@@ -89,6 +89,13 @@ nav{display:flex;gap:.2rem;}
 .role-opt .role-icon{font-size:1.4rem;margin-bottom:.3rem;}
 .role-opt .role-lbl{font-size:.8rem;font-weight:600;}
 .role-opt .role-desc{font-size:.72rem;color:var(--muted);margin-top:.15rem;}
+.role-selector{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.role-opt{padding:.75rem;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.role-opt:hover{border-color:var(--matcha);background:var(--bg);}
+.role-opt.selected{border-color:var(--matcha);background:#edf7ee;}
+.role-opt .role-icon{font-size:1.4rem;margin-bottom:.3rem;}
+.role-opt .role-lbl{font-size:.8rem;font-weight:600;}
+.role-opt .role-desc{font-size:.72rem;color:var(--muted);margin-top:.15rem;}
 .btn-auth{padding:.8rem;background:var(--matcha);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:.5rem;}
 .btn-auth:hover{opacity:.88;}
 .btn-auth:disabled{opacity:.45;cursor:not-allowed;}
@@ -430,43 +437,72 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 
     <!-- Register form -->
     <form class="auth-form" id="formRegister" onsubmit="doRegister(event)">
+
+      <!-- Role selector -->
+      <div class="role-selector">
+        <label class="role-opt selected" id="optPatient" onclick="setRegRole('patient')">
+          <div class="role-icon">🧑‍⚕️</div>
+          <div class="role-lbl">Patient</div>
+          <div class="role-desc">Cognitive games &amp; my results</div>
+        </label>
+        <label class="role-opt" id="optDoctor" onclick="setRegRole('doctor')">
+          <div class="role-icon">👨‍⚕️</div>
+          <div class="role-lbl">Doctor</div>
+          <div class="role-desc">Patient management &amp; history</div>
+        </label>
+      </div>
+
       <div class="field">
         <label>Full name</label>
         <input type="text" id="regName" placeholder="María García López" required>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
         <div class="field">
-          <label>Patient ID (DNI / NHC)</label>
+          <label id="regUsernameLbl">Patient ID (DNI / NHC)</label>
           <input type="text" id="regUsername" placeholder="12345678A" required>
         </div>
-        <div class="field">
+        <div class="field" id="fieldDob">
           <label>Date of birth</label>
-          <input type="date" id="regDob" required>
+          <input type="date" id="regDob">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+
+      <!-- Patient-only fields -->
+      <div id="patientFields">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+          <div class="field">
+            <label>Phone <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
+            <input type="tel" id="regPhone" placeholder="+34 600 000 000">
+          </div>
+          <div class="field">
+            <label>Last appointment <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
+            <input type="date" id="regLastAppt">
+          </div>
+        </div>
         <div class="field">
-          <label>Phone <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
-          <input type="tel" id="regPhone" placeholder="+34 600 000 000">
+          <label>Neurologist <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
+          <input type="text" id="regNeurologist" placeholder="Dr. Ana Martínez">
+        </div>
+      </div>
+
+      <!-- Doctor-only fields -->
+      <div id="doctorFields" style="display:none;">
+        <div class="field">
+          <label>Número de colegiado</label>
+          <input type="text" id="regColNum" placeholder="e.g. 28-12345">
         </div>
         <div class="field">
-          <label>Last appointment <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
-          <input type="date" id="regLastAppt">
+          <label>Staff code <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(provided by your centre)</span></label>
+          <input type="text" id="regStaffCode" placeholder="••••••••">
         </div>
       </div>
-      <div class="field">
-        <label>Neurologist <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
-        <input type="text" id="regNeurologist" placeholder="Dr. Ana Martínez">
-      </div>
+
       <div class="field">
         <label>Password <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(min. 8 characters)</span></label>
         <input type="password" id="regPassword" placeholder="••••••••" minlength="8" required>
       </div>
       <div class="auth-msg" id="registerMsg"></div>
       <button type="submit" class="btn-auth" id="btnRegister">Create patient account</button>
-      <div style="background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-size:.77rem;color:var(--muted);line-height:1.55;">
-        🩺 <strong>Doctors:</strong> accounts for medical staff are created by the system administrator.
-      </div>
       <p class="auth-divider">Already have an account? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--matcha-dk);">Log in</a></p>
     </form>
   </div>
@@ -763,6 +799,22 @@ function switchAuth(tab) {
   document.getElementById('registerMsg').className = 'auth-msg';
 }
 
+// ── Role toggle ──────────────────────────────────────────────
+const STAFF_CODE = 'NEURO2026';
+let regRole = 'patient';
+
+function setRegRole(role) {
+  regRole = role;
+  document.getElementById('optPatient').classList.toggle('selected', role === 'patient');
+  document.getElementById('optDoctor').classList.toggle('selected', role === 'doctor');
+  document.getElementById('patientFields').style.display  = role === 'patient' ? '' : 'none';
+  document.getElementById('doctorFields').style.display   = role === 'doctor'  ? '' : 'none';
+  document.getElementById('fieldDob').style.display       = role === 'patient' ? '' : 'none';
+  document.getElementById('regUsernameLbl').textContent   = role === 'patient' ? 'Patient ID (DNI / NHC)' : 'Username';
+  document.getElementById('regUsername').placeholder      = role === 'patient' ? '12345678A' : 'dr.apellido';
+  document.getElementById('btnRegister').textContent      = role === 'patient' ? 'Create patient account' : 'Create doctor account';
+}
+
 // ── Register ────────────────────────────────────────────────
 async function doRegister(e) {
   e.preventDefault();
@@ -770,39 +822,51 @@ async function doRegister(e) {
   const msg         = document.getElementById('registerMsg');
   const name        = document.getElementById('regName').value.trim();
   const username    = document.getElementById('regUsername').value.trim().toUpperCase();
-  const dob         = document.getElementById('regDob').value || null;
-  const phone       = document.getElementById('regPhone').value.trim() || null;
-  const lastAppt    = document.getElementById('regLastAppt').value || null;
-  const neurologist = document.getElementById('regNeurologist').value.trim() || null;
   const pass        = document.getElementById('regPassword').value;
+
+  // Doctor validation
+  if (regRole === 'doctor') {
+    const code = document.getElementById('regStaffCode').value.trim().toUpperCase();
+    if (code !== STAFF_CODE) {
+      showMsg(msg, 'error', 'Invalid staff code. Please contact your centre administrator.');
+      return;
+    }
+  }
+
+  const dob         = regRole === 'patient' ? (document.getElementById('regDob').value || null) : null;
+  const phone       = regRole === 'patient' ? (document.getElementById('regPhone').value.trim() || null) : null;
+  const lastAppt    = regRole === 'patient' ? (document.getElementById('regLastAppt').value || null) : null;
+  const neurologist = regRole === 'patient' ? (document.getElementById('regNeurologist').value.trim() || null) : null;
+  const colNum      = regRole === 'doctor'  ? (document.getElementById('regColNum').value.trim() || null) : null;
 
   btn.disabled = true; btn.textContent = 'Creating account…';
   msg.className = 'auth-msg';
 
-  const { data: existing, error: chkErr } = await db.from('users').select('id').eq('username', username).maybeSingle();
+  const { data: existing, error: chkErr } = await db.from('users').select('id').ilike('username', username).maybeSingle();
   if (chkErr) {
     showMsg(msg, 'error', 'Could not connect to the database. Check your network.');
-    btn.disabled = false; btn.textContent = 'Create patient account'; return;
+    btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account'; return;
   }
   if (existing) {
-    showMsg(msg, 'error', 'This Patient ID is already registered.');
-    btn.disabled = false; btn.textContent = 'Create patient account'; return;
+    showMsg(msg, 'error', 'This ID is already registered.');
+    btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account'; return;
   }
 
   const hash = await hashPassword(pass);
   const { error } = await db.from('users').insert({
     username, full_name: name, date_of_birth: dob, phone,
     neurologist, last_appointment: lastAppt,
-    password_hash: hash, role: 'patient'
+    notes: colNum ? `Nº colegiado: ${colNum}` : null,
+    password_hash: hash, role: regRole
   });
 
   if (error) {
     showMsg(msg, 'error', 'Registration failed: ' + error.message);
   } else {
-    showMsg(msg, 'success', 'Account created! You can now log in.');
+    showMsg(msg, 'success', `Account created! You can now log in.`);
     setTimeout(() => switchAuth('login'), 1600);
   }
-  btn.disabled = false; btn.textContent = 'Create patient account';
+  btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
 }
 
 // ── Login ────────────────────────────────────────────────────
@@ -819,7 +883,7 @@ async function doLogin(e) {
   const hash = await hashPassword(pass);
   const { data, error } = await db.from('users')
     .select('id, full_name, role, username, date_of_birth, phone, neurologist, last_appointment')
-    .eq('username', username).eq('password_hash', hash).maybeSingle();
+    .ilike('username', username).eq('password_hash', hash).maybeSingle();
 
   if (error) {
     showMsg(msg, 'error', 'Database error: ' + error.message);
