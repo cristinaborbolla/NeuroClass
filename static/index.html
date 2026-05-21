@@ -4,345 +4,410 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeuroStage · Alzheimer MRI Classifier</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:        #f4f3ef;
-    --surface:   #ffffff;
-    --border:    #e2e0d8;
-    --text:      #1a1916;
-    --muted:     #7a7770;
-    --accent:    #2d5be3;
-    --accent-lt: #eef1fd;
+:root {
+  --bg:        #F6FAF5;
+  --surface:   #E8F2E3;
+  --surface2:  #ffffff;
+  --border:    #B7D6B0;
+  --matcha:    #94B49F;
+  --matcha-dk: #6e9178;
+  --rose:      #FACAD7;
+  --rose-dk:   #e8a0b5;
+  --text:      #2c3e30;
+  --muted:     #7a9080;
+  --radius:    14px;
+  --matcha-lt: #B7D6B0;
+  --cream:     #FAF8F2;
+  --shadow:    0 1px 12px rgba(44,62,48,.06);
 
-    --c0: #2a7a4b;   /* NonDemented      → verde */
-    --c1: #d4820a;   /* VeryMild         → ámbar */
-    --c2: #c45820;   /* Mild             → naranja */
-    --c3: #b02a2a;   /* Moderate         → rojo */
+  --c0: #4a8c5c;
+  --c1: #b07d2a;
+  --c2: #c45820;
+  --c3: #a83232;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
 
-    --radius: 14px;
-    --shadow: 0 2px 18px rgba(0,0,0,.07);
-  }
+/* ── Header ── */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:.55rem;font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:500;letter-spacing:-.01em;color:var(--text);}
+.logo-mark{width:28px;height:28px;background:var(--matcha);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:16px;height:16px;fill:white;}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 16px; }
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+/* ── Nav tabs ── */
+nav{display:flex;gap:.25rem;}
+.nav-btn{padding:.45rem 1.1rem;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--muted);border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+.nav-btn:hover{background:var(--bg);color:var(--text);}
+.nav-btn.active{background:var(--matcha);color:white;}
 
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 2rem;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky; top: 0; z-index: 10;
-  }
-  .logo {
-    display: flex; align-items: center; gap: .6rem;
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.35rem; letter-spacing: -.02em;
-  }
-  .logo-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--accent); flex-shrink: 0;
-  }
-  .badge {
-    font-size: .7rem; font-weight: 500; letter-spacing: .06em;
-    text-transform: uppercase; color: var(--muted);
-    border: 1px solid var(--border);
-    padding: .25rem .7rem; border-radius: 99px;
-  }
+/* ── Sections ── */
+.section{display:none;flex:1;animation:fadeIn .2s ease;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-  main {
-    flex: 1;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem;
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
-  }
+/* ══════════════════════════════════════
+   HOME
+══════════════════════════════════════ */
+.hero{max-width:900px;margin:0 auto;padding:4rem 2rem 3rem;text-align:center;}
+.hero-tag{display:inline-block;background:var(--rose);color:#7a3050;font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .9rem;border-radius:99px;margin-bottom:1.4rem;}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:500;line-height:1.15;letter-spacing:-.02em;margin-bottom:1.1rem;color:var(--text);}
+.hero h1 em{font-style:italic;color:var(--matcha-dk);}
+.hero p{font-size:1.05rem;color:var(--muted);line-height:1.75;max-width:560px;margin:0 auto 2.5rem;}
+.hero-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--matcha);color:white;border:none;padding:.8rem 2rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s;}
+.hero-btn:hover{background:var(--matcha-dk);}
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-  }
-  .card-header {
-    padding: 1.2rem 1.5rem .9rem;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: .6rem;
-  }
-  .card-header h2 {
-    font-size: .8rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .08em;
-    color: var(--muted);
-  }
-  .card-icon {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: var(--accent-lt);
-    display: flex; align-items: center; justify-content: center;
-    font-size: .9rem;
-  }
-  .card-body { padding: 1.5rem; }
+.features{max-width:900px;margin:0 auto;padding:0 2rem 4rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;}
+.feat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;transition:box-shadow .2s;}
+.feat-card:hover{box-shadow:var(--shadow);}
+.feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:1rem;}
+.feat-icon.green{background:#E8F2E3;}
+.feat-icon.rose{background:#fce8ef;}
+.feat-icon.blue{background:#e6f0fb;}
+.feat-card h3{font-size:.95rem;font-weight:600;margin-bottom:.4rem;color:var(--text);}
+.feat-card p{font-size:.82rem;color:var(--muted);line-height:1.6;}
 
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color .2s, background .2s;
-    position: relative;
-  }
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--accent);
-    background: var(--accent-lt);
-  }
-  .upload-zone input[type="file"] {
-    position: absolute; inset: 0;
-    opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
-  .upload-icon { font-size: 2rem; margin-bottom: .8rem; }
-  .upload-title {
-    font-size: .95rem; font-weight: 500; margin-bottom: .3rem;
-  }
-  .upload-hint { font-size: .8rem; color: var(--muted); }
+.stats-strip{background:var(--matcha-lt);padding:2.5rem 2rem;margin-bottom:0;}
+.stats-inner{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1.5rem;text-align:center;}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:500;color:white;line-height:1;}
+.stat-lbl{font-size:.75rem;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.08em;margin-top:.3rem;}
 
-  .preview-wrap {
-    margin-top: 1.2rem;
-    display: none;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: #111;
-    aspect-ratio: 1 / 1;
-  }
-  .preview-wrap.visible { display: block; }
-  .preview-wrap img {
-    width: 100%; height: 100%;
-    object-fit: contain;
-    display: block;
-  }
+/* ══════════════════════════════════════
+   CLASSIFIER
+══════════════════════════════════════ */
+.clf-wrap{max-width:960px;margin:0 auto;padding:2.5rem 1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:1.1rem 1.4rem .9rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;}
+.card-header h2{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.card-icon{width:28px;height:28px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.card-body{padding:1.4rem;}
 
-  .btn-analyse {
-    margin-top: 1.2rem;
-    width: 100%;
-    padding: .85rem;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: .95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity .2s, transform .1s;
-    display: flex; align-items: center;
-    justify-content: center; gap: .5rem;
-  }
-  .btn-analyse:hover  { opacity: .88; }
-  .btn-analyse:active { transform: scale(.98); }
-  .btn-analyse:disabled { opacity: .4; cursor: not-allowed; }
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--matcha);background:#E8F2E3;}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:2rem;margin-bottom:.8rem;}
+.upload-title{font-size:.95rem;font-weight:500;margin-bottom:.3rem;}
+.upload-hint{font-size:.8rem;color:var(--muted);}
 
-  .spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-    display: none;
-  }
-  .btn-analyse.loading .spinner { display: block; }
-  .btn-analyse.loading .btn-label { display: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+.preview-wrap{margin-top:1.2rem;display:none;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#111;aspect-ratio:1/1;}
+.preview-wrap.visible{display:block;}
+.preview-wrap img{width:100%;height:100%;object-fit:contain;display:block;}
 
-  .result-empty {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 3rem 1.5rem;
-    text-align: center;
-  }
-  .result-empty-icon { font-size: 2.4rem; margin-bottom: 1rem; opacity: .35; }
-  .result-empty p { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+.btn-analyse{margin-top:1.2rem;width:100%;padding:.85rem;background:var(--matcha);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+.btn-analyse:hover{opacity:.88;}
+.btn-analyse:active{transform:scale(.98);}
+.btn-analyse:disabled{opacity:.4;cursor:not-allowed;}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+.btn-analyse.loading .spinner{display:block;}
+.btn-analyse.loading .btn-label{display:none;}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  .result-content { display: none; }
-  .result-content.visible { display: block; }
+.result-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;}
+.result-empty-icon{font-size:2.4rem;margin-bottom:1rem;opacity:.35;}
+.result-empty p{font-size:.85rem;color:var(--muted);line-height:1.6;}
+.result-content{display:none;}
+.result-content.visible{display:block;}
 
-  .diagnosis {
-    padding: 1.4rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 1rem;
-  }
-  .diagnosis-dot {
-    width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
-  }
-  .diagnosis-label { font-size: .7rem; text-transform: uppercase;
-    letter-spacing: .08em; color: var(--muted); margin-bottom: .15rem; }
-  .diagnosis-class {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.5rem; line-height: 1.1;
-    letter-spacing: -.02em;
-  }
-  .diagnosis-conf {
-    margin-left: auto;
-    text-align: right;
-  }
-  .diagnosis-conf .conf-val {
-    font-size: 1.8rem; font-weight: 600;
-    line-height: 1;
-  }
-  .diagnosis-conf .conf-lbl {
-    font-size: .7rem; color: var(--muted); text-transform: uppercase;
-    letter-spacing: .06em;
-  }
+.diagnosis{padding:1.4rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;}
+.diagnosis-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+.diagnosis-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.15rem;}
+.diagnosis-class{font-family:'Cormorant Garamond',serif;font-size:1.55rem;line-height:1.1;letter-spacing:-.01em;}
+.diagnosis-conf{margin-left:auto;text-align:right;}
+.conf-val{font-size:1.8rem;font-weight:600;line-height:1;}
+.conf-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
 
-  .prob-list { padding: 1.2rem 1.5rem; display: flex; flex-direction: column; gap: .85rem; }
-  .prob-item { }
-  .prob-row {
-    display: flex; justify-content: space-between;
-    font-size: .82rem; margin-bottom: .3rem;
-  }
-  .prob-name { font-weight: 500; }
-  .prob-pct  { color: var(--muted); font-weight: 400; }
-  .prob-bar-bg {
-    height: 6px; background: var(--bg);
-    border-radius: 99px; overflow: hidden;
-  }
-  .prob-bar-fill {
-    height: 100%; border-radius: 99px;
-    transition: width .6s cubic-bezier(.4,0,.2,1);
-  }
+.prob-list{padding:1.2rem 1.5rem;display:flex;flex-direction:column;gap:.85rem;}
+.prob-row{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem;}
+.prob-name{font-weight:500;}
+.prob-pct{color:var(--muted);}
+.prob-bar-bg{height:6px;background:var(--bg);border-radius:99px;overflow:hidden;}
+.prob-bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);}
 
-  .desc-box {
-    margin: 0 1.5rem 1.5rem;
-    padding: 1rem;
-    background: var(--bg);
-    border-radius: 10px;
-    font-size: .82rem;
-    color: var(--muted);
-    line-height: 1.65;
-    border-left: 3px solid var(--border);
-  }
+.desc-box{margin:0 1.5rem 1.5rem;padding:1rem;background:var(--cream);border-radius:10px;font-size:.82rem;color:var(--muted);line-height:1.65;border-left:3px solid var(--rose-dk);}
+.error-box{background:#fef2f2;border:1px solid #fecaca;color:#a83232;border-radius:10px;padding:1rem;font-size:.85rem;margin:1rem 1.5rem;display:none;}
+.error-box.visible{display:block;}
 
-  /* error */
-  .error-box {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #b02a2a;
-    border-radius: 10px;
-    padding: 1rem;
-    font-size: .85rem;
-    margin: 1rem 1.5rem;
-    display: none;
-  }
-  .error-box.visible { display: block; }
+/* ══════════════════════════════════════
+   ABOUT ALZHEIMER
+══════════════════════════════════════ */
+.about-wrap{max-width:860px;margin:0 auto;padding:3rem 2rem;}
+.about-hero{text-align:center;margin-bottom:3rem;}
+.about-hero h2{font-family:'Cormorant Garamond',serif;font-size:2.3rem;font-weight:500;margin-bottom:.8rem;color:var(--text);}
+.about-hero p{font-size:.95rem;color:var(--muted);line-height:1.75;max-width:560px;margin:0 auto;}
 
-  footer {
-    text-align: center;
-    padding: 1.5rem;
-    font-size: .75rem;
-    color: var(--muted);
-    border-top: 1px solid var(--border);
-  }
-  footer a { color: inherit; }
+.stages-title{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1.2rem;}
 
-  @media (max-width: 680px) {
-    main { grid-template-columns: 1fr; }
-  }
+.stage-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden;transition:box-shadow .2s;}
+.stage-card:hover{box-shadow:var(--shadow);}
+.stage-header{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.4rem;cursor:pointer;}
+.stage-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.85rem;flex-shrink:0;}
+.stage-name{font-weight:600;font-size:.95rem;flex:1;}
+.stage-badge{font-size:.7rem;font-weight:600;padding:.25rem .75rem;border-radius:99px;}
+.stage-chevron{font-size:.8rem;color:var(--muted);transition:transform .2s;}
+.stage-card.open .stage-chevron{transform:rotate(180deg);}
+.stage-body{display:none;padding:0 1.4rem 1.4rem;}
+.stage-card.open .stage-body{display:block;}
+.stage-body p{font-size:.88rem;color:var(--muted);line-height:1.75;margin-bottom:.8rem;}
+.stage-body p:last-child{margin-bottom:0;}
+.stage-features{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.8rem;}
+.stage-feat{background:var(--cream);border-radius:8px;padding:.55rem .75rem;font-size:.8rem;color:var(--text);}
+
+.info-strip{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:2.5rem;}
+.info-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;}
+.info-card h3{font-size:.9rem;font-weight:600;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
+.info-card ul{padding-left:1.1rem;}
+.info-card li{font-size:.83rem;color:var(--muted);line-height:1.7;margin-bottom:.2rem;}
+
+/* ── Footer ── */
+footer{text-align:center;padding:1.5rem;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);background:var(--surface);}
+
+/* ── Responsive ── */
+@media(max-width:680px){
+  .clf-wrap{grid-template-columns:1fr;}
+  .hero h1{font-size:2.2rem;}
+  .info-strip{grid-template-columns:1fr;}
+  .stage-features{grid-template-columns:1fr;}
+  nav .nav-btn{padding:.4rem .7rem;font-size:.8rem;}
+}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-dot"></div>
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9zm0 2a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/></svg>
+    </div>
     NeuroStage
   </div>
-  <span class="badge">Alzheimer · MRI · CNN</span>
+  <nav>
+    <button class="nav-btn active" onclick="showTab('home')">Home</button>
+    <button class="nav-btn" onclick="showTab('classifier')">Classifier</button>
+    <button class="nav-btn" onclick="showTab('alzheimer')">About Alzheimer</button>
+  </nav>
 </header>
 
-<main>
+<!-- ══ HOME ══════════════════════════════════════════════════════ -->
+<div id="tab-home" class="section active">
 
-  <!-- Upload card -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">🔬</div>
-      <h2>MRI Image Input</h2>
-    </div>
-    <div class="card-body">
+  <div class="hero">
+    <span class="hero-tag">TFG · Universidad de Deusto · 2026</span>
+    <h1>Alzheimer staging<br>through <em>deep learning</em></h1>
+    <p>NeuroStage uses a convolutional neural network trained on brain MRI images to automatically classify Alzheimer's disease into four diagnostic stages, supporting early detection and longitudinal follow-up.</p>
+    <button class="hero-btn" onclick="showTab('classifier')">
+      Try the classifier
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
 
-      <div class="upload-zone" id="uploadZone">
-        <input type="file" id="fileInput" accept="image/*">
-        <div class="upload-icon">🧠</div>
-        <p class="upload-title">Drop MRI image here</p>
-        <p class="upload-hint">or click to browse · JPG / PNG</p>
-      </div>
-
-      <div class="preview-wrap" id="previewWrap">
-        <img id="previewImg" src="" alt="MRI preview">
-      </div>
-
-      <button class="btn-analyse" id="analyseBtn" disabled>
-        <span class="btn-label">Analyse image</span>
-        <div class="spinner"></div>
-      </button>
-
+  <div class="stats-strip">
+    <div class="stats-inner">
+      <div><div class="stat-val">98.78%</div><div class="stat-lbl">Test accuracy</div></div>
+      <div><div class="stat-val">4</div><div class="stat-lbl">Diagnostic stages</div></div>
+      <div><div class="stat-val">CNN</div><div class="stat-lbl">Advanced · Reduced</div></div>
+      <div><div class="stat-val">190×200</div><div class="stat-lbl">Input resolution</div></div>
     </div>
   </div>
 
-  <!-- Results card -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">📊</div>
-      <h2>Classification Result</h2>
+  <div class="features" style="margin-top:2.5rem;">
+    <div class="feat-card">
+      <div class="feat-icon green">🧠</div>
+      <h3>MRI-based classification</h3>
+      <p>Analyses axial brain MRI slices preprocessed with CLAHE contrast enhancement and classifies them into four Alzheimer's stages in under a second.</p>
     </div>
-
-    <!-- Empty state -->
-    <div class="result-empty" id="resultEmpty">
-      <div class="result-empty-icon">⟳</div>
-      <p>Upload an MRI image and press<br><strong>Analyse image</strong> to see results.</p>
+    <div class="feat-card">
+      <div class="feat-icon rose">📊</div>
+      <h3>Probability distribution</h3>
+      <p>Returns the full softmax probability vector for all four classes, giving clinicians a transparent view of model confidence rather than a single label.</p>
     </div>
+    <div class="feat-card">
+      <div class="feat-icon blue">🔬</div>
+      <h3>Clinical support tool</h3>
+      <p>Designed as a decision-support aid, not a replacement for clinical judgement. Results should always be interpreted by a qualified medical professional.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon green">⚙️</div>
+      <h3>Optimised architecture</h3>
+      <p>The Advanced-Reduced CNN configuration was selected after Optuna hyperparameter optimisation across six architecture variants and three backbone sizes.</p>
+    </div>
+  </div>
+</div>
 
-    <!-- Error -->
-    <div class="error-box" id="errorBox"></div>
+<!-- ══ CLASSIFIER ════════════════════════════════════════════════ -->
+<div id="tab-classifier" class="section">
+  <div class="clf-wrap">
 
-    <!-- Results -->
-    <div class="result-content" id="resultContent">
-      <div class="diagnosis" id="diagnosisBanner">
-        <div class="diagnosis-dot" id="diagnosisDot"></div>
-        <div>
-          <div class="diagnosis-label">Predicted stage</div>
-          <div class="diagnosis-class" id="diagnosisClass">—</div>
-        </div>
-        <div class="diagnosis-conf">
-          <div class="conf-val" id="confVal">—</div>
-          <div class="conf-lbl">confidence</div>
-        </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🔬</div>
+        <h2>MRI Image Input</h2>
       </div>
+      <div class="card-body">
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept="image/*">
+          <div class="upload-icon">🧠</div>
+          <p class="upload-title">Drop MRI image here</p>
+          <p class="upload-hint">or click to browse · JPG / PNG</p>
+        </div>
+        <div class="preview-wrap" id="previewWrap">
+          <img id="previewImg" src="" alt="MRI preview">
+        </div>
+        <button class="btn-analyse" id="analyseBtn" disabled>
+          <span class="btn-label">Analyse image</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+    </div>
 
-      <div class="prob-list" id="probList"></div>
-
-      <div class="desc-box" id="descBox"></div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📊</div>
+        <h2>Classification Result</h2>
+      </div>
+      <div class="result-empty" id="resultEmpty">
+        <div class="result-empty-icon">⟳</div>
+        <p>Upload an MRI image and press<br><strong>Analyse image</strong> to see results.</p>
+      </div>
+      <div class="error-box" id="errorBox"></div>
+      <div class="result-content" id="resultContent">
+        <div class="diagnosis">
+          <div class="diagnosis-dot" id="diagnosisDot"></div>
+          <div>
+            <div class="diagnosis-label">Predicted stage</div>
+            <div class="diagnosis-class" id="diagnosisClass">—</div>
+          </div>
+          <div class="diagnosis-conf">
+            <div class="conf-val" id="confVal">—</div>
+            <div class="conf-lbl">confidence</div>
+          </div>
+        </div>
+        <div class="prob-list" id="probList"></div>
+        <div class="desc-box" id="descBox"></div>
+      </div>
     </div>
 
   </div>
-</main>
+</div>
+
+<!-- ══ ABOUT ALZHEIMER ══════════════════════════════════════════ -->
+<div id="tab-alzheimer" class="section">
+  <div class="about-wrap">
+
+    <div class="about-hero">
+      <h2>Alzheimer's disease staging</h2>
+      <p>Alzheimer's disease progresses through identifiable stages with characteristic changes in brain structure and cognitive function. Understanding these stages is key to early diagnosis and intervention.</p>
+    </div>
+
+    <p class="stages-title">The four diagnostic stages used in this classifier</p>
+
+    <div class="stage-card open" id="s0">
+      <div class="stage-header" onclick="toggleStage('s0')">
+        <div class="stage-num" style="background:#e6f4ea;color:#2e7d4f;">1</div>
+        <span class="stage-name">Non-Demented</span>
+        <span class="stage-badge" style="background:#e6f4ea;color:#2e7d4f;">No impairment</span>
+        <span class="stage-chevron">▼</span>
+      </div>
+      <div class="stage-body">
+        <p>No significant cognitive impairment is present. The individual maintains normal memory function, orientation, and daily living activities. Brain structure appears within expected ranges for the given age group, with cortical thickness and ventricular volume showing no pathological signs.</p>
+        <p>Regular monitoring is still recommended for individuals over 65 or with a family history of Alzheimer's disease.</p>
+        <div class="stage-features">
+          <div class="stage-feat">Normal memory function</div>
+          <div class="stage-feat">Intact daily activities</div>
+          <div class="stage-feat">No cortical atrophy</div>
+          <div class="stage-feat">Normal ventricular size</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-card" id="s1">
+      <div class="stage-header" onclick="toggleStage('s1')">
+        <div class="stage-num" style="background:#fffbeb;color:#92600a;">2</div>
+        <span class="stage-name">Very Mild Demented</span>
+        <span class="stage-badge" style="background:#fffbeb;color:#92600a;">Very mild decline</span>
+        <span class="stage-chevron">▼</span>
+      </div>
+      <div class="stage-body">
+        <p>Subtle cognitive changes begin to appear, primarily affecting memory for recent events and the ability to recall names. These changes may be attributed to normal ageing by both the patient and their family, making early detection particularly challenging.</p>
+        <p>Structural MRI may show minimal hippocampal volume reduction. The patient typically remains independent in daily activities but may exhibit mild forgetfulness.</p>
+        <div class="stage-features">
+          <div class="stage-feat">Occasional forgetfulness</div>
+          <div class="stage-feat">Mostly independent</div>
+          <div class="stage-feat">Subtle hippocampal changes</div>
+          <div class="stage-feat">Early monitoring advised</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-card" id="s2">
+      <div class="stage-header" onclick="toggleStage('s2')">
+        <div class="stage-num" style="background:#fff7ed;color:#9a4412;">3</div>
+        <span class="stage-name">Mild Demented</span>
+        <span class="stage-badge" style="background:#fff7ed;color:#9a4412;">Mild decline</span>
+        <span class="stage-chevron">▼</span>
+      </div>
+      <div class="stage-body">
+        <p>Memory loss becomes more noticeable and begins to interfere with daily activities. The patient may have difficulty with complex tasks, show increased confusion about time and place, and struggle with problem-solving. Social withdrawal may begin at this stage.</p>
+        <p>Brain imaging typically reveals enlarged ventricles and measurable reduction in hippocampal and cortical volume, particularly in the temporal and parietal lobes.</p>
+        <div class="stage-features">
+          <div class="stage-feat">Noticeable memory loss</div>
+          <div class="stage-feat">Difficulty with complex tasks</div>
+          <div class="stage-feat">Enlarged ventricles</div>
+          <div class="stage-feat">Temporal lobe atrophy</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-card" id="s3">
+      <div class="stage-header" onclick="toggleStage('s3')">
+        <div class="stage-num" style="background:#fef2f2;color:#841c1c;">4</div>
+        <span class="stage-name">Moderate Demented</span>
+        <span class="stage-badge" style="background:#fef2f2;color:#841c1c;">Moderate decline</span>
+        <span class="stage-chevron">▼</span>
+      </div>
+      <div class="stage-body">
+        <p>Significant cognitive decline affecting multiple domains. The patient requires assistance with daily activities and may not recognise close family members. Behavioural changes such as agitation, wandering, and sleep disturbances are common. Full-time care is often necessary at this stage.</p>
+        <p>Structural MRI shows significant diffuse cortical atrophy, substantially enlarged ventricles, and marked hippocampal volume loss. These changes are typically visible and measurable on standard imaging.</p>
+        <div class="stage-features">
+          <div class="stage-feat">Requires daily assistance</div>
+          <div class="stage-feat">Recognition difficulties</div>
+          <div class="stage-feat">Significant cortical atrophy</div>
+          <div class="stage-feat">Full care often needed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-strip">
+      <div class="info-card">
+        <h3>🔬 How the model works</h3>
+        <ul>
+          <li>Input: axial brain MRI slice (grayscale)</li>
+          <li>Preprocessing: CLAHE contrast enhancement</li>
+          <li>Resolution: 190 × 200 pixels</li>
+          <li>Architecture: custom CNN (Advanced-Reduced)</li>
+          <li>Output: softmax probabilities over 4 classes</li>
+          <li>Training dataset: Kaggle Augmented Alzheimer MRI</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3>⚠️ Important disclaimer</h3>
+        <ul>
+          <li>This tool is a research prototype</li>
+          <li>Not validated for clinical use</li>
+          <li>Results must be reviewed by a physician</li>
+          <li>Do not use for self-diagnosis</li>
+          <li>Single-slice classification has inherent limitations</li>
+          <li>Always combine with full clinical assessment</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <footer>
-  NeuroStage · TFG Biomedical Engineering · Universidad de Deusto · 2026<br>
+  NeuroStage · TFG Biomedical Engineering · Universidad de Deusto · 2026 ·
   Supervisión: Prof. Begoña García-Zapirain &amp; Dr. Marcin Derlatka
 </footer>
 
@@ -350,70 +415,53 @@
 const API_URL = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space/predict";
 
 const CLASSES = {
-  NonDemented: {
-    color: "#2a7a4b",
-    bg:    "#f0faf4",
-    label: "Non-Demented",
-    desc:  "No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group."
-  },
-  VeryMildDemented: {
-    color: "#d4820a",
-    bg:    "#fffbeb",
-    label: "Very Mild Demented",
-    desc:  "Very mild cognitive decline. Subtle changes in memory and orientation may be present. Early clinical monitoring is recommended."
-  },
-  MildDemented: {
-    color: "#c45820",
-    bg:    "#fff7ed",
-    label: "Mild Demented",
-    desc:  "Mild cognitive impairment with noticeable memory loss. Enlarged ventricles and reduced hippocampal volume may be observed."
-  },
-  ModerateDemented: {
-    color: "#b02a2a",
-    bg:    "#fef2f2",
-    label: "Moderate Demented",
-    desc:  "Moderate cognitive decline. Significant structural atrophy is likely present. Comprehensive clinical evaluation is strongly advised."
-  }
+  NonDemented:      { color:"#4a8c5c", label:"Non-Demented",      desc:"No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group." },
+  VeryMildDemented: { color:"#b07d2a", label:"Very Mild Demented", desc:"Very mild cognitive decline. Subtle changes in memory and orientation may be present. Early clinical monitoring is recommended." },
+  MildDemented:     { color:"#c45820", label:"Mild Demented",      desc:"Mild cognitive impairment with noticeable memory loss. Enlarged ventricles and reduced hippocampal volume may be observed." },
+  ModerateDemented: { color:"#a83232", label:"Moderate Demented",  desc:"Moderate cognitive decline. Significant structural atrophy is likely present. Comprehensive clinical evaluation is strongly advised." }
 };
-
 const CLASS_ORDER = ["NonDemented","VeryMildDemented","MildDemented","ModerateDemented"];
 
-const fileInput     = document.getElementById("fileInput");
-const uploadZone    = document.getElementById("uploadZone");
-const previewWrap   = document.getElementById("previewWrap");
-const previewImg    = document.getElementById("previewImg");
-const analyseBtn    = document.getElementById("analyseBtn");
-const resultEmpty   = document.getElementById("resultEmpty");
-const resultContent = document.getElementById("resultContent");
-const errorBox      = document.getElementById("errorBox");
-const diagnosisDot  = document.getElementById("diagnosisDot");
-const diagnosisClass= document.getElementById("diagnosisClass");
-const confVal       = document.getElementById("confVal");
-const probList      = document.getElementById("probList");
-const descBox       = document.getElementById("descBox");
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
 
+function toggleStage(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+const fileInput  = document.getElementById("fileInput");
+const uploadZone = document.getElementById("uploadZone");
+const previewWrap= document.getElementById("previewWrap");
+const previewImg = document.getElementById("previewImg");
+const analyseBtn = document.getElementById("analyseBtn");
+const resultEmpty= document.getElementById("resultEmpty");
+const resultContent=document.getElementById("resultContent");
+const errorBox   = document.getElementById("errorBox");
+const diagnosisDot=document.getElementById("diagnosisDot");
+const diagnosisClass=document.getElementById("diagnosisClass");
+const confVal    = document.getElementById("confVal");
+const probList   = document.getElementById("probList");
+const descBox    = document.getElementById("descBox");
 let selectedFile = null;
 
 uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
 uploadZone.addEventListener("dragleave", ()  => uploadZone.classList.remove("drag-over"));
 uploadZone.addEventListener("drop", e => {
-  e.preventDefault();
-  uploadZone.classList.remove("drag-over");
+  e.preventDefault(); uploadZone.classList.remove("drag-over");
   const f = e.dataTransfer.files[0];
   if (f && f.type.startsWith("image/")) handleFile(f);
 });
-
-fileInput.addEventListener("change", () => {
-  if (fileInput.files[0]) handleFile(fileInput.files[0]);
-});
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
 
 function handleFile(file) {
   selectedFile = file;
-  const url = URL.createObjectURL(file);
-  previewImg.src = url;
+  previewImg.src = URL.createObjectURL(file);
   previewWrap.classList.add("visible");
   analyseBtn.disabled = false;
-  // Reset results
   resultContent.classList.remove("visible");
   resultEmpty.style.display = "flex";
   errorBox.classList.remove("visible");
@@ -421,25 +469,17 @@ function handleFile(file) {
 
 analyseBtn.addEventListener("click", async () => {
   if (!selectedFile) return;
-
   analyseBtn.classList.add("loading");
   analyseBtn.disabled = true;
   errorBox.classList.remove("visible");
-
-  const formData = new FormData();
-  formData.append("file", selectedFile);
-
+  const fd = new FormData();
+  fd.append("file", selectedFile);
   try {
-    const res  = await fetch(API_URL, { method: "POST", body: formData });
+    const res  = await fetch(API_URL, { method:"POST", body:fd });
     const data = await res.json();
-
-    if (!res.ok || data.error) {
-      throw new Error(data.error || `Server error ${res.status}`);
-    }
-
+    if (!res.ok || data.error) throw new Error(data.error || "Server error " + res.status);
     displayResults(data);
-
-  } catch (err) {
+  } catch(err) {
     errorBox.textContent = "Error: " + err.message;
     errorBox.classList.add("visible");
     resultEmpty.style.display = "flex";
@@ -454,48 +494,27 @@ function displayResults(data) {
   const cls  = data.predicted_class;
   const meta = CLASSES[cls];
   const conf = (data.probabilities[cls] * 100).toFixed(1);
-
-  // Banner
-  diagnosisDot.style.background = meta.color;
-  diagnosisClass.textContent     = meta.label;
-  diagnosisClass.style.color     = meta.color;
-  confVal.textContent            = conf + "%";
-
-  // Probability bars
+  diagnosisDot.style.background  = meta.color;
+  diagnosisClass.textContent      = meta.label;
+  diagnosisClass.style.color      = meta.color;
+  confVal.textContent             = conf + "%";
   probList.innerHTML = "";
   CLASS_ORDER.forEach(c => {
-    const pct  = (data.probabilities[c] * 100).toFixed(1);
-    const m    = CLASSES[c];
+    const pct = (data.probabilities[c] * 100).toFixed(1);
+    const m   = CLASSES[c];
     const item = document.createElement("div");
-    item.className = "prob-item";
     item.innerHTML = `
-      <div class="prob-row">
-        <span class="prob-name">${m.label}</span>
-        <span class="prob-pct">${pct}%</span>
-      </div>
-      <div class="prob-bar-bg">
-        <div class="prob-bar-fill"
-             style="width:0%; background:${m.color};"
-             data-target="${pct}"></div>
-      </div>`;
+      <div class="prob-row"><span class="prob-name">${m.label}</span><span class="prob-pct">${pct}%</span></div>
+      <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:0%;background:${m.color}" data-target="${pct}"></div></div>`;
     probList.appendChild(item);
   });
-
-  // Animate bars after paint
   requestAnimationFrame(() => {
-    probList.querySelectorAll(".prob-bar-fill").forEach(bar => {
-      bar.style.width = bar.dataset.target + "%";
-    });
+    probList.querySelectorAll(".prob-bar-fill").forEach(b => b.style.width = b.dataset.target + "%");
   });
-
-  // Description
   descBox.textContent = meta.desc;
-
-  // Show
   resultEmpty.style.display = "none";
   resultContent.classList.add("visible");
 }
 </script>
-
 </body>
 </html>
