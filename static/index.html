@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeuroStage · Alzheimer MRI Classifier</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg:        #F6FAF5;
@@ -67,7 +67,7 @@ nav{display:flex;gap:.2rem;}
 /* ══ LOGIN / REGISTER ══════════════════════════════════════ */
 #tab-login{display:none;}
 #tab-login.active{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 64px - 53px);padding:2rem 1rem;}
-.auth-card{width:100%;max-width:420px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.auth-card{width:100%;max-width:440px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
 .auth-tabs{display:flex;border-bottom:1px solid var(--border);}
 .auth-tab{flex:1;padding:.9rem;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;}
 .auth-tab.active{background:var(--surface2);color:var(--text);border-bottom:2px solid var(--matcha);}
@@ -75,17 +75,10 @@ nav{display:flex;gap:.2rem;}
 .auth-form.active{display:flex;}
 .field{display:flex;flex-direction:column;gap:.35rem;}
 .field label{font-size:.8rem;font-weight:500;color:var(--text);}
-.field input,.field select{padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;}
-.field input:focus,.field select:focus{border-color:var(--matcha);}
-.field select{cursor:pointer;}
-.role-selector{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
-.role-opt{padding:.75rem;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
-.role-opt:hover{border-color:var(--matcha);background:var(--bg);}
-.role-opt.selected{border-color:var(--matcha);background:#edf7ee;}
-.role-opt input{display:none;}
-.role-opt .role-icon{font-size:1.4rem;margin-bottom:.3rem;}
-.role-opt .role-lbl{font-size:.8rem;font-weight:600;}
-.role-opt .role-desc{font-size:.72rem;color:var(--muted);margin-top:.15rem;}
+.field label .opt{font-weight:400;color:var(--muted);font-size:.75rem;}
+.field input{padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;}
+.field input:focus{border-color:var(--matcha);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
 .btn-auth{padding:.8rem;background:var(--matcha);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:.5rem;}
 .btn-auth:hover{opacity:.88;}
 .btn-auth:disabled{opacity:.45;cursor:not-allowed;}
@@ -93,6 +86,7 @@ nav{display:flex;gap:.2rem;}
 .auth-msg.error{display:block;background:#fef2f2;color:#a83232;border:1px solid #fecaca;}
 .auth-msg.success{display:block;background:#f0faf4;color:#2e7d4f;border:1px solid #b7d6b0;}
 .auth-divider{text-align:center;font-size:.78rem;color:var(--muted);}
+.auth-note{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-size:.77rem;color:var(--muted);line-height:1.55;}
 
 /* ══ HOME ══════════════════════════════════════════════════ */
 .hero{max-width:900px;margin:0 auto;padding:4rem 2rem 3rem;text-align:center;}
@@ -196,6 +190,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   .info-strip,.stage-features{grid-template-columns:1fr;}
   .nav-btn{padding:.38rem .65rem;font-size:.78rem;}
   .user-name{display:none;}
+  .field-row{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -257,58 +252,64 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   <div class="auth-card">
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuth('login')">Log in</button>
-      <button class="auth-tab"        onclick="switchAuth('register')">Register</button>
+      <button class="auth-tab"        onclick="switchAuth('register')">New patient</button>
     </div>
 
-    <!-- Login form -->
+    <!-- ── Login form ─────────────────────────────────── -->
     <form class="auth-form active" id="formLogin" onsubmit="doLogin(event)">
       <div class="field">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com" required>
+        <label>Patient ID / Username</label>
+        <input type="text" id="loginUsername" placeholder="e.g. 12345678A" autocomplete="username" required>
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" required>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
       </div>
       <div class="auth-msg" id="loginMsg"></div>
       <button type="submit" class="btn-auth" id="btnLogin">Log in</button>
-      <p class="auth-divider">Don't have an account? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--matcha-dk);">Register</a></p>
+      <p class="auth-divider">New patient? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--matcha-dk);">Register here</a></p>
     </form>
 
-    <!-- Register form -->
+    <!-- ── Register form (patients only) ─────────────── -->
     <form class="auth-form" id="formRegister" onsubmit="doRegister(event)">
       <div class="field">
         <label>Full name</label>
-        <input type="text" id="regName" placeholder="Maria García" required>
+        <input type="text" id="regName" placeholder="María García López" autocomplete="name" required>
       </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="regEmail" placeholder="your@email.com" required>
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="regPassword" placeholder="Min. 8 characters" minlength="8" required>
-      </div>
-      <div class="field">
-        <label>I am a...</label>
-        <div class="role-selector">
-          <label class="role-opt selected" id="optPatient">
-            <input type="radio" name="role" value="patient" checked>
-            <div class="role-icon">🧑‍⚕️</div>
-            <div class="role-lbl">Patient</div>
-            <div class="role-desc">Cognitive games & my results</div>
-          </label>
-          <label class="role-opt" id="optDoctor">
-            <input type="radio" name="role" value="doctor">
-            <div class="role-icon">👨‍⚕️</div>
-            <div class="role-lbl">Doctor</div>
-            <div class="role-desc">Patient management & history</div>
-          </label>
+      <div class="field-row">
+        <div class="field">
+          <label>Patient ID <span class="opt">(DNI / NHC)</span></label>
+          <input type="text" id="regUsername" placeholder="12345678A" required>
+        </div>
+        <div class="field">
+          <label>Date of birth</label>
+          <input type="date" id="regDob" required>
         </div>
       </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Phone <span class="opt">(optional)</span></label>
+          <input type="tel" id="regPhone" placeholder="+34 600 000 000">
+        </div>
+        <div class="field">
+          <label>Last appointment <span class="opt">(optional)</span></label>
+          <input type="date" id="regLastAppt">
+        </div>
+      </div>
+      <div class="field">
+        <label>Neurologist <span class="opt">(optional)</span></label>
+        <input type="text" id="regNeurologist" placeholder="Dr. Ana Martínez">
+      </div>
+      <div class="field">
+        <label>Password <span class="opt">(min. 8 characters)</span></label>
+        <input type="password" id="regPassword" placeholder="••••••••" minlength="8" autocomplete="new-password" required>
+      </div>
       <div class="auth-msg" id="registerMsg"></div>
-      <button type="submit" class="btn-auth" id="btnRegister">Create account</button>
-      <p class="auth-divider">Already have an account? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--matcha-dk);">Log in</a></p>
+      <button type="submit" class="btn-auth" id="btnRegister">Create patient account</button>
+      <div class="auth-note">
+        🩺 <strong>Doctors:</strong> accounts for medical staff are created by the system administrator. Please contact your centre's administrator for access.
+      </div>
+      <p class="auth-divider">Already registered? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--matcha-dk);">Log in</a></p>
     </form>
   </div>
 </div>
@@ -481,15 +482,16 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 </footer>
 
 <script>
-// ── Supabase ────────────────────────────────────────────────
+// ── Supabase ─────────────────────────────────────────────────
 const SUPA_URL = "https://uldzsksgzjriqdtozeyw.supabase.co";
 const SUPA_KEY = "sb_publishable_i4_b83eXKpgRwMqu0WNLuw_CB8TVzdS";
-const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
 
-// ── API ─────────────────────────────────────────────────────
+// ── API ──────────────────────────────────────────────────────
 const API_URL = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space/predict";
 
-// ── Classes ─────────────────────────────────────────────────
+// ── Classes ──────────────────────────────────────────────────
 const CLASSES = {
   NonDemented:      { color:"#4a8c5c", label:"Non-Demented",      desc:"No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group." },
   VeryMildDemented: { color:"#b07d2a", label:"Very Mild Demented", desc:"Very mild cognitive decline. Subtle changes in memory and orientation may be present. Early clinical monitoring is recommended." },
@@ -498,92 +500,118 @@ const CLASSES = {
 };
 const CLASS_ORDER = ["NonDemented","VeryMildDemented","MildDemented","ModerateDemented"];
 
-// ── Session state ───────────────────────────────────────────
-let currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null');
+// ── Session state ─────────────────────────────────────────────
+let currentUser = null;
+try { currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null'); } catch(e) {}
 
-// ── Password hash (SHA-256 via Web Crypto API) ──────────────
+// ── Password hash (SHA-256 via Web Crypto) ────────────────────
 async function hashPassword(password) {
-  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-// ── Auth UI helpers ─────────────────────────────────────────
+// ── Auth UI helpers ───────────────────────────────────────────
 function switchAuth(tab) {
   document.getElementById('formLogin').classList.toggle('active', tab === 'login');
   document.getElementById('formRegister').classList.toggle('active', tab === 'register');
-  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
-  document.getElementById('loginMsg').className = 'auth-msg';
+  document.querySelectorAll('.auth-tab').forEach((t,i) =>
+    t.classList.toggle('active', (i===0) === (tab==='login'))
+  );
+  document.getElementById('loginMsg').className    = 'auth-msg';
   document.getElementById('registerMsg').className = 'auth-msg';
 }
 
-document.querySelectorAll('.role-opt').forEach(opt => {
-  opt.addEventListener('click', () => {
-    document.querySelectorAll('.role-opt').forEach(o => o.classList.remove('selected'));
-    opt.classList.add('selected');
-  });
-});
+function showMsg(el, type, text) {
+  el.className    = 'auth-msg ' + type;
+  el.textContent  = text;
+}
 
-// ── Register ────────────────────────────────────────────────
+// ── Register (patients only) ──────────────────────────────────
 async function doRegister(e) {
   e.preventDefault();
-  const btn  = document.getElementById('btnRegister');
-  const msg  = document.getElementById('registerMsg');
-  const name = document.getElementById('regName').value.trim();
-  const email= document.getElementById('regEmail').value.trim();
-  const pass = document.getElementById('regPassword').value;
-  const role = document.querySelector('input[name="role"]:checked').value;
+  const btn            = document.getElementById('btnRegister');
+  const msg            = document.getElementById('registerMsg');
+  const name           = document.getElementById('regName').value.trim();
+  const username       = document.getElementById('regUsername').value.trim().toUpperCase();
+  const dob            = document.getElementById('regDob').value || null;
+  const phone          = document.getElementById('regPhone').value.trim()        || null;
+  const lastAppt       = document.getElementById('regLastAppt').value            || null;
+  const neurologist    = document.getElementById('regNeurologist').value.trim()  || null;
+  const pass           = document.getElementById('regPassword').value;
 
   btn.disabled = true; btn.textContent = 'Creating account…';
   msg.className = 'auth-msg';
 
-  // Check email not already registered
-  const { data: existing } = await db.from('users').select('id').eq('email', email).maybeSingle();
+  const { data: existing, error: chkErr } = await db
+    .from('users').select('id').eq('username', username).maybeSingle();
+
+  if (chkErr) {
+    showMsg(msg, 'error', 'Could not connect to the database. Check your network.');
+    btn.disabled = false; btn.textContent = 'Create patient account'; return;
+  }
   if (existing) {
-    showMsg(msg, 'error', 'This email is already registered.');
-    btn.disabled = false; btn.textContent = 'Create account'; return;
+    showMsg(msg, 'error', 'This Patient ID is already registered.');
+    btn.disabled = false; btn.textContent = 'Create patient account'; return;
   }
 
   const hash = await hashPassword(pass);
-  const { error } = await db.from('users').insert({ name, email, password_hash: hash, role });
+  const { error } = await db.from('users').insert({
+    username, full_name: name, date_of_birth: dob, phone,
+    neurologist, last_appointment: lastAppt,
+    password_hash: hash, role: 'patient'
+  });
 
   if (error) {
-    showMsg(msg, 'error', 'Registration failed. Please try again.');
+    console.error('Register error:', error);
+    showMsg(msg, 'error', 'Registration failed: ' + error.message);
   } else {
     showMsg(msg, 'success', 'Account created! You can now log in.');
-    setTimeout(() => switchAuth('login'), 1500);
+    setTimeout(() => switchAuth('login'), 1600);
   }
-  btn.disabled = false; btn.textContent = 'Create account';
+  btn.disabled = false; btn.textContent = 'Create patient account';
 }
 
-// ── Login ────────────────────────────────────────────────────
+// ── Login ─────────────────────────────────────────────────────
 async function doLogin(e) {
   e.preventDefault();
-  const btn   = document.getElementById('btnLogin');
-  const msg   = document.getElementById('loginMsg');
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPassword').value;
+  const btn      = document.getElementById('btnLogin');
+  const msg      = document.getElementById('loginMsg');
+  const username = document.getElementById('loginUsername').value.trim().toUpperCase();
+  const pass     = document.getElementById('loginPassword').value;
 
   btn.disabled = true; btn.textContent = 'Logging in…';
   msg.className = 'auth-msg';
 
   const hash = await hashPassword(pass);
-  const { data, error } = await db.from('users')
-    .select('*').eq('email', email).eq('password_hash', hash).maybeSingle();
 
-  if (error || !data) {
-    showMsg(msg, 'error', 'Incorrect email or password.');
+  const { data, error } = await db
+    .from('users')
+    .select('id, full_name, role, date_of_birth, phone, username')
+    .eq('username', username)
+    .eq('password_hash', hash)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Login error:', error);
+    showMsg(msg, 'error', 'Database error: ' + error.message);
+    btn.disabled = false; btn.textContent = 'Log in'; return;
+  }
+  if (!data) {
+    showMsg(msg, 'error', 'Incorrect Patient ID or password.');
     btn.disabled = false; btn.textContent = 'Log in'; return;
   }
 
-  // Save session
-  currentUser = { id: data.id, name: data.name, role: data.role, email: data.email };
+  currentUser = {
+    id: data.id, name: data.full_name, role: data.role,
+    username: data.username, dob: data.date_of_birth, phone: data.phone
+  };
   localStorage.setItem('ns_user', JSON.stringify(currentUser));
   updateHeaderAuth();
   showTab('home');
   btn.disabled = false; btn.textContent = 'Log in';
 }
 
-// ── Logout ──────────────────────────────────────────────────
+// ── Logout ────────────────────────────────────────────────────
 function logout() {
   currentUser = null;
   localStorage.removeItem('ns_user');
@@ -591,66 +619,58 @@ function logout() {
   showTab('home');
 }
 
-// ── Update header after login/logout ────────────────────────
+// ── Update header ─────────────────────────────────────────────
 function updateHeaderAuth() {
   const loggedIn = !!currentUser;
-  document.getElementById('navLogin').style.display     = loggedIn ? 'none' : '';
+  document.getElementById('navLogin').style.display = loggedIn ? 'none' : '';
   document.getElementById('userPill').classList.toggle('visible', loggedIn);
 
-  // Unlock tabs
-  ['navClassifier'].forEach(id => {
-    const btn = document.getElementById(id);
-    btn.classList.toggle('locked', !loggedIn);
-  });
-  // Games: only for patients
-  const gamesBtn = document.getElementById('navGames');
+  // Classifier: all logged-in users
+  document.getElementById('navClassifier').classList.toggle('locked', !loggedIn);
+
+  // Games: patients only
   const canGames = loggedIn && currentUser.role === 'patient';
-  gamesBtn.classList.toggle('locked', !canGames);
+  document.getElementById('navGames').classList.toggle('locked', !canGames);
 
   if (loggedIn) {
-    const initials = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const initials = currentUser.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('userAvatar').textContent = initials;
     document.getElementById('userName').textContent   = currentUser.name.split(' ')[0];
     const badge = document.getElementById('roleBadge');
-    badge.textContent  = currentUser.role;
-    badge.className    = 'role-badge ' + currentUser.role;
+    badge.textContent = currentUser.role;
+    badge.className   = 'role-badge ' + currentUser.role;
   }
 }
 
-function showMsg(el, type, text) {
-  el.className = 'auth-msg ' + type;
-  el.textContent = text;
-}
-
-// ── Tab navigation ──────────────────────────────────────────
+// ── Tab navigation ────────────────────────────────────────────
 function showTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   const navMap = { home:'', alzheimer:'', login:'navLogin', classifier:'navClassifier', games:'navGames' };
   if (navMap[id]) document.getElementById(navMap[id])?.classList.add('active');
-  if (id === 'home') document.querySelector('.nav-btn').classList.add('active');
+  if (id === 'home')      document.querySelector('.nav-btn').classList.add('active');
   if (id === 'alzheimer') document.querySelectorAll('.nav-btn')[1].classList.add('active');
 }
 
 function guardedTab(id) {
   if (!currentUser) { showTab('login'); return; }
-  if (id === 'games' && currentUser.role !== 'patient') { return; }
+  if (id === 'games' && currentUser.role !== 'patient') return;
   showTab(id);
 }
 
 function toggleStage(id) { document.getElementById(id).classList.toggle('open'); }
 
-// ── Classifier ──────────────────────────────────────────────
-const fileInput    = document.getElementById("fileInput");
-const uploadZone   = document.getElementById("uploadZone");
-const previewWrap  = document.getElementById("previewWrap");
-const previewImg   = document.getElementById("previewImg");
-const analyseBtn   = document.getElementById("analyseBtn");
-const resultEmpty  = document.getElementById("resultEmpty");
-const resultContent= document.getElementById("resultContent");
-const errorBox     = document.getElementById("errorBox");
-let selectedFile   = null;
+// ── Classifier ────────────────────────────────────────────────
+const fileInput     = document.getElementById("fileInput");
+const uploadZone    = document.getElementById("uploadZone");
+const previewWrap   = document.getElementById("previewWrap");
+const previewImg    = document.getElementById("previewImg");
+const analyseBtn    = document.getElementById("analyseBtn");
+const resultEmpty   = document.getElementById("resultEmpty");
+const resultContent = document.getElementById("resultContent");
+const errorBox      = document.getElementById("errorBox");
+let selectedFile    = null;
 
 uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
 uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
@@ -696,10 +716,10 @@ function displayResults(data) {
   const cls  = data.predicted_class;
   const meta = CLASSES[cls];
   const conf = (data.probabilities[cls] * 100).toFixed(1);
-  document.getElementById("diagnosisDot").style.background   = meta.color;
-  document.getElementById("diagnosisClass").textContent      = meta.label;
-  document.getElementById("diagnosisClass").style.color      = meta.color;
-  document.getElementById("confVal").textContent             = conf + "%";
+  document.getElementById("diagnosisDot").style.background = meta.color;
+  document.getElementById("diagnosisClass").textContent    = meta.label;
+  document.getElementById("diagnosisClass").style.color    = meta.color;
+  document.getElementById("confVal").textContent           = conf + "%";
   const probList = document.getElementById("probList");
   probList.innerHTML = "";
   CLASS_ORDER.forEach(c => {
@@ -719,7 +739,7 @@ function displayResults(data) {
   resultContent.classList.add("visible");
 }
 
-// ── Init ────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────
 updateHeaderAuth();
 </script>
 </body>
