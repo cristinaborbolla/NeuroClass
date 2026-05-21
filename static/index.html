@@ -363,14 +363,14 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   <div class="auth-card">
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuth('login')">Log in</button>
-      <button class="auth-tab"        onclick="switchAuth('register')">Register</button>
+      <button class="auth-tab"        onclick="switchAuth('register')">New patient</button>
     </div>
 
     <!-- Login form -->
     <form class="auth-form active" id="formLogin" onsubmit="doLogin(event)">
       <div class="field">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com" required>
+        <label>Patient ID / Username</label>
+        <input type="text" id="loginUsername" placeholder="e.g. 12345678A" autocomplete="username" required>
       </div>
       <div class="field">
         <label>Password</label>
@@ -378,42 +378,48 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       </div>
       <div class="auth-msg" id="loginMsg"></div>
       <button type="submit" class="btn-auth" id="btnLogin">Log in</button>
-      <p class="auth-divider">Don't have an account? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--matcha-dk);">Register</a></p>
+      <p class="auth-divider">New patient? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--matcha-dk);">Register here</a></p>
     </form>
 
     <!-- Register form -->
     <form class="auth-form" id="formRegister" onsubmit="doRegister(event)">
       <div class="field">
         <label>Full name</label>
-        <input type="text" id="regName" placeholder="Maria García" required>
+        <input type="text" id="regName" placeholder="María García López" required>
       </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="regEmail" placeholder="your@email.com" required>
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="regPassword" placeholder="Min. 8 characters" minlength="8" required>
-      </div>
-      <div class="field">
-        <label>I am a...</label>
-        <div class="role-selector">
-          <label class="role-opt selected" id="optPatient">
-            <input type="radio" name="role" value="patient" checked>
-            <div class="role-icon">🧑‍⚕️</div>
-            <div class="role-lbl">Patient</div>
-            <div class="role-desc">Cognitive games & my results</div>
-          </label>
-          <label class="role-opt" id="optDoctor">
-            <input type="radio" name="role" value="doctor">
-            <div class="role-icon">👨‍⚕️</div>
-            <div class="role-lbl">Doctor</div>
-            <div class="role-desc">Patient management & history</div>
-          </label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="field">
+          <label>Patient ID (DNI / NHC)</label>
+          <input type="text" id="regUsername" placeholder="12345678A" required>
+        </div>
+        <div class="field">
+          <label>Date of birth</label>
+          <input type="date" id="regDob" required>
         </div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="field">
+          <label>Phone <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
+          <input type="tel" id="regPhone" placeholder="+34 600 000 000">
+        </div>
+        <div class="field">
+          <label>Last appointment <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
+          <input type="date" id="regLastAppt">
+        </div>
+      </div>
+      <div class="field">
+        <label>Neurologist <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
+        <input type="text" id="regNeurologist" placeholder="Dr. Ana Martínez">
+      </div>
+      <div class="field">
+        <label>Password <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(min. 8 characters)</span></label>
+        <input type="password" id="regPassword" placeholder="••••••••" minlength="8" required>
+      </div>
       <div class="auth-msg" id="registerMsg"></div>
-      <button type="submit" class="btn-auth" id="btnRegister">Create account</button>
+      <button type="submit" class="btn-auth" id="btnRegister">Create patient account</button>
+      <div style="background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-size:.77rem;color:var(--muted);line-height:1.55;">
+        🩺 <strong>Doctors:</strong> accounts for medical staff are created by the system administrator.
+      </div>
       <p class="auth-divider">Already have an account? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--matcha-dk);">Log in</a></p>
     </form>
   </div>
@@ -695,67 +701,74 @@ function switchAuth(tab) {
   document.getElementById('registerMsg').className = 'auth-msg';
 }
 
-document.querySelectorAll('.role-opt').forEach(opt => {
-  opt.addEventListener('click', () => {
-    document.querySelectorAll('.role-opt').forEach(o => o.classList.remove('selected'));
-    opt.classList.add('selected');
-  });
-});
-
 // ── Register ────────────────────────────────────────────────
 async function doRegister(e) {
   e.preventDefault();
-  const btn  = document.getElementById('btnRegister');
-  const msg  = document.getElementById('registerMsg');
-  const name = document.getElementById('regName').value.trim();
-  const email= document.getElementById('regEmail').value.trim();
-  const pass = document.getElementById('regPassword').value;
-  const role = document.querySelector('input[name="role"]:checked').value;
+  const btn         = document.getElementById('btnRegister');
+  const msg         = document.getElementById('registerMsg');
+  const name        = document.getElementById('regName').value.trim();
+  const username    = document.getElementById('regUsername').value.trim().toUpperCase();
+  const dob         = document.getElementById('regDob').value || null;
+  const phone       = document.getElementById('regPhone').value.trim() || null;
+  const lastAppt    = document.getElementById('regLastAppt').value || null;
+  const neurologist = document.getElementById('regNeurologist').value.trim() || null;
+  const pass        = document.getElementById('regPassword').value;
 
   btn.disabled = true; btn.textContent = 'Creating account…';
   msg.className = 'auth-msg';
 
-  // Check email not already registered
-  const { data: existing } = await db.from('users').select('id').eq('email', email).maybeSingle();
+  const { data: existing, error: chkErr } = await db.from('users').select('id').eq('username', username).maybeSingle();
+  if (chkErr) {
+    showMsg(msg, 'error', 'Could not connect to the database. Check your network.');
+    btn.disabled = false; btn.textContent = 'Create patient account'; return;
+  }
   if (existing) {
-    showMsg(msg, 'error', 'This email is already registered.');
-    btn.disabled = false; btn.textContent = 'Create account'; return;
+    showMsg(msg, 'error', 'This Patient ID is already registered.');
+    btn.disabled = false; btn.textContent = 'Create patient account'; return;
   }
 
   const hash = await hashPassword(pass);
-  const { error } = await db.from('users').insert({ name, email, password_hash: hash, role });
+  const { error } = await db.from('users').insert({
+    username, full_name: name, date_of_birth: dob, phone,
+    neurologist, last_appointment: lastAppt,
+    password_hash: hash, role: 'patient'
+  });
 
   if (error) {
-    showMsg(msg, 'error', 'Registration failed. Please try again.');
+    showMsg(msg, 'error', 'Registration failed: ' + error.message);
   } else {
     showMsg(msg, 'success', 'Account created! You can now log in.');
-    setTimeout(() => switchAuth('login'), 1500);
+    setTimeout(() => switchAuth('login'), 1600);
   }
-  btn.disabled = false; btn.textContent = 'Create account';
+  btn.disabled = false; btn.textContent = 'Create patient account';
 }
 
 // ── Login ────────────────────────────────────────────────────
 async function doLogin(e) {
   e.preventDefault();
-  const btn   = document.getElementById('btnLogin');
-  const msg   = document.getElementById('loginMsg');
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPassword').value;
+  const btn      = document.getElementById('btnLogin');
+  const msg      = document.getElementById('loginMsg');
+  const username = document.getElementById('loginUsername').value.trim().toUpperCase();
+  const pass     = document.getElementById('loginPassword').value;
 
   btn.disabled = true; btn.textContent = 'Logging in…';
   msg.className = 'auth-msg';
 
   const hash = await hashPassword(pass);
   const { data, error } = await db.from('users')
-    .select('*').eq('email', email).eq('password_hash', hash).maybeSingle();
+    .select('id, full_name, role, username, date_of_birth, phone, neurologist, last_appointment')
+    .eq('username', username).eq('password_hash', hash).maybeSingle();
 
-  if (error || !data) {
-    showMsg(msg, 'error', 'Incorrect email or password.');
+  if (error) {
+    showMsg(msg, 'error', 'Database error: ' + error.message);
+    btn.disabled = false; btn.textContent = 'Log in'; return;
+  }
+  if (!data) {
+    showMsg(msg, 'error', 'Incorrect Patient ID or password.');
     btn.disabled = false; btn.textContent = 'Log in'; return;
   }
 
-  // Save session
-  currentUser = { id: data.id, name: data.name, role: data.role, email: data.email };
+  currentUser = { id: data.id, name: data.full_name, role: data.role, username: data.username };
   localStorage.setItem('ns_user', JSON.stringify(currentUser));
   updateHeaderAuth();
   showTab('home');
