@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeuroStage · Alzheimer MRI Classifier</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root {
   --bg:        #F6FAF5;
   --surface:   #E8F2E3;
   --surface2:  #ffffff;
   --cream-lt:  #FAF8F2;
-  --cream:     #FAF8F2;
+  --cream:     #f8f3e4;
   --cream-dk:  #ece7d8;
   --border:    #B7D6B0;
   --matcha:    #94B49F;
@@ -70,7 +70,7 @@ nav{display:flex;gap:.2rem;}
 /* ══ LOGIN / REGISTER ══════════════════════════════════════ */
 #tab-login{display:none;}
 #tab-login.active{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 64px - 53px);padding:2rem 1rem;}
-.auth-card{width:100%;max-width:440px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.auth-card{width:100%;max-width:420px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
 .auth-tabs{display:flex;border-bottom:1px solid var(--border);}
 .auth-tab{flex:1;padding:.9rem;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;}
 .auth-tab.active{background:var(--surface2);color:var(--text);border-bottom:2px solid var(--matcha);}
@@ -78,10 +78,17 @@ nav{display:flex;gap:.2rem;}
 .auth-form.active{display:flex;}
 .field{display:flex;flex-direction:column;gap:.35rem;}
 .field label{font-size:.8rem;font-weight:500;color:var(--text);}
-.field label .opt{font-weight:400;color:var(--muted);font-size:.75rem;}
-.field input{padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;}
-.field input:focus{border-color:var(--matcha);}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.field input,.field select{padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;}
+.field input:focus,.field select:focus{border-color:var(--matcha);}
+.field select{cursor:pointer;}
+.role-selector{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.role-opt{padding:.75rem;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.role-opt:hover{border-color:var(--matcha);background:var(--bg);}
+.role-opt.selected{border-color:var(--matcha);background:#edf7ee;}
+.role-opt input{display:none;}
+.role-opt .role-icon{font-size:1.4rem;margin-bottom:.3rem;}
+.role-opt .role-lbl{font-size:.8rem;font-weight:600;}
+.role-opt .role-desc{font-size:.72rem;color:var(--muted);margin-top:.15rem;}
 .btn-auth{padding:.8rem;background:var(--matcha);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:.5rem;}
 .btn-auth:hover{opacity:.88;}
 .btn-auth:disabled{opacity:.45;cursor:not-allowed;}
@@ -89,7 +96,6 @@ nav{display:flex;gap:.2rem;}
 .auth-msg.error{display:block;background:#fef2f2;color:#a83232;border:1px solid #fecaca;}
 .auth-msg.success{display:block;background:#f0faf4;color:#2e7d4f;border:1px solid #b7d6b0;}
 .auth-divider{text-align:center;font-size:.78rem;color:var(--muted);}
-.auth-note{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-size:.77rem;color:var(--muted);line-height:1.55;}
 
 /* ══ HOME ══════════════════════════════════════════════════ */
 .hero{max-width:900px;margin:0 auto;padding:4rem 2rem 3rem;text-align:center;}
@@ -99,7 +105,7 @@ nav{display:flex;gap:.2rem;}
 .hero p{font-size:1.05rem;color:var(--muted);line-height:1.75;max-width:560px;margin:0 auto 2.5rem;}
 .hero-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--matcha);color:white;border:none;padding:.8rem 2rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s;}
 .hero-btn:hover{background:var(--matcha-dk);}
-.stats-strip{background:var(--matcha-lt);padding:2.5rem 2rem;}
+.stats-strip{background:var(--matcha-slt);padding:2.5rem 2rem;}
 .stats-inner{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1.5rem;text-align:center;}
 .stat-val{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:500;color:var(--matcha-dk);line-height:1;}
 .stat-lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.3rem;}
@@ -187,13 +193,78 @@ nav{display:flex;gap:.2rem;}
 /* ── Footer ── */
 footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);background:var(--surface);}
 
+/* ══ GAMES ══════════════════════════════════════════════════ */
+.games-wrap{max-width:960px;margin:0 auto;padding:2.5rem 1.5rem;}
+.games-header{text-align:center;margin-bottom:2.5rem;}
+.games-header h2{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;margin-bottom:.6rem;}
+.games-header p{color:var(--muted);font-size:.95rem;}
+.games-lobby{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem;}
+.game-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem 1.5rem;text-align:center;transition:box-shadow .2s,transform .15s;}
+.game-card:hover{box-shadow:0 4px 20px rgba(44,62,48,.1);transform:translateY(-2px);}
+.game-emoji{font-size:2.8rem;margin-bottom:1rem;}
+.game-title{font-size:1.1rem;font-weight:600;margin-bottom:.4rem;}
+.game-desc{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;}
+.game-start-btn{display:inline-block;background:var(--matcha);color:white;border:none;border-radius:8px;padding:.55rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.game-start-btn:hover{opacity:.85;}
+.game-view{display:none;}
+.game-view.active{display:block;}
+.game-topbar{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+.btn-back{display:flex;align-items:center;gap:.4rem;background:none;border:1px solid var(--border);border-radius:8px;padding:.45rem .9rem;font-family:'DM Sans',sans-serif;font-size:.83rem;color:var(--muted);cursor:pointer;transition:background .15s;}
+.btn-back:hover{background:var(--bg);}
+.game-topbar h3{font-size:1.1rem;font-weight:600;flex:1;}
+.game-stat{background:var(--surface);border-radius:8px;padding:.4rem .9rem;font-size:.82rem;font-weight:500;color:var(--text);}
+.results-overlay{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;max-width:420px;margin:1.5rem auto;box-shadow:var(--shadow);}
+.results-emoji{font-size:3rem;margin-bottom:1rem;}
+.results-score{font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:500;color:var(--matcha-dk);line-height:1;margin-bottom:.3rem;}
+.results-label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.2rem;}
+.results-detail{font-size:.88rem;color:var(--muted);margin-bottom:1.8rem;line-height:1.7;}
+.results-btns{display:flex;gap:.75rem;justify-content:center;}
+.btn-play-again{background:var(--matcha);color:white;border:none;border-radius:9px;padding:.7rem 1.6rem;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn-play-again:hover{opacity:.85;}
+.btn-games-home{background:none;border:1px solid var(--border);border-radius:9px;padding:.7rem 1.6rem;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--muted);cursor:pointer;transition:background .15s;}
+.btn-games-home:hover{background:var(--bg);}
+/* Memory */
+.memory-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;max-width:480px;margin:0 auto 1.5rem;}
+.mem-card{aspect-ratio:1/1;cursor:pointer;perspective:600px;}
+.mem-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .4s;border-radius:10px;}
+.mem-card.flipped .mem-inner,.mem-card.matched .mem-inner{transform:rotateY(180deg);}
+.mem-front,.mem-back{position:absolute;inset:0;border-radius:10px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;}
+.mem-front{background:var(--matcha);font-size:1.4rem;}
+.mem-back{background:var(--surface2);border:1px solid var(--border);font-size:1.8rem;transform:rotateY(180deg);}
+.mem-card.matched .mem-front,.mem-card.matched .mem-back{border:2px solid var(--matcha);background:#edf7ee;}
+/* Orientation */
+.orient-progress{display:flex;gap:.4rem;margin:0 auto 1.5rem;max-width:480px;}
+.orient-dot{flex:1;height:6px;background:var(--border);border-radius:99px;transition:background .3s;}
+.orient-dot.done{background:var(--matcha);}
+.orient-dot.current{background:var(--matcha-lt);}
+.orient-question-wrap{max-width:480px;margin:0 auto 1.5rem;text-align:center;}
+.orient-q{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:500;margin-bottom:1.5rem;line-height:1.3;}
+.orient-options{display:flex;flex-direction:column;gap:.65rem;}
+.orient-opt{padding:.85rem 1.2rem;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:.95rem;cursor:pointer;transition:border-color .15s,background .15s;text-align:left;}
+.orient-opt:hover:not(:disabled){border-color:var(--matcha);background:var(--surface);}
+.orient-opt.correct{border-color:#4a8c5c!important;background:#edf7ee!important;color:#2e7d4f;font-weight:600;}
+.orient-opt.wrong{border-color:#a83232!important;background:#fef2f2!important;color:#a83232;}
+.orient-opt:disabled{cursor:not-allowed;}
+/* Sequence */
+.seq-wrap{max-width:380px;margin:0 auto;text-align:center;}
+.seq-info{font-size:.95rem;color:var(--muted);margin-bottom:1.5rem;min-height:1.4rem;}
+.seq-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;}
+.seq-btn{aspect-ratio:1/1;border:none;border-radius:16px;cursor:pointer;transition:filter .15s,transform .1s,opacity .15s;opacity:.7;}
+.seq-btn:hover:not(:disabled){opacity:1;}
+.seq-btn:disabled{cursor:not-allowed;}
+.seq-btn.lit{opacity:1!important;filter:brightness(1.4);transform:scale(1.06);}
+.seq-btn[data-color="green"]{background:#4a8c5c;}
+.seq-btn[data-color="red"]{background:#a83232;}
+.seq-btn[data-color="blue"]{background:#3050b0;}
+.seq-btn[data-color="yellow"]{background:#b07d2a;}
+.seq-status{font-size:.85rem;color:var(--muted);min-height:1.4rem;}
+
 @media(max-width:680px){
   .clf-wrap{grid-template-columns:1fr;}
   .hero h1{font-size:2.1rem;}
   .info-strip,.stage-features{grid-template-columns:1fr;}
   .nav-btn{padding:.38rem .65rem;font-size:.78rem;}
   .user-name{display:none;}
-  .field-row{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -292,64 +363,58 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   <div class="auth-card">
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuth('login')">Log in</button>
-      <button class="auth-tab"        onclick="switchAuth('register')">New patient</button>
+      <button class="auth-tab"        onclick="switchAuth('register')">Register</button>
     </div>
 
-    <!-- ── Login form ─────────────────────────────────── -->
+    <!-- Login form -->
     <form class="auth-form active" id="formLogin" onsubmit="doLogin(event)">
       <div class="field">
-        <label>Patient ID / Username</label>
-        <input type="text" id="loginUsername" placeholder="e.g. 12345678A" autocomplete="username" required>
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" required>
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
       </div>
       <div class="auth-msg" id="loginMsg"></div>
       <button type="submit" class="btn-auth" id="btnLogin">Log in</button>
-      <p class="auth-divider">New patient? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--matcha-dk);">Register here</a></p>
+      <p class="auth-divider">Don't have an account? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--matcha-dk);">Register</a></p>
     </form>
 
-    <!-- ── Register form (patients only) ─────────────── -->
+    <!-- Register form -->
     <form class="auth-form" id="formRegister" onsubmit="doRegister(event)">
       <div class="field">
         <label>Full name</label>
-        <input type="text" id="regName" placeholder="María García López" autocomplete="name" required>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Patient ID <span class="opt">(DNI / NHC)</span></label>
-          <input type="text" id="regUsername" placeholder="12345678A" required>
-        </div>
-        <div class="field">
-          <label>Date of birth</label>
-          <input type="date" id="regDob" required>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Phone <span class="opt">(optional)</span></label>
-          <input type="tel" id="regPhone" placeholder="+34 600 000 000">
-        </div>
-        <div class="field">
-          <label>Last appointment <span class="opt">(optional)</span></label>
-          <input type="date" id="regLastAppt">
-        </div>
+        <input type="text" id="regName" placeholder="Maria García" required>
       </div>
       <div class="field">
-        <label>Neurologist <span class="opt">(optional)</span></label>
-        <input type="text" id="regNeurologist" placeholder="Dr. Ana Martínez">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="your@email.com" required>
       </div>
       <div class="field">
-        <label>Password <span class="opt">(min. 8 characters)</span></label>
-        <input type="password" id="regPassword" placeholder="••••••••" minlength="8" autocomplete="new-password" required>
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min. 8 characters" minlength="8" required>
+      </div>
+      <div class="field">
+        <label>I am a...</label>
+        <div class="role-selector">
+          <label class="role-opt selected" id="optPatient">
+            <input type="radio" name="role" value="patient" checked>
+            <div class="role-icon">🧑‍⚕️</div>
+            <div class="role-lbl">Patient</div>
+            <div class="role-desc">Cognitive games & my results</div>
+          </label>
+          <label class="role-opt" id="optDoctor">
+            <input type="radio" name="role" value="doctor">
+            <div class="role-icon">👨‍⚕️</div>
+            <div class="role-lbl">Doctor</div>
+            <div class="role-desc">Patient management & history</div>
+          </label>
+        </div>
       </div>
       <div class="auth-msg" id="registerMsg"></div>
-      <button type="submit" class="btn-auth" id="btnRegister">Create patient account</button>
-      <div class="auth-note">
-        🩺 <strong>Doctors:</strong> accounts for medical staff are created by the system administrator. Please contact your centre's administrator for access.
-      </div>
-      <p class="auth-divider">Already registered? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--matcha-dk);">Log in</a></p>
+      <button type="submit" class="btn-auth" id="btnRegister">Create account</button>
+      <p class="auth-divider">Already have an account? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--matcha-dk);">Log in</a></p>
     </form>
   </div>
 </div>
@@ -399,12 +464,85 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   </div>
 </div>
 
-<!-- ══ GAMES (placeholder) ══════════════════════════════════ -->
+<!-- ══ GAMES ══════════════════════════════════════════════════ -->
 <div id="tab-games" class="section">
-  <div class="coming-wrap">
-    <div style="font-size:3rem;margin-bottom:1rem;">🎮</div>
-    <h2>Cognitive games</h2>
-    <p>This section is under development. It will include memory, sequence, orientation, pattern and other cognitive exercises designed to support patients with Alzheimer's disease.</p>
+  <div class="games-wrap">
+
+    <!-- Lobby -->
+    <div id="gamesLobby">
+      <div class="games-header">
+        <h2>Cognitive games</h2>
+        <p>Train your memory, orientation and attention with these exercises.</p>
+      </div>
+      <div class="games-lobby">
+        <div class="game-card">
+          <div class="game-emoji">🃏</div>
+          <div class="game-title">Memory</div>
+          <div class="game-desc">Find all matching pairs of cards. Tests visual memory and concentration.</div>
+          <button class="game-start-btn" onclick="startGame('memory')">Play</button>
+        </div>
+        <div class="game-card">
+          <div class="game-emoji">🗓️</div>
+          <div class="game-title">Orientation</div>
+          <div class="game-desc">Answer questions about today's date, month, year and season. Tests temporal orientation.</div>
+          <button class="game-start-btn" onclick="startGame('orientation')">Play</button>
+        </div>
+        <div class="game-card">
+          <div class="game-emoji">🔢</div>
+          <div class="game-title">Sequence</div>
+          <div class="game-desc">Repeat the colour sequence shown on screen. Tests short-term memory and attention.</div>
+          <button class="game-start-btn" onclick="startGame('sequence')">Play</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Memory view -->
+    <div class="game-view" id="viewMemory">
+      <div class="game-topbar">
+        <button class="btn-back" onclick="backToLobby()">← Back</button>
+        <h3>🃏 Memory</h3>
+        <span class="game-stat" id="memPairs">Pairs: 0 / 8</span>
+        <span class="game-stat" id="memTime">00:00</span>
+      </div>
+      <div class="memory-grid" id="memoryGrid"></div>
+      <div id="memResults"></div>
+    </div>
+
+    <!-- Orientation view -->
+    <div class="game-view" id="viewOrientation">
+      <div class="game-topbar">
+        <button class="btn-back" onclick="backToLobby()">← Back</button>
+        <h3>🗓️ Orientation</h3>
+        <span class="game-stat" id="orientScore">Score: 0 / 6</span>
+      </div>
+      <div class="orient-progress" id="orientProgress"></div>
+      <div class="orient-question-wrap">
+        <div class="orient-q" id="orientQ"></div>
+        <div class="orient-options" id="orientOpts"></div>
+      </div>
+      <div id="orientResults"></div>
+    </div>
+
+    <!-- Sequence view -->
+    <div class="game-view" id="viewSequence">
+      <div class="game-topbar">
+        <button class="btn-back" onclick="backToLobby()">← Back</button>
+        <h3>🔢 Sequence</h3>
+        <span class="game-stat" id="seqRoundStat">Round 1</span>
+      </div>
+      <div class="seq-wrap">
+        <div class="seq-info" id="seqInfo">Get ready…</div>
+        <div class="seq-grid">
+          <button class="seq-btn" data-color="green"  onclick="seqPlayerClick('green')"  disabled></button>
+          <button class="seq-btn" data-color="red"    onclick="seqPlayerClick('red')"    disabled></button>
+          <button class="seq-btn" data-color="blue"   onclick="seqPlayerClick('blue')"   disabled></button>
+          <button class="seq-btn" data-color="yellow" onclick="seqPlayerClick('yellow')" disabled></button>
+        </div>
+        <div class="seq-status" id="seqStatus"></div>
+      </div>
+      <div id="seqResults"></div>
+    </div>
+
   </div>
 </div>
 
@@ -522,16 +660,15 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 </footer>
 
 <script>
-// ── Supabase ─────────────────────────────────────────────────
+// ── Supabase ────────────────────────────────────────────────
 const SUPA_URL = "https://uldzsksgzjriqdtozeyw.supabase.co";
 const SUPA_KEY = "sb_publishable_i4_b83eXKpgRwMqu0WNLuw_CB8TVzdS";
-const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-// ── API ──────────────────────────────────────────────────────
+// ── API ─────────────────────────────────────────────────────
 const API_URL = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space/predict";
 
-// ── Classes ──────────────────────────────────────────────────
+// ── Classes ─────────────────────────────────────────────────
 const CLASSES = {
   NonDemented:      { color:"#4a8c5c", label:"Non-Demented",      desc:"No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group." },
   VeryMildDemented: { color:"#b07d2a", label:"Very Mild Demented", desc:"Very mild cognitive decline. Subtle changes in memory and orientation may be present. Early clinical monitoring is recommended." },
@@ -540,118 +677,92 @@ const CLASSES = {
 };
 const CLASS_ORDER = ["NonDemented","VeryMildDemented","MildDemented","ModerateDemented"];
 
-// ── Session state ─────────────────────────────────────────────
-let currentUser = null;
-try { currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null'); } catch(e) {}
+// ── Session state ───────────────────────────────────────────
+let currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null');
 
-// ── Password hash (SHA-256 via Web Crypto) ────────────────────
+// ── Password hash (SHA-256 via Web Crypto API) ──────────────
 async function hashPassword(password) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-// ── Auth UI helpers ───────────────────────────────────────────
+// ── Auth UI helpers ─────────────────────────────────────────
 function switchAuth(tab) {
   document.getElementById('formLogin').classList.toggle('active', tab === 'login');
   document.getElementById('formRegister').classList.toggle('active', tab === 'register');
-  document.querySelectorAll('.auth-tab').forEach((t,i) =>
-    t.classList.toggle('active', (i===0) === (tab==='login'))
-  );
-  document.getElementById('loginMsg').className    = 'auth-msg';
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
+  document.getElementById('loginMsg').className = 'auth-msg';
   document.getElementById('registerMsg').className = 'auth-msg';
 }
 
-function showMsg(el, type, text) {
-  el.className    = 'auth-msg ' + type;
-  el.textContent  = text;
-}
+document.querySelectorAll('.role-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.role-opt').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
 
-// ── Register (patients only) ──────────────────────────────────
+// ── Register ────────────────────────────────────────────────
 async function doRegister(e) {
   e.preventDefault();
-  const btn            = document.getElementById('btnRegister');
-  const msg            = document.getElementById('registerMsg');
-  const name           = document.getElementById('regName').value.trim();
-  const username       = document.getElementById('regUsername').value.trim().toUpperCase();
-  const dob            = document.getElementById('regDob').value || null;
-  const phone          = document.getElementById('regPhone').value.trim()        || null;
-  const lastAppt       = document.getElementById('regLastAppt').value            || null;
-  const neurologist    = document.getElementById('regNeurologist').value.trim()  || null;
-  const pass           = document.getElementById('regPassword').value;
+  const btn  = document.getElementById('btnRegister');
+  const msg  = document.getElementById('registerMsg');
+  const name = document.getElementById('regName').value.trim();
+  const email= document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  const role = document.querySelector('input[name="role"]:checked').value;
 
   btn.disabled = true; btn.textContent = 'Creating account…';
   msg.className = 'auth-msg';
 
-  const { data: existing, error: chkErr } = await db
-    .from('users').select('id').eq('username', username).maybeSingle();
-
-  if (chkErr) {
-    showMsg(msg, 'error', 'Could not connect to the database. Check your network.');
-    btn.disabled = false; btn.textContent = 'Create patient account'; return;
-  }
+  // Check email not already registered
+  const { data: existing } = await db.from('users').select('id').eq('email', email).maybeSingle();
   if (existing) {
-    showMsg(msg, 'error', 'This Patient ID is already registered.');
-    btn.disabled = false; btn.textContent = 'Create patient account'; return;
+    showMsg(msg, 'error', 'This email is already registered.');
+    btn.disabled = false; btn.textContent = 'Create account'; return;
   }
 
   const hash = await hashPassword(pass);
-  const { error } = await db.from('users').insert({
-    username, full_name: name, date_of_birth: dob, phone,
-    neurologist, last_appointment: lastAppt,
-    password_hash: hash, role: 'patient'
-  });
+  const { error } = await db.from('users').insert({ name, email, password_hash: hash, role });
 
   if (error) {
-    console.error('Register error:', error);
-    showMsg(msg, 'error', 'Registration failed: ' + error.message);
+    showMsg(msg, 'error', 'Registration failed. Please try again.');
   } else {
     showMsg(msg, 'success', 'Account created! You can now log in.');
-    setTimeout(() => switchAuth('login'), 1600);
+    setTimeout(() => switchAuth('login'), 1500);
   }
-  btn.disabled = false; btn.textContent = 'Create patient account';
+  btn.disabled = false; btn.textContent = 'Create account';
 }
 
-// ── Login ─────────────────────────────────────────────────────
+// ── Login ────────────────────────────────────────────────────
 async function doLogin(e) {
   e.preventDefault();
-  const btn      = document.getElementById('btnLogin');
-  const msg      = document.getElementById('loginMsg');
-  const username = document.getElementById('loginUsername').value.trim().toUpperCase();
-  const pass     = document.getElementById('loginPassword').value;
+  const btn   = document.getElementById('btnLogin');
+  const msg   = document.getElementById('loginMsg');
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
 
   btn.disabled = true; btn.textContent = 'Logging in…';
   msg.className = 'auth-msg';
 
   const hash = await hashPassword(pass);
+  const { data, error } = await db.from('users')
+    .select('*').eq('email', email).eq('password_hash', hash).maybeSingle();
 
-  const { data, error } = await db
-    .from('users')
-    .select('id, full_name, role, date_of_birth, phone, username')
-    .eq('username', username)
-    .eq('password_hash', hash)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Login error:', error);
-    showMsg(msg, 'error', 'Database error: ' + error.message);
-    btn.disabled = false; btn.textContent = 'Log in'; return;
-  }
-  if (!data) {
-    showMsg(msg, 'error', 'Incorrect Patient ID or password.');
+  if (error || !data) {
+    showMsg(msg, 'error', 'Incorrect email or password.');
     btn.disabled = false; btn.textContent = 'Log in'; return;
   }
 
-  currentUser = {
-    id: data.id, name: data.full_name, role: data.role,
-    username: data.username, dob: data.date_of_birth, phone: data.phone
-  };
+  // Save session
+  currentUser = { id: data.id, name: data.name, role: data.role, email: data.email };
   localStorage.setItem('ns_user', JSON.stringify(currentUser));
   updateHeaderAuth();
   showTab('home');
   btn.disabled = false; btn.textContent = 'Log in';
 }
 
-// ── Logout ────────────────────────────────────────────────────
+// ── Logout ──────────────────────────────────────────────────
 function logout() {
   currentUser = null;
   localStorage.removeItem('ns_user');
@@ -659,58 +770,66 @@ function logout() {
   showTab('home');
 }
 
-// ── Update header ─────────────────────────────────────────────
+// ── Update header after login/logout ────────────────────────
 function updateHeaderAuth() {
   const loggedIn = !!currentUser;
-  document.getElementById('navLogin').style.display = loggedIn ? 'none' : '';
+  document.getElementById('navLogin').style.display     = loggedIn ? 'none' : '';
   document.getElementById('userPill').classList.toggle('visible', loggedIn);
 
-  // Classifier: all logged-in users
-  document.getElementById('navClassifier').classList.toggle('locked', !loggedIn);
-
-  // Games: patients only
+  // Unlock tabs
+  ['navClassifier'].forEach(id => {
+    const btn = document.getElementById(id);
+    btn.classList.toggle('locked', !loggedIn);
+  });
+  // Games: only for patients
+  const gamesBtn = document.getElementById('navGames');
   const canGames = loggedIn && currentUser.role === 'patient';
-  document.getElementById('navGames').classList.toggle('locked', !canGames);
+  gamesBtn.classList.toggle('locked', !canGames);
 
   if (loggedIn) {
-    const initials = currentUser.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const initials = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('userAvatar').textContent = initials;
     document.getElementById('userName').textContent   = currentUser.name.split(' ')[0];
     const badge = document.getElementById('roleBadge');
-    badge.textContent = currentUser.role;
-    badge.className   = 'role-badge ' + currentUser.role;
+    badge.textContent  = currentUser.role;
+    badge.className    = 'role-badge ' + currentUser.role;
   }
 }
 
-// ── Tab navigation ────────────────────────────────────────────
+function showMsg(el, type, text) {
+  el.className = 'auth-msg ' + type;
+  el.textContent = text;
+}
+
+// ── Tab navigation ──────────────────────────────────────────
 function showTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   const navMap = { home:'', alzheimer:'', login:'navLogin', classifier:'navClassifier', games:'navGames' };
   if (navMap[id]) document.getElementById(navMap[id])?.classList.add('active');
-  if (id === 'home')      document.querySelector('.nav-btn').classList.add('active');
+  if (id === 'home') document.querySelector('.nav-btn').classList.add('active');
   if (id === 'alzheimer') document.querySelectorAll('.nav-btn')[1].classList.add('active');
 }
 
 function guardedTab(id) {
   if (!currentUser) { showTab('login'); return; }
-  if (id === 'games' && currentUser.role !== 'patient') return;
+  if (id === 'games' && currentUser.role !== 'patient') { return; }
   showTab(id);
 }
 
 function toggleStage(id) { document.getElementById(id).classList.toggle('open'); }
 
-// ── Classifier ────────────────────────────────────────────────
-const fileInput     = document.getElementById("fileInput");
-const uploadZone    = document.getElementById("uploadZone");
-const previewWrap   = document.getElementById("previewWrap");
-const previewImg    = document.getElementById("previewImg");
-const analyseBtn    = document.getElementById("analyseBtn");
-const resultEmpty   = document.getElementById("resultEmpty");
-const resultContent = document.getElementById("resultContent");
-const errorBox      = document.getElementById("errorBox");
-let selectedFile    = null;
+// ── Classifier ──────────────────────────────────────────────
+const fileInput    = document.getElementById("fileInput");
+const uploadZone   = document.getElementById("uploadZone");
+const previewWrap  = document.getElementById("previewWrap");
+const previewImg   = document.getElementById("previewImg");
+const analyseBtn   = document.getElementById("analyseBtn");
+const resultEmpty  = document.getElementById("resultEmpty");
+const resultContent= document.getElementById("resultContent");
+const errorBox     = document.getElementById("errorBox");
+let selectedFile   = null;
 
 uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
 uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
@@ -756,10 +875,10 @@ function displayResults(data) {
   const cls  = data.predicted_class;
   const meta = CLASSES[cls];
   const conf = (data.probabilities[cls] * 100).toFixed(1);
-  document.getElementById("diagnosisDot").style.background = meta.color;
-  document.getElementById("diagnosisClass").textContent    = meta.label;
-  document.getElementById("diagnosisClass").style.color    = meta.color;
-  document.getElementById("confVal").textContent           = conf + "%";
+  document.getElementById("diagnosisDot").style.background   = meta.color;
+  document.getElementById("diagnosisClass").textContent      = meta.label;
+  document.getElementById("diagnosisClass").style.color      = meta.color;
+  document.getElementById("confVal").textContent             = conf + "%";
   const probList = document.getElementById("probList");
   probList.innerHTML = "";
   CLASS_ORDER.forEach(c => {
@@ -779,7 +898,236 @@ function displayResults(data) {
   resultContent.classList.add("visible");
 }
 
-// ── Init ──────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// GAMES
+// ══════════════════════════════════════════════════════════════
+
+async function saveGameSession(gameName, score, maxScore, durationSec) {
+  if (!currentUser) return;
+  try {
+    await db.from('game_sessions').insert({
+      patient_id: currentUser.id, game_name: gameName,
+      score, max_score: maxScore, duration_sec: durationSec, completed: true
+    });
+  } catch(e) { console.warn('Could not save game session:', e); }
+}
+
+let gameTimers = [];
+function clearGameTimers() {
+  gameTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
+  gameTimers = [];
+}
+
+function startGame(id) {
+  clearGameTimers();
+  document.getElementById('gamesLobby').style.display = 'none';
+  document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
+  const map = { memory:'viewMemory', orientation:'viewOrientation', sequence:'viewSequence' };
+  document.getElementById(map[id]).classList.add('active');
+  if (id === 'memory')      initMemory();
+  if (id === 'orientation') initOrientation();
+  if (id === 'sequence')    initSequence();
+}
+
+function backToLobby() {
+  clearGameTimers();
+  document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('gamesLobby').style.display = '';
+}
+
+function showResults(containerId, gameName, score, maxScore, durationSec, detail) {
+  const pct   = Math.round((score / maxScore) * 100);
+  const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪';
+  const m     = String(Math.floor(durationSec / 60)).padStart(2,'0');
+  const s     = String(durationSec % 60).padStart(2,'0');
+  document.getElementById(containerId).innerHTML = `
+    <div class="results-overlay">
+      <div class="results-emoji">${emoji}</div>
+      <div class="results-score">${score}<span style="font-size:1.8rem;color:var(--muted)">/${maxScore}</span></div>
+      <div class="results-label">Score</div>
+      <div class="results-detail">${detail}<br>Time: ${m}:${s}</div>
+      <div class="results-btns">
+        <button class="btn-play-again" onclick="startGame('${gameName}')">Play again</button>
+        <button class="btn-games-home" onclick="backToLobby()">All games</button>
+      </div>
+    </div>`;
+  saveGameSession(gameName, score, maxScore, durationSec);
+}
+
+// ── Memory ────────────────────────────────────────────────────
+let memState = {};
+function initMemory() {
+  const emojis = ['🧠','🌸','🎵','🌈','🦋','🍀','🌙','⭐'];
+  const cards  = [...emojis,...emojis].sort(() => Math.random()-.5);
+  memState = { flipped:[], matched:0, attempts:0, locked:false, startTime:Date.now() };
+  document.getElementById('memPairs').textContent = 'Pairs: 0 / 8';
+  document.getElementById('memTime').textContent  = '00:00';
+  document.getElementById('memResults').innerHTML = '';
+  const grid = document.getElementById('memoryGrid');
+  grid.innerHTML = '';
+  cards.forEach(emoji => {
+    const c = document.createElement('div');
+    c.className = 'mem-card';
+    c.dataset.emoji = emoji;
+    c.innerHTML = `<div class="mem-inner"><div class="mem-front">🧩</div><div class="mem-back">${emoji}</div></div>`;
+    c.addEventListener('click', () => memFlip(c));
+    grid.appendChild(c);
+  });
+  const t = setInterval(() => {
+    const e = Math.floor((Date.now()-memState.startTime)/1000);
+    document.getElementById('memTime').textContent =
+      String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
+  }, 1000);
+  memState.timerInterval = t;
+  gameTimers.push(t);
+}
+function memFlip(card) {
+  if (memState.locked || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  card.classList.add('flipped');
+  memState.flipped.push(card);
+  if (memState.flipped.length < 2) return;
+  memState.locked = true; memState.attempts++;
+  const [a,b] = memState.flipped;
+  if (a.dataset.emoji === b.dataset.emoji) {
+    a.classList.add('matched'); b.classList.add('matched');
+    memState.matched++;
+    document.getElementById('memPairs').textContent = `Pairs: ${memState.matched} / 8`;
+    memState.flipped = []; memState.locked = false;
+    if (memState.matched === 8) {
+      clearInterval(memState.timerInterval);
+      const elapsed = Math.floor((Date.now()-memState.startTime)/1000);
+      const t = setTimeout(() => showResults('memResults','memory',8,8,elapsed,
+        `All pairs found in ${memState.attempts} attempt${memState.attempts!==1?'s':''}`), 600);
+      gameTimers.push(t);
+    }
+  } else {
+    const t = setTimeout(() => {
+      a.classList.remove('flipped'); b.classList.remove('flipped');
+      memState.flipped=[]; memState.locked=false;
+    }, 900);
+    gameTimers.push(t);
+  }
+}
+
+// ── Orientation ───────────────────────────────────────────────
+let orientState = {};
+function buildOrientQuestions() {
+  const now  = new Date();
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const SEAS = {12:'Winter',1:'Winter',2:'Winter',3:'Spring',4:'Spring',5:'Spring',
+                6:'Summer',7:'Summer',8:'Summer',9:'Autumn',10:'Autumn',11:'Autumn'};
+  const day=DAYS[now.getDay()], date=String(now.getDate()), month=MONS[now.getMonth()],
+        year=String(now.getFullYear()), season=SEAS[now.getMonth()+1],
+        tod=now.getHours()<12?'Morning':now.getHours()<18?'Afternoon':'Evening';
+  const mix=(c,w1,w2)=>[String(c),String(w1),String(w2)].sort(()=>Math.random()-.5);
+  return [
+    {q:'What day of the week is it today?',
+     opts:mix(day,DAYS[(now.getDay()+1)%7],DAYS[(now.getDay()+5)%7]),answer:day},
+    {q:"What is today's date?",
+     opts:mix(date,String(((now.getDate())%28)+1),String(((now.getDate()+13)%28)+1)),answer:date},
+    {q:'What month are we in?',
+     opts:mix(month,MONS[(now.getMonth()+1)%12],MONS[(now.getMonth()+10)%12]),answer:month},
+    {q:'What year is it?',
+     opts:mix(year,String(now.getFullYear()-1),String(now.getFullYear()+1)),answer:year},
+    {q:'What season is it currently?',
+     opts:mix(season,...['Spring','Summer','Autumn','Winter'].filter(s=>s!==season).slice(0,2)),answer:season},
+    {q:'What part of the day is it right now?',
+     opts:mix(tod,...['Morning','Afternoon','Evening'].filter(t=>t!==tod)),answer:tod}
+  ];
+}
+function initOrientation() {
+  orientState={questions:buildOrientQuestions(),current:0,correct:0,startTime:Date.now()};
+  document.getElementById('orientScore').textContent='Score: 0 / 6';
+  document.getElementById('orientResults').innerHTML='';
+  renderOrientQ();
+}
+function renderOrientQ() {
+  const {questions,current}=orientState;
+  const prog=document.getElementById('orientProgress');
+  prog.innerHTML='';
+  questions.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='orient-dot'+(i<current?' done':i===current?' current':'');
+    prog.appendChild(d);
+  });
+  const q=questions[current];
+  document.getElementById('orientQ').textContent=q.q;
+  const opts=document.getElementById('orientOpts');
+  opts.innerHTML='';
+  q.opts.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='orient-opt'; btn.textContent=opt;
+    btn.onclick=()=>orientAnswer(btn,opt,q.answer);
+    opts.appendChild(btn);
+  });
+}
+function orientAnswer(btn,chosen,correct) {
+  document.querySelectorAll('.orient-opt').forEach(b=>b.disabled=true);
+  if(chosen===correct){btn.classList.add('correct');orientState.correct++;}
+  else{btn.classList.add('wrong');document.querySelectorAll('.orient-opt').forEach(b=>{if(b.textContent===correct)b.classList.add('correct');});}
+  document.getElementById('orientScore').textContent=`Score: ${orientState.correct} / 6`;
+  const t=setTimeout(()=>{
+    orientState.current++;
+    if(orientState.current<6){renderOrientQ();}
+    else{const el=Math.floor((Date.now()-orientState.startTime)/1000);
+      showResults('orientResults','orientation',orientState.correct,6,el,
+        `${Math.round((orientState.correct/6)*100)}% correct answers`);}
+  },1200);
+  gameTimers.push(t);
+}
+
+// ── Sequence ──────────────────────────────────────────────────
+let seqState={};
+const SEQ_COLORS=['green','red','blue','yellow'];
+function initSequence() {
+  seqState={sequence:[],playerIdx:0,round:0,over:false,startTime:Date.now()};
+  document.getElementById('seqResults').innerHTML='';
+  document.getElementById('seqStatus').textContent='';
+  seqNextRound();
+}
+function seqNextRound() {
+  seqState.round++; seqState.playerIdx=0;
+  seqState.sequence.push(SEQ_COLORS[Math.floor(Math.random()*4)]);
+  document.getElementById('seqRoundStat').textContent=`Round ${seqState.round}`;
+  document.getElementById('seqInfo').innerHTML=
+    `Watch the sequence… <strong>(${seqState.sequence.length} step${seqState.sequence.length>1?'s':''})</strong>`;
+  seqSetBtns(true); seqPlay();
+}
+function seqSetBtns(disabled){document.querySelectorAll('.seq-btn').forEach(b=>b.disabled=disabled);}
+function seqPlay() {
+  let i=0;
+  function next(){
+    if(i>=seqState.sequence.length){seqSetBtns(false);document.getElementById('seqInfo').textContent='Your turn! Repeat the sequence.';return;}
+    const btn=document.querySelector(`.seq-btn[data-color="${seqState.sequence[i]}"]`);
+    const t1=setTimeout(()=>btn.classList.add('lit'),200);
+    const t2=setTimeout(()=>{btn.classList.remove('lit');i++;next();},750);
+    gameTimers.push(t1,t2);
+  }
+  const t=setTimeout(next,700); gameTimers.push(t);
+}
+function seqPlayerClick(color) {
+  if(seqState.over)return;
+  const btn=document.querySelector(`.seq-btn[data-color="${color}"]`);
+  btn.classList.add('lit');
+  const t=setTimeout(()=>btn.classList.remove('lit'),200); gameTimers.push(t);
+  if(color!==seqState.sequence[seqState.playerIdx]){
+    seqState.over=true; seqSetBtns(true);
+    document.getElementById('seqInfo').textContent='✗ Wrong!';
+    document.getElementById('seqStatus').textContent=`You completed ${seqState.round-1} round${seqState.round-1!==1?'s':''}`;
+    const elapsed=Math.floor((Date.now()-seqState.startTime)/1000);
+    const t2=setTimeout(()=>showResults('seqResults','sequence',seqState.round-1,20,elapsed,
+      `Reached round ${seqState.round} · sequence length ${seqState.sequence.length}`),900);
+    gameTimers.push(t2); return;
+  }
+  seqState.playerIdx++;
+  if(seqState.playerIdx===seqState.sequence.length){
+    seqSetBtns(true); document.getElementById('seqInfo').textContent='✓ Correct!';
+    const t3=setTimeout(seqNextRound,900); gameTimers.push(t3);
+  }
+}
+
+// ── Init ────────────────────────────────────────────────────
 updateHeaderAuth();
 </script>
 </body>
