@@ -130,6 +130,9 @@ nav{display:flex;gap:.2rem;}
 .preview-wrap{margin-top:1.2rem;display:none;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#111;aspect-ratio:1/1;}
 .preview-wrap.visible{display:block;}
 .preview-wrap img{width:100%;height:100%;object-fit:contain;display:block;}
+.btn-change{margin-top:.75rem;width:100%;padding:.5rem;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:background .15s,color .15s;display:none;}
+.btn-change:hover{background:var(--bg);color:var(--text);}
+.btn-change.visible{display:block;}
 .btn-analyse{margin-top:1.2rem;width:100%;padding:.85rem;background:var(--matcha);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;display:flex;align-items:center;justify-content:center;gap:.5rem;}
 .btn-analyse:hover{opacity:.88;}
 .btn-analyse:active{transform:scale(.98);}
@@ -438,6 +441,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           <p class="upload-hint">or click to browse · JPG / PNG</p>
         </div>
         <div class="preview-wrap" id="previewWrap"><img id="previewImg" src="" alt="MRI preview"></div>
+        <button class="btn-change" id="changeBtn" onclick="clearImage()">🔄 Change image</button>
         <button class="btn-analyse" id="analyseBtn" disabled>
           <span class="btn-label">Analyse image</span>
           <div class="spinner"></div>
@@ -856,11 +860,26 @@ fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(
 function handleFile(file) {
   selectedFile = file;
   previewImg.src = URL.createObjectURL(file);
+  uploadZone.style.display   = "none";
   previewWrap.classList.add("visible");
+  document.getElementById("changeBtn").classList.add("visible");
   analyseBtn.disabled = false;
   resultContent.classList.remove("visible");
   resultEmpty.style.display = "flex";
   errorBox.classList.remove("visible");
+}
+
+function clearImage() {
+  selectedFile = null;
+  previewImg.src = "";
+  previewWrap.classList.remove("visible");
+  document.getElementById("changeBtn").classList.remove("visible");
+  uploadZone.style.display = "";
+  analyseBtn.disabled = true;
+  resultContent.classList.remove("visible");
+  resultEmpty.style.display = "flex";
+  errorBox.classList.remove("visible");
+  fileInput.value = "";
 }
 
 analyseBtn.addEventListener("click", async () => {
