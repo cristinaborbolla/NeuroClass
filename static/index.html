@@ -312,6 +312,26 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .dash-empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.88rem;line-height:1.7;}
 .dash-empty span{font-size:2rem;display:block;margin-bottom:.8rem;opacity:.4;}
 
+/* ══ HISTORY TAB ════════════════════════════════════════════ */
+.hist-wrap{max-width:860px;margin:0 auto;padding:2.5rem 1.5rem;}
+.hist-header{margin-bottom:1.8rem;}
+.hist-header h2{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;margin-bottom:.35rem;}
+.hist-header p{color:var(--muted);font-size:.88rem;}
+.pred-tbl{width:100%;border-collapse:collapse;font-size:.83rem;}
+.pred-tbl th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:.55rem .75rem;border-bottom:1px solid var(--border);font-weight:600;}
+.pred-tbl td{padding:.8rem .75rem;border-bottom:1px solid var(--bg);vertical-align:middle;}
+.pred-tbl tr:last-child td{border-bottom:none;}
+.pred-tbl tr:hover td{background:var(--bg);}
+.stage-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:.4rem;vertical-align:middle;}
+.mini-bars{display:flex;flex-direction:column;gap:2px;min-width:100px;}
+.mini-bar-row{display:flex;align-items:center;gap:.3rem;font-size:.68rem;color:var(--muted);}
+.mini-bar-bg{flex:1;height:4px;background:var(--bg);border-radius:99px;overflow:hidden;}
+.mini-bar-fill{height:100%;border-radius:99px;}
+/* Export */
+.btn-export{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;color:var(--text);cursor:pointer;transition:background .15s;margin-left:auto;}
+.btn-export:hover{background:var(--bg);}
+.detail-top-actions{display:flex;align-items:center;gap:.75rem;flex:1;}
+
 @media(max-width:680px){
   .clf-wrap{grid-template-columns:1fr;}
   .hero h1{font-size:2.1rem;}
@@ -1054,10 +1074,28 @@ function displayResults(data) {
   document.getElementById("descBox").textContent = meta.desc;
   resultEmpty.style.display = "none";
   resultContent.classList.add("visible");
+  // Save to Supabase
+  savePrediction(data);
 }
 
-// ══════════════════════════════════════════════════════════════
-// GAMES
+// ── Save prediction to Supabase ──────────────────────────────
+async function savePrediction(data) {
+  if (!currentUser) return;
+  try {
+    await db.from('predictions').insert({
+      patient_id:       currentUser.id,
+      predicted_class:  data.predicted_class,
+      predicted_index:  CLASS_ORDER.indexOf(data.predicted_class),
+      prob_non_demented: data.probabilities['NonDemented'],
+      prob_very_mild:    data.probabilities['VeryMildDemented'],
+      prob_mild:         data.probabilities['MildDemented'],
+      prob_moderate:     data.probabilities['ModerateDemented'],
+      confidence:        data.probabilities[data.predicted_class]
+    });
+  } catch(e) { console.warn('Could not save prediction:', e); }
+}
+
+
 // ══════════════════════════════════════════════════════════════
 
 async function saveGameSession(gameName, score, maxScore, durationSec) {
@@ -1370,12 +1408,11 @@ async function loadPatients() {
 }
 
 async function selectPatient(p) {
-  // Highlight selected card
   document.querySelectorAll('.patient-card').forEach(c => c.classList.remove('selected'));
   const card = document.getElementById('pc-' + p.id);
   if (card) { card.classList.add('selected'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
 
-  const detail = document.getElementById('patientDetail');
+  const detail   = document.getElementById('patientDetail');
   const initials = p.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const age      = calcAge(p.date_of_birth);
 
@@ -1383,56 +1420,119 @@ async function selectPatient(p) {
   detail.innerHTML = `
     <div class="detail-top">
       <div class="detail-avatar">${initials}</div>
-      <div>
-        <div class="detail-name">${p.full_name}</div>
-        <div class="detail-sub">${p.username} · Registered ${formatDate(p.created_at)}</div>
+      <div class="detail-top-actions">
+        <div>
+          <div class="detail-name">${p.full_name}</div>
+          <div class="detail-sub">${p.username} · Registered ${formatDate(p.created_at)}</div>
+        </div>
+        <button class="btn-export" onclick="exportPatientCSV('${p.id}','${p.full_name.replace(/'/g,"\\'")}','${p.username}')">
+          ⬇ Export CSV
+        </button>
       </div>
     </div>
     <div class="detail-body">
       <div class="detail-fields">
-        <div class="detail-field"><div class="detail-field-lbl">Date of birth</div><div class="detail-field-val">${formatDate(p.date_of_birth)}${age ? ' ('+age+' y/o)' : ''}</div></div>
-        <div class="detail-field"><div class="detail-field-lbl">Phone</div><div class="detail-field-val">${p.phone || '—'}</div></div>
-        <div class="detail-field"><div class="detail-field-lbl">Neurologist</div><div class="detail-field-val">${p.neurologist || '—'}</div></div>
+        <div class="detail-field"><div class="detail-field-lbl">Date of birth</div><div class="detail-field-val">${formatDate(p.date_of_birth)}${age?' ('+age+' y/o)':''}</div></div>
+        <div class="detail-field"><div class="detail-field-lbl">Phone</div><div class="detail-field-val">${p.phone||'—'}</div></div>
+        <div class="detail-field"><div class="detail-field-lbl">Neurologist</div><div class="detail-field-val">${p.neurologist||'—'}</div></div>
         <div class="detail-field"><div class="detail-field-lbl">Last appointment</div><div class="detail-field-val">${formatDate(p.last_appointment)}</div></div>
       </div>
-      <div class="section-title">Game session history</div>
+      <div class="section-title" style="margin-bottom:.85rem;">MRI prediction history</div>
+      <div id="predHistoryWrap"><div class="dash-empty"><span>⏳</span>Loading…</div></div>
+      <div class="section-title" style="margin-top:1.6rem;margin-bottom:.85rem;">Game session history</div>
       <div id="gameHistoryWrap"><div class="dash-empty"><span>⏳</span>Loading…</div></div>
     </div>`;
 
   detail.scrollIntoView({ behavior:'smooth', block:'start' });
 
-  // Load game history
-  const { data: sessions, error } = await db
-    .from('game_sessions')
-    .select('*')
-    .eq('patient_id', p.id)
-    .order('created_at', { ascending: false });
+  // Load predictions
+  const { data: preds } = await db
+    .from('predictions').select('*')
+    .eq('patient_id', p.id).order('created_at', { ascending: false });
 
-  const wrap = document.getElementById('gameHistoryWrap');
-  if (error || !sessions || sessions.length === 0) {
-    wrap.innerHTML = '<div class="dash-empty"><span>🎮</span>No game sessions recorded yet.</div>';
-    return;
+  const predWrap = document.getElementById('predHistoryWrap');
+  if (!preds || preds.length === 0) {
+    predWrap.innerHTML = '<div class="dash-empty"><span>🧠</span>No predictions recorded yet.</div>';
+  } else {
+    const clsMeta = {
+      NonDemented:      { color:'#4a8c5c', label:'Non-Demented' },
+      VeryMildDemented: { color:'#b07d2a', label:'Very Mild' },
+      MildDemented:     { color:'#c45820', label:'Mild' },
+      ModerateDemented: { color:'#a83232', label:'Moderate' }
+    };
+    const predRows = preds.map(r => {
+      const m   = clsMeta[r.predicted_class] || { color:'#999', label: r.predicted_class };
+      const conf= (r.confidence*100).toFixed(1);
+      return `<tr>
+        <td><span class="stage-dot" style="background:${m.color}"></span>${m.label}</td>
+        <td><strong>${conf}%</strong></td>
+        <td>
+          <div class="mini-bars">
+            <div class="mini-bar-row"><span style="min-width:56px">Non-Dem.</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_non_demented*100).toFixed(0)}%;background:#4a8c5c"></div></div><span>${(r.prob_non_demented*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">V. Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_very_mild*100).toFixed(0)}%;background:#b07d2a"></div></div><span>${(r.prob_very_mild*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_mild*100).toFixed(0)}%;background:#c45820"></div></div><span>${(r.prob_mild*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">Moderate</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_moderate*100).toFixed(0)}%;background:#a83232"></div></div><span>${(r.prob_moderate*100).toFixed(1)}%</span></div>
+          </div>
+        </td>
+        <td style="color:var(--muted)">${formatDateTime(r.created_at)}</td>
+      </tr>`;
+    }).join('');
+    predWrap.innerHTML = `<div style="overflow-x:auto;"><table class="pred-tbl">
+      <thead><tr><th>Stage</th><th>Confidence</th><th>Probabilities</th><th>Date</th></tr></thead>
+      <tbody>${predRows}</tbody></table></div>`;
   }
 
+  // Load game sessions
+  const { data: sessions } = await db
+    .from('game_sessions').select('*')
+    .eq('patient_id', p.id).order('created_at', { ascending: false });
+
+  const gameWrap = document.getElementById('gameHistoryWrap');
+  if (!sessions || sessions.length === 0) {
+    gameWrap.innerHTML = '<div class="dash-empty"><span>🎮</span>No game sessions recorded yet.</div>';
+    return;
+  }
   const gameEmoji = { memory:'🃏', orientation:'🗓️', sequence:'🔢' };
-  const rows = sessions.map(s => `
+  const gameRows = sessions.map(s => `
     <tr>
-      <td>${gameEmoji[s.game_name] || '🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</td>
+      <td>${gameEmoji[s.game_name]||'🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</td>
       <td>${scorePill(s.score, s.max_score)}</td>
       <td>${Math.round((s.score/s.max_score)*100)}%</td>
       <td>${formatDuration(s.duration_sec)}</td>
       <td style="color:var(--muted)">${formatDateTime(s.created_at)}</td>
     </tr>`).join('');
+  gameWrap.innerHTML = `<div style="overflow-x:auto;"><table class="games-tbl">
+    <thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead>
+    <tbody>${gameRows}</tbody></table></div>`;
+}
 
-  wrap.innerHTML = `
-    <div class="games-tbl-wrap" style="overflow-x:auto;">
-      <table class="games-tbl">
-        <thead><tr>
-          <th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+async function exportPatientCSV(patientId, patientName, username) {
+  const [{ data: preds }, { data: games }] = await Promise.all([
+    db.from('predictions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
+    db.from('game_sessions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false })
+  ]);
+
+  let csv = `NeuroStage · Patient Data Export\nPatient:,${patientName}\nID:,${username}\nExported:,${new Date().toLocaleString('en-GB')}\n\n`;
+
+  csv += `MRI PREDICTIONS\nDate,Predicted Stage,Confidence (%),Non-Demented (%),Very Mild (%),Mild (%),Moderate (%)\n`;
+  (preds||[]).forEach(r => {
+    csv += `${formatDateTime(r.created_at)},${r.predicted_class},${(r.confidence*100).toFixed(2)},${(r.prob_non_demented*100).toFixed(2)},${(r.prob_very_mild*100).toFixed(2)},${(r.prob_mild*100).toFixed(2)},${(r.prob_moderate*100).toFixed(2)}\n`;
+  });
+  if (!preds || preds.length === 0) csv += `No predictions recorded\n`;
+
+  csv += `\nGAME SESSIONS\nDate,Game,Score,Max Score,Result (%),Duration (s)\n`;
+  (games||[]).forEach(s => {
+    csv += `${formatDateTime(s.created_at)},${s.game_name},${s.score},${s.max_score},${Math.round((s.score/s.max_score)*100)},${s.duration_sec}\n`;
+  });
+  if (!games || games.length === 0) csv += `No game sessions recorded\n`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `neurostage_${username}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── Init ────────────────────────────────────────────────────
