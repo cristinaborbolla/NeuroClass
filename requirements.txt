@@ -1,0 +1,17 @@
+# requirements.txt
+# Python dependencies for the Flask server on Hugging Face Spaces
+
+# Web server
+flask==2.2.5
+flask-cors==4.0.0          # allows CORS requests from the browser
+gunicorn==21.2.0            # production server (replaces Flask development server)
+
+# Machine Learning
+# tensorflow-cpu: GPU-free build, much lighter for deployment
+# Pinned to 2.10.x because the model was saved with TF 2.10
+tensorflow-cpu==2.10.1
+numpy==1.23.5               # pinned for TF 2.10 compatibility
+
+# Image processing
+opencv-python-headless==4.8.1.78   # headless = no GUI (suitable for servers)
+Pillow==9.5.0
