@@ -358,6 +358,43 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .chart-box{background:var(--bg);border-radius:10px;padding:1rem 1.2rem;}
 .chart-box-title{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem;}
 
+/* ══ WHAT'S MISSING ════════════════════════════════════════ */
+.wm-wrap{max-width:420px;margin:0 auto;text-align:center;}
+.wm-countdown{font-size:.82rem;color:var(--muted);margin-bottom:.9rem;min-height:1.2rem;}
+.wm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin:0 auto 1.4rem;}
+.wm-cell{aspect-ratio:1/1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:var(--surface2);border:1px solid var(--border);transition:all .4s;}
+.wm-cell.hidden{background:var(--surface);border:2px dashed var(--rose-dk);font-size:1.4rem;color:var(--muted);}
+.wm-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin:0 auto;}
+.wm-opt{aspect-ratio:1/1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:all .15s;}
+.wm-opt:hover:not(:disabled){border-color:var(--matcha);background:var(--surface);}
+.wm-opt.correct{border-color:#4a8c5c!important;background:#edf7ee!important;}
+.wm-opt.wrong{border-color:#a83232!important;background:#fef2f2!important;}
+.wm-opt:disabled{cursor:not-allowed;}
+
+/* ══ PATTERN ════════════════════════════════════════════════ */
+.pat-wrap{max-width:480px;margin:0 auto;text-align:center;}
+.pat-info{font-size:.92rem;color:var(--muted);margin-bottom:1.2rem;min-height:1.3rem;}
+.pat-sequence{display:flex;align-items:center;justify-content:center;gap:.45rem;flex-wrap:wrap;margin-bottom:1.6rem;}
+.pat-cell{width:48px;height:48px;border-radius:10px;flex-shrink:0;border:2px solid rgba(255,255,255,.2);}
+.pat-question{width:48px;height:48px;border-radius:10px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--muted);background:var(--surface);flex-shrink:0;}
+.pat-opts{display:flex;gap:.9rem;justify-content:center;}
+.pat-opt{width:64px;height:64px;border-radius:12px;border:2px solid var(--border);cursor:pointer;transition:all .15s;flex-shrink:0;}
+.pat-opt:hover:not(:disabled){border-color:var(--matcha);transform:scale(1.07);}
+.pat-opt.correct{border-color:#4a8c5c!important;box-shadow:0 0 0 3px #e6f4ea;}
+.pat-opt.wrong{border-color:#a83232!important;box-shadow:0 0 0 3px #fef2f2;}
+.pat-opt:disabled{cursor:not-allowed;}
+
+/* ══ ARITHMETIC ═════════════════════════════════════════════ */
+.arith-wrap{max-width:360px;margin:0 auto;text-align:center;}
+.arith-level-badge{display:inline-block;font-size:.72rem;font-weight:600;padding:.2rem .7rem;border-radius:99px;margin-bottom:1rem;background:var(--cream);color:var(--muted);border:1px solid var(--border);}
+.arith-problem{font-family:'Cormorant Garamond',serif;font-size:3.8rem;font-weight:500;line-height:1;margin-bottom:2rem;color:var(--text);}
+.arith-opts{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.arith-opt{padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface2);font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text);}
+.arith-opt:hover:not(:disabled){border-color:var(--matcha);background:var(--surface);}
+.arith-opt.correct{border-color:#4a8c5c!important;background:#edf7ee!important;}
+.arith-opt.wrong{border-color:#a83232!important;background:#fef2f2!important;}
+.arith-opt:disabled{cursor:not-allowed;}
+
 @media(max-width:680px){
   .clf-wrap{grid-template-columns:1fr;}
   .hero h1{font-size:2.1rem;}
@@ -648,6 +685,24 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           <div class="game-desc">Repeat the colour sequence shown on screen. Tests short-term memory and attention.</div>
           <button class="game-start-btn" onclick="startGame('sequence')">Play</button>
         </div>
+        <div class="game-card">
+          <div class="game-emoji">👁️</div>
+          <div class="game-title">What's Missing?</div>
+          <div class="game-desc">A grid of objects appears briefly, then one vanishes. Identify which one disappeared. Tests visual short-term memory.</div>
+          <button class="game-start-btn" onclick="startGame('whatsmissing')">Play</button>
+        </div>
+        <div class="game-card">
+          <div class="game-emoji">🎨</div>
+          <div class="game-title">Pattern</div>
+          <div class="game-desc">A colour sequence is shown with one element missing. Select the colour that comes next. Tests visuospatial memory.</div>
+          <button class="game-start-btn" onclick="startGame('pattern')">Play</button>
+        </div>
+        <div class="game-card">
+          <div class="game-emoji">➕</div>
+          <div class="game-title">Arithmetic</div>
+          <div class="game-desc">Simple additions and subtractions with four answer choices. Difficulty increases gradually. Tests working memory.</div>
+          <button class="game-start-btn" onclick="startGame('arithmetic')">Play</button>
+        </div>
       </div>
     </div>
 
@@ -696,6 +751,54 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         <div class="seq-status" id="seqStatus"></div>
       </div>
       <div id="seqResults"></div>
+    </div>
+
+    <!-- What's Missing view -->
+    <div class="game-view" id="viewWhatsMissing">
+      <div class="game-topbar">
+        <button class="btn-back" onclick="backToLobby()">← Back</button>
+        <h3>👁️ What's Missing?</h3>
+        <span class="game-stat" id="wmRoundStat">Round 1 / 8</span>
+        <span class="game-stat" id="wmScore">Score: 0 / 8</span>
+      </div>
+      <div class="wm-wrap">
+        <div class="wm-countdown" id="wmCountdown"></div>
+        <div class="wm-grid" id="wmGrid"></div>
+        <div class="wm-opts" id="wmOpts"></div>
+      </div>
+      <div id="wmResults"></div>
+    </div>
+
+    <!-- Pattern view -->
+    <div class="game-view" id="viewPattern">
+      <div class="game-topbar">
+        <button class="btn-back" onclick="backToLobby()">← Back</button>
+        <h3>🎨 Pattern</h3>
+        <span class="game-stat" id="patRoundStat">Round 1 / 8</span>
+        <span class="game-stat" id="patScore">Score: 0 / 8</span>
+      </div>
+      <div class="pat-wrap">
+        <div class="pat-info" id="patInfo">What colour comes next?</div>
+        <div class="pat-sequence" id="patSequence"></div>
+        <div class="pat-opts" id="patOpts"></div>
+      </div>
+      <div id="patResults"></div>
+    </div>
+
+    <!-- Arithmetic view -->
+    <div class="game-view" id="viewArithmetic">
+      <div class="game-topbar">
+        <button class="btn-back" onclick="backToLobby()">← Back</button>
+        <h3>➕ Arithmetic</h3>
+        <span class="game-stat" id="arithRoundStat">Q 1 / 10</span>
+        <span class="game-stat" id="arithScore">Score: 0 / 10</span>
+      </div>
+      <div class="arith-wrap">
+        <div class="arith-level-badge" id="arithLevel">Easy</div>
+        <div class="arith-problem" id="arithProblem"></div>
+        <div class="arith-opts" id="arithOpts"></div>
+      </div>
+      <div id="arithResults"></div>
     </div>
 
   </div>
@@ -1189,11 +1292,15 @@ function startGame(id) {
   clearGameTimers();
   document.getElementById('gamesLobby').style.display = 'none';
   document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
-  const map = { memory:'viewMemory', orientation:'viewOrientation', sequence:'viewSequence' };
+  const map = { memory:'viewMemory', orientation:'viewOrientation', sequence:'viewSequence',
+                whatsmissing:'viewWhatsMissing', pattern:'viewPattern', arithmetic:'viewArithmetic' };
   document.getElementById(map[id]).classList.add('active');
-  if (id === 'memory')      initMemory();
-  if (id === 'orientation') initOrientation();
-  if (id === 'sequence')    initSequence();
+  if (id === 'memory')       initMemory();
+  if (id === 'orientation')  initOrientation();
+  if (id === 'sequence')     initSequence();
+  if (id === 'whatsmissing') initWhatsMissing();
+  if (id === 'pattern')      initPattern();
+  if (id === 'arithmetic')   initArithmetic();
 }
 
 function backToLobby() {
@@ -1575,7 +1682,7 @@ async function selectPatient(p) {
     return;
   }
   renderGamesChart(sessions);
-  const gameEmoji = { memory:'🃏', orientation:'🗓️', sequence:'🔢' };
+  const gameEmoji = { memory:'🃏', orientation:'🗓️', sequence:'🔢', whatsmissing:'👁️', pattern:'🎨', arithmetic:'➕' };
   const gameRows = sessions.map(s => `
     <tr>
       <td>${gameEmoji[s.game_name]||'🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</td>
@@ -1812,6 +1919,197 @@ function renderGamesChart(sessions) {
         tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` }}}
     }
   });
+}
+
+// ══════════════════════════════════════════════════════════════
+// WHAT'S MISSING
+// ══════════════════════════════════════════════════════════════
+const WM_OBJECTS = ['🍎','🍌','🐱','🐶','🚗','⚽','🎸','🌺','🎯','🍕',
+                    '🎨','🦋','🌙','⭐','🏠','🎪','🍦','🦁','🌻','🎭',
+                    '🐸','🍇','🎀','🚀','🌈','🐠','🎃','🍩','🦊','🎵'];
+let wmState = {};
+
+function initWhatsMissing() {
+  wmState = { round:0, score:0, maxRounds:8, startTime:Date.now() };
+  document.getElementById('wmResults').innerHTML = '';
+  document.getElementById('wmScore').textContent = 'Score: 0 / 8';
+  wmNextRound();
+}
+
+function wmNextRound() {
+  wmState.round++;
+  if (wmState.round > wmState.maxRounds) {
+    const el = Math.floor((Date.now()-wmState.startTime)/1000);
+    showResults('wmResults','whatsmissing',wmState.score,wmState.maxRounds,el,
+      `${wmState.score} of ${wmState.maxRounds} objects identified correctly`);
+    return;
+  }
+  document.getElementById('wmRoundStat').textContent = `Round ${wmState.round} / ${wmState.maxRounds}`;
+  document.getElementById('wmOpts').innerHTML = '';
+  document.getElementById('wmCountdown').textContent = 'Look carefully at all the objects…';
+
+  const pool = [...WM_OBJECTS].sort(()=>Math.random()-.5);
+  const gridObjs = pool.slice(0,9);
+  const missingIdx = Math.floor(Math.random()*9);
+  const missing = gridObjs[missingIdx];
+  wmState.missing = missing;
+
+  const grid = document.getElementById('wmGrid');
+  grid.innerHTML = gridObjs.map((o,i)=>
+    `<div class="wm-cell" id="wmc-${i}">${o}</div>`).join('');
+
+  // Countdown then hide
+  let secs = 4;
+  const tick = setInterval(() => {
+    secs--;
+    if (secs > 0) document.getElementById('wmCountdown').textContent = `Memorise… ${secs}s`;
+    else {
+      clearInterval(tick);
+      const cell = document.getElementById(`wmc-${missingIdx}`);
+      if (cell) { cell.classList.add('hidden'); cell.textContent = '?'; }
+      document.getElementById('wmCountdown').textContent = 'Which object disappeared?';
+
+      const distractors = pool.slice(9,12);
+      const opts = [missing,...distractors].sort(()=>Math.random()-.5);
+      document.getElementById('wmOpts').innerHTML = opts.map(o=>
+        `<button class="wm-opt" onclick="wmAnswer(this,'${o}','${missing}')">${o}</button>`
+      ).join('');
+    }
+  }, 1000);
+  gameTimers.push(tick);
+}
+
+function wmAnswer(btn, chosen, correct) {
+  document.querySelectorAll('.wm-opt').forEach(b=>b.disabled=true);
+  if (chosen===correct){ btn.classList.add('correct'); wmState.score++; }
+  else { btn.classList.add('wrong');
+    document.querySelectorAll('.wm-opt').forEach(b=>{ if(b.textContent===correct) b.classList.add('correct'); }); }
+  document.getElementById('wmScore').textContent=`Score: ${wmState.score} / ${wmState.maxRounds}`;
+  const t=setTimeout(wmNextRound,1200); gameTimers.push(t);
+}
+
+// ══════════════════════════════════════════════════════════════
+// PATTERN
+// ══════════════════════════════════════════════════════════════
+const PAT_COLORS = [
+  {name:'red',    hex:'#e55353'},
+  {name:'blue',   hex:'#4a7fc1'},
+  {name:'yellow', hex:'#e8b84b'},
+  {name:'green',  hex:'#5aaa6a'},
+  {name:'purple', hex:'#9b6bc4'},
+  {name:'orange', hex:'#e87c3e'},
+];
+let patState = {};
+
+function buildPattern(round) {
+  const nColors = round<=3 ? 2 : round<=6 ? 3 : 4;
+  const colors  = [...PAT_COLORS].sort(()=>Math.random()-.5).slice(0,nColors);
+  const showLen = nColors*2 + Math.floor(Math.random()*nColors);
+  const seq     = Array.from({length:showLen},(_,i)=>colors[i%nColors]);
+  const answer  = colors[showLen%nColors];
+  const distractors = PAT_COLORS.filter(c=>c.name!==answer.name)
+    .sort(()=>Math.random()-.5).slice(0,2);
+  const options = [answer,...distractors].sort(()=>Math.random()-.5);
+  return {seq,answer,options};
+}
+
+function initPattern() {
+  patState={round:0,score:0,maxRounds:8,startTime:Date.now()};
+  document.getElementById('patResults').innerHTML='';
+  document.getElementById('patScore').textContent='Score: 0 / 8';
+  patNextRound();
+}
+
+function patNextRound() {
+  patState.round++;
+  if (patState.round>patState.maxRounds) {
+    const el=Math.floor((Date.now()-patState.startTime)/1000);
+    showResults('patResults','pattern',patState.score,patState.maxRounds,el,
+      `${patState.score} patterns completed correctly`);
+    return;
+  }
+  document.getElementById('patRoundStat').textContent=`Round ${patState.round} / ${patState.maxRounds}`;
+  document.getElementById('patScore').textContent=`Score: ${patState.score} / ${patState.maxRounds}`;
+  document.getElementById('patInfo').textContent='What colour comes next?';
+
+  const {seq,answer,options}=buildPattern(patState.round);
+  patState.answer=answer.name;
+
+  document.getElementById('patSequence').innerHTML=
+    seq.map(c=>`<div class="pat-cell" style="background:${c.hex}"></div>`).join('')+
+    '<div class="pat-question">?</div>';
+
+  document.getElementById('patOpts').innerHTML=options.map(c=>
+    `<button class="pat-opt" data-color="${c.name}" style="background:${c.hex}"
+      onclick="patAnswer(this,'${c.name}','${answer.name}')"></button>`
+  ).join('');
+}
+
+function patAnswer(btn,chosen,correct) {
+  document.querySelectorAll('.pat-opt').forEach(b=>b.disabled=true);
+  if (chosen===correct){ btn.classList.add('correct'); patState.score++; }
+  else { btn.classList.add('wrong');
+    document.querySelectorAll('.pat-opt').forEach(b=>{ if(b.dataset.color===correct) b.classList.add('correct'); }); }
+  document.getElementById('patScore').textContent=`Score: ${patState.score} / ${patState.maxRounds}`;
+  const t=setTimeout(patNextRound,1000); gameTimers.push(t);
+}
+
+// ══════════════════════════════════════════════════════════════
+// ARITHMETIC
+// ══════════════════════════════════════════════════════════════
+let arithState = {};
+
+function buildArith(round) {
+  const op = Math.random()>.45 ? '+' : '-';
+  let a,b;
+  if (round<=3)     { a=Math.floor(Math.random()*9)+1;  b=Math.floor(Math.random()*9)+1; }
+  else if (round<=6){ a=Math.floor(Math.random()*19)+5; b=Math.floor(Math.random()*9)+1; }
+  else              { a=Math.floor(Math.random()*49)+10; b=Math.floor(Math.random()*19)+1; }
+  if (op==='-' && a<b) [a,b]=[b,a];
+  const answer = op==='+' ? a+b : a-b;
+  const wrongs = new Set();
+  while (wrongs.size<3) {
+    const d=(Math.floor(Math.random()*5)+1)*(Math.random()>.5?1:-1);
+    const c=answer+d;
+    if (c!==answer && c>=0) wrongs.add(c);
+  }
+  const options=[answer,...wrongs].sort(()=>Math.random()-.5);
+  const level = round<=3?'Easy':round<=6?'Medium':'Hard';
+  return {display:`${a} ${op} ${b} =`,answer,options,level};
+}
+
+function initArithmetic() {
+  arithState={round:0,score:0,maxRounds:10,startTime:Date.now()};
+  document.getElementById('arithResults').innerHTML='';
+  document.getElementById('arithScore').textContent='Score: 0 / 10';
+  arithNextRound();
+}
+
+function arithNextRound() {
+  arithState.round++;
+  if (arithState.round>arithState.maxRounds) {
+    const el=Math.floor((Date.now()-arithState.startTime)/1000);
+    showResults('arithResults','arithmetic',arithState.score,arithState.maxRounds,el,
+      `${arithState.score} correct answers out of ${arithState.maxRounds}`);
+    return;
+  }
+  document.getElementById('arithRoundStat').textContent=`Q ${arithState.round} / ${arithState.maxRounds}`;
+  const {display,answer,options,level}=buildArith(arithState.round);
+  arithState.answer=answer;
+  document.getElementById('arithLevel').textContent=level;
+  document.getElementById('arithProblem').textContent=display;
+  document.getElementById('arithOpts').innerHTML=options.map(o=>
+    `<button class="arith-opt" onclick="arithAnswer(this,${o},${answer})">${o}</button>`
+  ).join('');
+}
+
+function arithAnswer(btn,chosen,correct) {
+  document.querySelectorAll('.arith-opt').forEach(b=>b.disabled=true);
+  if (chosen===correct){ btn.classList.add('correct'); arithState.score++; }
+  else { btn.classList.add('wrong');
+    document.querySelectorAll('.arith-opt').forEach(b=>{ if(+b.textContent===correct) b.classList.add('correct'); }); }
+  document.getElementById('arithScore').textContent=`Score: ${arithState.score} / ${arithState.maxRounds}`;
+  const t=setTimeout(arithNextRound,1000); gameTimers.push(t);
 }
 
 // ── Init ────────────────────────────────────────────────────
