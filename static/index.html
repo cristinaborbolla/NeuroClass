@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroStage · Alzheimer MRI Classifier</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #f4f3ef;
+    --surface:   #ffffff;
+    --border:    #e2e0d8;
+    --text:      #1a1916;
+    --muted:     #7a7770;
+    --accent:    #2d5be3;
+    --accent-lt: #eef1fd;
+
+    --c0: #2a7a4b;   /* NonDemented      → verde */
+    --c1: #d4820a;   /* VeryMild         → ámbar */
+    --c2: #c45820;   /* Mild             → naranja */
+    --c3: #b02a2a;   /* Moderate         → rojo */
+
+    --radius: 14px;
+    --shadow: 0 2px 18px rgba(0,0,0,.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo {
+    display: flex; align-items: center; gap: .6rem;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.35rem; letter-spacing: -.02em;
+  }
+  .logo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+  .badge {
+    font-size: .7rem; font-weight: 500; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted);
+    border: 1px solid var(--border);
+    padding: .25rem .7rem; border-radius: 99px;
+  }
+
+  main {
+    flex: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 1.2rem 1.5rem .9rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .card-header h2 {
+    font-size: .8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted);
+  }
+  .card-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: var(--accent-lt);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem;
+  }
+  .card-body { padding: 1.5rem; }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-lt);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 2rem; margin-bottom: .8rem; }
+  .upload-title {
+    font-size: .95rem; font-weight: 500; margin-bottom: .3rem;
+  }
+  .upload-hint { font-size: .8rem; color: var(--muted); }
+
+  .preview-wrap {
+    margin-top: 1.2rem;
+    display: none;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #111;
+    aspect-ratio: 1 / 1;
+  }
+  .preview-wrap.visible { display: block; }
+  .preview-wrap img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .btn-analyse {
+    margin-top: 1.2rem;
+    width: 100%;
+    padding: .85rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    display: flex; align-items: center;
+    justify-content: center; gap: .5rem;
+  }
+  .btn-analyse:hover  { opacity: .88; }
+  .btn-analyse:active { transform: scale(.98); }
+  .btn-analyse:disabled { opacity: .4; cursor: not-allowed; }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  .btn-analyse.loading .spinner { display: block; }
+  .btn-analyse.loading .btn-label { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .result-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+  .result-empty-icon { font-size: 2.4rem; margin-bottom: 1rem; opacity: .35; }
+  .result-empty p { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+
+  .result-content { display: none; }
+  .result-content.visible { display: block; }
+
+  .diagnosis {
+    padding: 1.4rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .diagnosis-dot {
+    width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  }
+  .diagnosis-label { font-size: .7rem; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted); margin-bottom: .15rem; }
+  .diagnosis-class {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem; line-height: 1.1;
+    letter-spacing: -.02em;
+  }
+  .diagnosis-conf {
+    margin-left: auto;
+    text-align: right;
+  }
+  .diagnosis-conf .conf-val {
+    font-size: 1.8rem; font-weight: 600;
+    line-height: 1;
+  }
+  .diagnosis-conf .conf-lbl {
+    font-size: .7rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  .prob-list { padding: 1.2rem 1.5rem; display: flex; flex-direction: column; gap: .85rem; }
+  .prob-item { }
+  .prob-row {
+    display: flex; justify-content: space-between;
+    font-size: .82rem; margin-bottom: .3rem;
+  }
+  .prob-name { font-weight: 500; }
+  .prob-pct  { color: var(--muted); font-weight: 400; }
+  .prob-bar-bg {
+    height: 6px; background: var(--bg);
+    border-radius: 99px; overflow: hidden;
+  }
+  .prob-bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+  }
+
+  .desc-box {
+    margin: 0 1.5rem 1.5rem;
+    padding: 1rem;
+    background: var(--bg);
+    border-radius: 10px;
+    font-size: .82rem;
+    color: var(--muted);
+    line-height: 1.65;
+    border-left: 3px solid var(--border);
+  }
+
+  /* error */
+  .error-box {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b02a2a;
+    border-radius: 10px;
+    padding: 1rem;
+    font-size: .85rem;
+    margin: 1rem 1.5rem;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: .75rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: inherit; }
+
+  @media (max-width: 680px) {
+    main { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    NeuroStage
+  </div>
+  <span class="badge">Alzheimer · MRI · CNN</span>
+</header>
+
+<main>
+
+  <!-- Upload card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🔬</div>
+      <h2>MRI Image Input</h2>
+    </div>
+    <div class="card-body">
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="upload-icon">🧠</div>
+        <p class="upload-title">Drop MRI image here</p>
+        <p class="upload-hint">or click to browse · JPG / PNG</p>
+      </div>
+
+      <div class="preview-wrap" id="previewWrap">
+        <img id="previewImg" src="" alt="MRI preview">
+      </div>
+
+      <button class="btn-analyse" id="analyseBtn" disabled>
+        <span class="btn-label">Analyse image</span>
+        <div class="spinner"></div>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Results card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📊</div>
+      <h2>Classification Result</h2>
+    </div>
+
+    <!-- Empty state -->
+    <div class="result-empty" id="resultEmpty">
+      <div class="result-empty-icon">⟳</div>
+      <p>Upload an MRI image and press<br><strong>Analyse image</strong> to see results.</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox"></div>
+
+    <!-- Results -->
+    <div class="result-content" id="resultContent">
+      <div class="diagnosis" id="diagnosisBanner">
+        <div class="diagnosis-dot" id="diagnosisDot"></div>
+        <div>
+          <div class="diagnosis-label">Predicted stage</div>
+          <div class="diagnosis-class" id="diagnosisClass">—</div>
+        </div>
+        <div class="diagnosis-conf">
+          <div class="conf-val" id="confVal">—</div>
+          <div class="conf-lbl">confidence</div>
+        </div>
+      </div>
+
+      <div class="prob-list" id="probList"></div>
+
+      <div class="desc-box" id="descBox"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  NeuroStage · TFG Biomedical Engineering · Universidad de Deusto · 2026<br>
+  Supervisión: Prof. Begoña García-Zapirain &amp; Dr. Marcin Derlatka
+</footer>
+
+<script>
+const API_URL = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space/predict";
+
+const CLASSES = {
+  NonDemented: {
+    color: "#2a7a4b",
+    bg:    "#f0faf4",
+    label: "Non-Demented",
+    desc:  "No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group."
+  },
+  VeryMildDemented: {
+    color: "#d4820a",
+    bg:    "#fffbeb",
+    label: "Very Mild Demented",
+    desc:  "Very mild cognitive decline. Subtle changes in memory and orientation may be present. Early clinical monitoring is recommended."
+  },
+  MildDemented: {
+    color: "#c45820",
+    bg:    "#fff7ed",
+    label: "Mild Demented",
+    desc:  "Mild cognitive impairment with noticeable memory loss. Enlarged ventricles and reduced hippocampal volume may be observed."
+  },
+  ModerateDemented: {
+    color: "#b02a2a",
+    bg:    "#fef2f2",
+    label: "Moderate Demented",
+    desc:  "Moderate cognitive decline. Significant structural atrophy is likely present. Comprehensive clinical evaluation is strongly advised."
+  }
+};
+
+const CLASS_ORDER = ["NonDemented","VeryMildDemented","MildDemented","ModerateDemented"];
+
+const fileInput     = document.getElementById("fileInput");
+const uploadZone    = document.getElementById("uploadZone");
+const previewWrap   = document.getElementById("previewWrap");
+const previewImg    = document.getElementById("previewImg");
+const analyseBtn    = document.getElementById("analyseBtn");
+const resultEmpty   = document.getElementById("resultEmpty");
+const resultContent = document.getElementById("resultContent");
+const errorBox      = document.getElementById("errorBox");
+const diagnosisDot  = document.getElementById("diagnosisDot");
+const diagnosisClass= document.getElementById("diagnosisClass");
+const confVal       = document.getElementById("confVal");
+const probList      = document.getElementById("probList");
+const descBox       = document.getElementById("descBox");
+
+let selectedFile = null;
+
+uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
+uploadZone.addEventListener("dragleave", ()  => uploadZone.classList.remove("drag-over"));
+uploadZone.addEventListener("drop", e => {
+  e.preventDefault();
+  uploadZone.classList.remove("drag-over");
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith("image/")) handleFile(f);
+});
+
+fileInput.addEventListener("change", () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file) {
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  previewImg.src = url;
+  previewWrap.classList.add("visible");
+  analyseBtn.disabled = false;
+  // Reset results
+  resultContent.classList.remove("visible");
+  resultEmpty.style.display = "flex";
+  errorBox.classList.remove("visible");
+}
+
+analyseBtn.addEventListener("click", async () => {
+  if (!selectedFile) return;
+
+  analyseBtn.classList.add("loading");
+  analyseBtn.disabled = true;
+  errorBox.classList.remove("visible");
+
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+
+  try {
+    const res  = await fetch(API_URL, { method: "POST", body: formData });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `Server error ${res.status}`);
+    }
+
+    displayResults(data);
+
+  } catch (err) {
+    errorBox.textContent = "Error: " + err.message;
+    errorBox.classList.add("visible");
+    resultEmpty.style.display = "flex";
+    resultContent.classList.remove("visible");
+  } finally {
+    analyseBtn.classList.remove("loading");
+    analyseBtn.disabled = false;
+  }
+});
+
+function displayResults(data) {
+  const cls  = data.predicted_class;
+  const meta = CLASSES[cls];
+  const conf = (data.probabilities[cls] * 100).toFixed(1);
+
+  // Banner
+  diagnosisDot.style.background = meta.color;
+  diagnosisClass.textContent     = meta.label;
+  diagnosisClass.style.color     = meta.color;
+  confVal.textContent            = conf + "%";
+
+  // Probability bars
+  probList.innerHTML = "";
+  CLASS_ORDER.forEach(c => {
+    const pct  = (data.probabilities[c] * 100).toFixed(1);
+    const m    = CLASSES[c];
+    const item = document.createElement("div");
+    item.className = "prob-item";
+    item.innerHTML = `
+      <div class="prob-row">
+        <span class="prob-name">${m.label}</span>
+        <span class="prob-pct">${pct}%</span>
+      </div>
+      <div class="prob-bar-bg">
+        <div class="prob-bar-fill"
+             style="width:0%; background:${m.color};"
+             data-target="${pct}"></div>
+      </div>`;
+    probList.appendChild(item);
+  });
+
+  // Animate bars after paint
+  requestAnimationFrame(() => {
+    probList.querySelectorAll(".prob-bar-fill").forEach(bar => {
+      bar.style.width = bar.dataset.target + "%";
+    });
+  });
+
+  // Description
+  descBox.textContent = meta.desc;
+
+  // Show
+  resultEmpty.style.display = "none";
+  resultContent.classList.add("visible");
+}
+</script>
+
+</body>
+</html>
