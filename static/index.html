@@ -227,26 +227,63 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 <div id="tab-home" class="section active">
   <div class="hero">
     <span class="hero-tag">TFG · Universidad de Deusto · 2026</span>
-    <h1>Alzheimer staging<br>through <em>deep learning</em></h1>
-    <p>NeuroStage uses a convolutional neural network trained on brain MRI images to automatically classify Alzheimer's disease into four diagnostic stages, supporting early detection and longitudinal follow-up.</p>
+    <h1>
+      Alzheimer staging<br>
+      through <em>deep learning</em>
+    </h1>
+    <p>
+      NeuroStage uses a convolutional neural network trained on brain MRI images
+      to automatically classify Alzheimer's disease into four diagnostic stages,
+      supporting early detection and longitudinal follow-up.
+    </p>
     <button class="hero-btn" onclick="guardedTab('classifier')">
       Try the classifier
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 8h10M9 4l4 4-4 4"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+      </svg>
     </button>
   </div>
+
+  <!-- Green section -->
   <div class="stats-strip">
-    <div class="stats-inner">
-      <div><div class="stat-val">98.78%</div><div class="stat-lbl">Test accuracy</div></div>
-      <div><div class="stat-val">4</div><div class="stat-lbl">Diagnostic stages</div></div>
-      <div><div class="stat-val">CNN</div><div class="stat-lbl">Advanced · Reduced</div></div>
-      <div><div class="stat-val">190×200</div><div class="stat-lbl">Input resolution</div></div>
+    <div class="features">
+      <div class="feat-card">
+        <div class="feat-icon g">🧠</div>
+        <h3>MRI-based classification</h3>
+        <p>
+          Analyses axial brain MRI slices preprocessed with CLAHE and classifies
+          them into four Alzheimer's stages in under a second.
+        </p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon r">📊</div>
+        <h3>Probability distribution</h3>
+        <p>
+          Returns the full softmax probability vector for all four classes,
+          giving clinicians a transparent view of model confidence.
+        </p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon b">🎮</div>
+        <h3>Cognitive games</h3>
+        <p>
+          Patients have access to a suite of cognitive exercises targeting
+          memory, attention and orientation, with automatic progress tracking.
+        </p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon g">⚙️</div>
+        <h3>Optimised architecture</h3>
+        <p>
+          The Advanced-Reduced CNN was selected after Optuna hyperparameter
+          optimisation across six architecture variants.
+        </p>
+      </div>
     </div>
-  </div>
-  <div class="features">
-    <div class="feat-card"><div class="feat-icon g">🧠</div><h3>MRI-based classification</h3><p>Analyses axial brain MRI slices preprocessed with CLAHE and classifies them into four Alzheimer's stages in under a second.</p></div>
-    <div class="feat-card"><div class="feat-icon r">📊</div><h3>Probability distribution</h3><p>Returns the full softmax probability vector for all four classes, giving clinicians a transparent view of model confidence.</p></div>
-    <div class="feat-card"><div class="feat-icon b">🎮</div><h3>Cognitive games</h3><p>Patients have access to a suite of cognitive exercises targeting memory, attention and orientation, with automatic progress tracking.</p></div>
-    <div class="feat-card"><div class="feat-icon g">⚙️</div><h3>Optimised architecture</h3><p>The Advanced-Reduced CNN was selected after Optuna hyperparameter optimisation across six architecture variants.</p></div>
   </div>
 </div>
 
