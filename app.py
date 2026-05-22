@@ -117,7 +117,7 @@ def gradcam():
         return jsonify({'error': 'Could not decode image'}), 400
  
     # ── Preprocess (igual que en /predict) ────────────────────
-    img_resized = cv2.resize(img_gray, (200, 190))   # (W, H) → 200×190
+    img_resized = cv2.resize(img_gray, (190, 200))   # (W, H) → 190x200
     clahe       = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     img_clahe   = clahe.apply(img_resized)
     img_norm    = img_clahe.astype(np.float32) / 255.0
@@ -133,7 +133,7 @@ def gradcam():
         return jsonify({'error': 'No Conv2D layer found in model'}), 500
  
     heatmap         = make_gradcam_heatmap(img_array, model, last_conv, pred_index)
-    heatmap_resized = cv2.resize(heatmap, (200, 190))
+    heatmap_resized = cv2.resize(heatmap, (190, 200))
     heatmap_uint8   = np.uint8(255 * heatmap_resized)
     heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
  
