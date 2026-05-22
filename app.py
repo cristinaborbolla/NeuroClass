@@ -92,14 +92,23 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index):
         outputs = [model.get_layer(last_conv_layer_name).output, model.output]
     )
     img_tensor = tf.cast(img_array, tf.float32)
+
+    # Forzar float32 para evitar underflow de gradientes con mixed_float16
+    with tf.keras.mixed_precision.Policy('float32') as _:
+        pass
+    tf.keras.mixed_precision.set_global_policy('float32')
+
     with tf.GradientTape() as tape:
         tape.watch(img_tensor)
         conv_outputs, predictions = grad_model(img_tensor, training=False)
-        class_channel = predictions[:, pred_index]
+        class_channel = tf.cast(predictions[:, pred_index], tf.float32)
 
     grads = tape.gradient(class_channel, conv_outputs)
     if grads is None:
         return np.zeros((conv_outputs.shape[1], conv_outputs.shape[2]))
+
+    grads = tf.cast(grads, tf.float32)
+    conv_outputs = tf.cast(conv_outputs, tf.float32)
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
     heatmap      = conv_outputs[0] @ pooled_grads[..., tf.newaxis]
     heatmap      = tf.squeeze(heatmap)
