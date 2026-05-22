@@ -35,7 +35,19 @@ CORS(app)
 print("[INFO] Loading CNN model...")
 model = tf.keras.models.load_model(MODEL_PATH)
 print(f"[INFO] Model loaded. Input shape: {model.input_shape}")
-# Expected: (None, 200, 190, 1)
+
+# Rebuild a float32 copy of the model specifically for Grad-CAM.
+# The model was saved with mixed_float16; even after set_global_policy,
+# each layer retains its saved dtype policy. Replacing it in the JSON config
+# forces all operations to float32 so gradients do not underflow to zero.
+# Weights are float32 on disk regardless, so predictions are identical.
+print("[INFO] Rebuilding float32 model for Grad-CAM...")
+_model_json = model.to_json()
+_model_json = _model_json.replace('"mixed_float16"', '"float32"')
+_model_json = _model_json.replace('"float16"',       '"float32"')
+model_f32   = tf.keras.models.model_from_json(_model_json)
+model_f32.set_weights(model.get_weights())
+print("[INFO] Float32 Grad-CAM model ready.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -109,22 +121,22 @@ def predict():
 # GRAD-CAM HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_last_conv_layer(model):
-    for layer in reversed(model.layers):
+def get_last_conv_layer(model_ref):
+    for layer in reversed(model_ref.layers):
         if isinstance(layer, tf.keras.layers.Conv2D):
             return layer.name
     return None
 
 
-def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index):
+def make_gradcam_heatmap(img_array, last_conv_layer_name, pred_index):
     """
-    Computes a Grad-CAM heatmap for the given img_array and predicted class.
+    Computes a Grad-CAM heatmap using model_f32 (float32 copy).
     img_array shape: (1, IMG_H, IMG_W, 1) = (1, 200, 190, 1)
     Returns: heatmap np.float32 of shape (h_conv, w_conv), normalised [0, 1]
     """
     grad_model = tf.keras.models.Model(
-        inputs  = model.inputs,
-        outputs = [model.get_layer(last_conv_layer_name).output, model.output]
+        inputs  = model_f32.inputs,
+        outputs = [model_f32.get_layer(last_conv_layer_name).output, model_f32.output]
     )
 
     img_tensor = tf.cast(img_array, tf.float32)   # (1, 200, 190, 1)
@@ -132,20 +144,19 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index):
     with tf.GradientTape() as tape:
         tape.watch(img_tensor)
         conv_outputs, predictions = grad_model(img_tensor, training=False)
-        # Cast to float32 to avoid underflow with mixed_float16
-        conv_outputs_f32 = tf.cast(conv_outputs, tf.float32)
-        predictions_f32  = tf.cast(predictions,  tf.float32)
-        class_channel    = predictions_f32[:, pred_index]
+        loss = predictions[:, pred_index]
 
-    grads = tape.gradient(class_channel, conv_outputs)
+    grads = tape.gradient(loss, conv_outputs)
     if grads is None:
         return np.zeros((conv_outputs.shape[1], conv_outputs.shape[2]))
 
-    grads        = tf.cast(grads, tf.float32)
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-    heatmap      = conv_outputs_f32[0] @ pooled_grads[..., tf.newaxis]
+    heatmap      = conv_outputs[0] @ pooled_grads[..., tf.newaxis]
     heatmap      = tf.squeeze(heatmap)
-    heatmap      = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-8)
+    heatmap      = tf.maximum(heatmap, 0)
+    max_val      = tf.math.reduce_max(heatmap)
+    if max_val > 0:
+        heatmap = heatmap / max_val
     return heatmap.numpy()   # (h_conv, w_conv)
 
 
@@ -166,35 +177,34 @@ def gradcam():
     except Exception as e:
         return jsonify({'error': f'Image processing error: {str(e)}'}), 400
 
-    # Prediction
+    # Prediction using original model
     preds      = model.predict(img_array, verbose=0)
     pred_index = int(np.argmax(preds[0]))
 
-    # Grad-CAM
-    last_conv = get_last_conv_layer(model)
+    # Grad-CAM using float32 model
+    last_conv = get_last_conv_layer(model_f32)
     if last_conv is None:
         return jsonify({'error': 'No Conv2D layer found in model'}), 500
 
-    heatmap = make_gradcam_heatmap(img_array, model, last_conv, pred_index)
-    # heatmap shape: (h_conv, w_conv) — small spatial dims from last conv layer
+    heatmap = make_gradcam_heatmap(img_array, last_conv, pred_index)
+    # heatmap shape: (h_conv, w_conv)
 
     heatmap = np.float32(heatmap)
 
-    # Resize heatmap to match model input: cv2.resize takes (width, height)
-    # Target: (IMG_W, IMG_H) = (190, 200) → result array shape (200, 190) ✓
-    heatmap_resized = cv2.resize(heatmap, (IMG_W, IMG_H))   # (190, 200) → array (200, 190)
-
+    # Resize heatmap to model input size: cv2.resize takes (width, height)
+    # (IMG_W, IMG_H) = (190, 200) → result array shape (200, 190) ✓
+    heatmap_resized = cv2.resize(heatmap, (IMG_W, IMG_H))   # array (200, 190)
     heatmap_uint8   = np.uint8(255 * heatmap_resized)       # (200, 190)
     heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)  # (200, 190, 3)
 
     # Original image for overlay: img_array[0, :, :, 0] → shape (200, 190) ✓
-    img_display = np.uint8(img_array[0, :, :, 0] * 255)    # (200, 190)
+    img_display = np.uint8(img_array[0, :, :, 0] * 255)         # (200, 190)
     img_bgr     = cv2.cvtColor(img_display, cv2.COLOR_GRAY2BGR)  # (200, 190, 3)
 
     overlay = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)  # (200, 190, 3)
 
     # Upscale for display: cv2.resize takes (width, height)
-    # Double the size: width=380, height=400 → array (400, 380, 3)
+    # Double the size: (IMG_W*2, IMG_H*2) = (380, 400) → array (400, 380, 3)
     overlay_big = cv2.resize(overlay, (IMG_W * 2, IMG_H * 2), interpolation=cv2.INTER_CUBIC)
 
     _, buffer = cv2.imencode('.jpg', overlay_big, [cv2.IMWRITE_JPEG_QUALITY, 92])
