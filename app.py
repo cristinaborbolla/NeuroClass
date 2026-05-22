@@ -133,6 +133,7 @@ def gradcam():
         return jsonify({'error': 'No Conv2D layer found in model'}), 500
  
     heatmap         = make_gradcam_heatmap(img_array, model, last_conv, pred_index)
+    heatmap = np.float32(heatmap)
     heatmap_resized = cv2.resize(heatmap, (190, 200))
     heatmap_uint8   = np.uint8(255 * heatmap_resized)
     heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
