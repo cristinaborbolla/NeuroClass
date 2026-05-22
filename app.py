@@ -107,47 +107,39 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index):
 def gradcam():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
- 
-    file     = request.files['file']
-    img_bytes= file.read()
-    np_arr   = np.frombuffer(img_bytes, np.uint8)
-    img_gray = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE)
- 
-    if img_gray is None:
-        return jsonify({'error': 'Could not decode image'}), 400
- 
-    # ── Preprocess (igual que en /predict) ────────────────────
-    img_resized = cv2.resize(img_gray, (190, 200))   # (W, H) → 190x200
-    clahe       = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    img_clahe   = clahe.apply(img_resized)
-    img_norm    = img_clahe.astype(np.float32) / 255.0
-    img_array   = np.expand_dims(img_norm, axis=(0, -1))   # (1, 190, 200, 1)
- 
-    # ── Predicción ────────────────────────────────────────────
+
+    file      = request.files['file']
+    img_bytes = file.read()
+
+    try:
+        img_array = preprocess_image(img_bytes)   # (1, 200, 190, 1) — igual que /predict
+    except Exception as e:
+        return jsonify({'error': f'Image processing error: {str(e)}'}), 400
+
+    # Predicción
     preds      = model.predict(img_array, verbose=0)
     pred_index = int(np.argmax(preds[0]))
- 
-    # ── Grad-CAM ──────────────────────────────────────────────
+
+    # Grad-CAM
     last_conv = get_last_conv_layer(model)
     if last_conv is None:
         return jsonify({'error': 'No Conv2D layer found in model'}), 500
- 
+
     heatmap         = make_gradcam_heatmap(img_array, model, last_conv, pred_index)
-    heatmap = np.float32(heatmap)
+    heatmap         = np.float32(heatmap)
     heatmap_resized = cv2.resize(heatmap, (190, 200))
     heatmap_uint8   = np.uint8(255 * heatmap_resized)
     heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
- 
-    # ── Overlay sobre imagen original ─────────────────────────
-    img_bgr = cv2.cvtColor(img_resized, cv2.COLOR_GRAY2BGR)
-    overlay = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)
- 
-    # Upscale para que se vea bien en pantalla
-    overlay_big = cv2.resize(overlay, (400, 380), interpolation=cv2.INTER_CUBIC)
- 
+
+    # Overlay sobre imagen original
+    img_display = np.uint8(img_array[0, :, :, 0] * 255)   # (200, 190)
+    img_bgr     = cv2.cvtColor(img_display, cv2.COLOR_GRAY2BGR)
+    overlay     = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)
+
+    overlay_big  = cv2.resize(overlay, (380, 400), interpolation=cv2.INTER_CUBIC)
     _, buffer    = cv2.imencode('.jpg', overlay_big, [cv2.IMWRITE_JPEG_QUALITY, 92])
     img_b64      = base64.b64encode(buffer).decode('utf-8')
- 
+
     return jsonify({
         'gradcam_image': f'data:image/jpeg;base64,{img_b64}',
         'predicted_index': pred_index
