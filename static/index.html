@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NeuroStage · Alzheimer MRI Classifier</title>
+<title>NeuroClass · Alzheimer MRI Classifier</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -437,7 +437,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     <div class="logo-mark">
       <svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9zm0 2a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/></svg>
     </div>
-    NeuroStage
+    NeuroClass
   </div>
   <div class="header-right">
     <nav id="mainNav">
@@ -467,7 +467,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       through <em>deep learning</em>
     </h1>
     <p>
-      NeuroStage uses a convolutional neural network trained on brain MRI images
+      NeuroClass uses a convolutional neural network trained on brain MRI images
       to automatically classify Alzheimer's disease into four diagnostic stages,
       supporting early detection and longitudinal follow-up.
     </p>
@@ -971,7 +971,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 </div>
 
 <footer>
-  NeuroStage · TFG Biomedical Engineering · Universidad de Deusto · 2026 ·
+  NeuroClass · TFG Biomedical Engineering · Universidad de Deusto · 2026 ·
   Supervisión: Prof. Begoña García-Zapirain &amp; Dr. Marcin Derlatka
 </footer>
 
@@ -1036,7 +1036,7 @@ const REC_DATA = {
         "Dedicate 20–30 minutes daily to structured cognitive exercises: word puzzles, number games or memory apps.",
         "Use memory aids proactively: calendars, to-do lists, phone reminders and written notes.",
         "Establish consistent daily routines — predictability reduces cognitive load and stress.",
-        "Practice the memory and orientation games in the NeuroStage app at least 3 times a week."
+        "Practice the memory and orientation games in the NeuroClass app at least 3 times a week."
       ],
       physical:[
         "Walk for at least 30 minutes daily; aerobic exercise has been shown to slow cognitive decline.",
@@ -1159,8 +1159,8 @@ const TREND_MODS = {
     summary:"Your recent exercise scores show a declining trend. It is important to discuss this with your specialist soon.",
     medical:"The declining trend in your exercise performance should be reviewed by your neurologist. Consider bringing forward your next appointment."},
   noData:{label:"No data yet",css:"trend-none",emoji:"📊",
-    summary:"Start using the cognitive exercises in the NeuroStage app regularly — they provide valuable data to personalise your recommendations over time.",
-    medical:"Begin tracking your cognitive performance using the NeuroStage games to enable more personalised follow-up recommendations."}
+    summary:"Start using the cognitive exercises in the NeuroClass app regularly — they provide valuable data to personalise your recommendations over time.",
+    medical:"Begin tracking your cognitive performance using the NeuroClass games to enable more personalised follow-up recommendations."}
 };
 
 // ── Session state ───────────────────────────────────────────
@@ -1856,7 +1856,7 @@ async function exportPatientCSV(patientId, patientName, username) {
     db.from('predictions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
     db.from('game_sessions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false })
   ]);
-  let csv = `NeuroStage · Patient Data Export\nPatient:,${patientName}\nID:,${username}\nExported:,${new Date().toLocaleString('en-GB')}\n\n`;
+  let csv = `NeuroClass · Patient Data Export\nPatient:,${patientName}\nID:,${username}\nExported:,${new Date().toLocaleString('en-GB')}\n\n`;
   csv += `MRI PREDICTIONS\nDate,Predicted Stage,Confidence (%),Non-Demented (%),Very Mild (%),Mild (%),Moderate (%)\n`;
   (preds||[]).forEach(r => {
     csv += `${formatDateTime(r.created_at)},${r.predicted_class},${(r.confidence*100).toFixed(2)},${(r.prob_non_demented*100).toFixed(2)},${(r.prob_very_mild*100).toFixed(2)},${(r.prob_mild*100).toFixed(2)},${(r.prob_moderate*100).toFixed(2)}\n`;
@@ -1871,7 +1871,7 @@ async function exportPatientCSV(patientId, patientName, username) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `neurostage_${username}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `neuroclass_${username}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
