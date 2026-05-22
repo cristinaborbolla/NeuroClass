@@ -981,7 +981,7 @@ const SUPA_URL = "https://uldzsksgzjriqdtozeyw.supabase.co";
 const SUPA_KEY = "sb_publishable_i4_b83eXKpgRwMqu0WNLuw_CB8TVzdS";
 const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 // ── API ─────────────────────────────────────────────────────
-const API_URL = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space/predict";
+const API_URL = "https://neuroclass-alzheimer-mri-classifier.hf.space/predict";
 // ── Classes ─────────────────────────────────────────────────
 const CLASSES = {
   NonDemented:      { color:"#4a8c5c", label:"Non-Demented",      desc:"No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group." },
@@ -1929,7 +1929,7 @@ function updateAnalyseBtn() {
 // ══════════════════════════════════════════════════════════════
 // GRAD-CAM
 // ══════════════════════════════════════════════════════════════
-const GRADCAM_URL  = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space/gradcam";
+const GRADCAM_URL  = "https://neuroclass-alzheimer-mri-classifier.hf.space/gradcam";
 let   gradcamSrc   = null;
 let   originalSrc  = null;
 let   currentView  = 'original';
