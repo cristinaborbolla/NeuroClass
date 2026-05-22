@@ -116,7 +116,7 @@ def gradcam():
     img_bytes = file.read()
 
     try:
-        img_array = preprocess_image(img_bytes)   # (1, 200, 190, 1) — igual que /predict
+        img_array = preprocess_image(img_bytes)   # (1, 190, 200, 1) — igual que /predict
     except Exception as e:
         return jsonify({'error': f'Image processing error: {str(e)}'}), 400
 
@@ -136,7 +136,7 @@ def gradcam():
     heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
 
     # Overlay sobre imagen original
-    img_display = np.uint8(img_array[0, :, :, 0] * 255)   # (200, 190)
+    img_display = np.uint8(img_array[0, :, :, 0] * 255)   # (190, 200)
     img_bgr     = cv2.cvtColor(img_display, cv2.COLOR_GRAY2BGR)
     overlay     = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)
 
