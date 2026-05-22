@@ -91,15 +91,19 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index):
         inputs  = model.inputs,
         outputs = [model.get_layer(last_conv_layer_name).output, model.output]
     )
+    img_tensor = tf.cast(img_array, tf.float32)
     with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(img_array)
+        tape.watch(img_tensor)
+        conv_outputs, predictions = grad_model(img_tensor, training=False)
         class_channel = predictions[:, pred_index]
- 
-    grads       = tape.gradient(class_channel, conv_outputs)
-    pooled_grads= tf.reduce_mean(grads, axis=(0, 1, 2))
-    heatmap     = conv_outputs[0] @ pooled_grads[..., tf.newaxis]
-    heatmap     = tf.squeeze(heatmap)
-    heatmap     = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-8)
+
+    grads = tape.gradient(class_channel, conv_outputs)
+    if grads is None:
+        return np.zeros((conv_outputs.shape[1], conv_outputs.shape[2]))
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    heatmap      = conv_outputs[0] @ pooled_grads[..., tf.newaxis]
+    heatmap      = tf.squeeze(heatmap)
+    heatmap      = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-8)
     return heatmap.numpy()
  
 # ── Endpoint /gradcam ─────────────────────────────────────────
