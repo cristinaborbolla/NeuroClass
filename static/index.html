@@ -402,6 +402,32 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   .nav-btn{padding:.38rem .65rem;font-size:.78rem;}
   .user-name{display:none;}
 }
+
+/* ══ RECOMMENDATIONS ════════════════════════════════════════ */
+.recs-wrap{max-width:860px;margin:0 auto;padding:2.5rem 1.5rem;}
+.recs-header{margin-bottom:1.8rem;}
+.recs-header h2{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;margin-bottom:.35rem;}
+.recs-header p{color:var(--muted);font-size:.88rem;}
+.recs-summary-card{background:linear-gradient(135deg,var(--surface),var(--matcha-slt));border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;}
+.recs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1rem;}
+.rec-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem;transition:box-shadow .2s;}
+.rec-card:hover{box-shadow:var(--shadow);}
+.rec-card-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;}
+.rec-card-icon{font-size:1.3rem;}
+.rec-card-title{font-size:.88rem;font-weight:600;}
+.rec-list{list-style:none;padding:0;margin:0;}
+.rec-list li{font-size:.81rem;color:var(--muted);line-height:1.65;padding:.3rem 0;border-bottom:1px solid var(--bg);display:flex;gap:.5rem;}
+.rec-list li:last-child{border-bottom:none;}
+.rec-list li::before{content:"→";color:var(--matcha);font-weight:700;flex-shrink:0;}
+.trend-indicator{display:inline-flex;align-items:center;gap:.35rem;font-size:.75rem;padding:.22rem .7rem;border-radius:99px;font-weight:600;}
+.trend-up{background:#e6f4ea;color:#2e7d4f;}
+.trend-stable{background:var(--cream);color:#92600a;}
+.trend-down{background:#fef2f2;color:#a83232;}
+.trend-none{background:var(--surface);color:var(--muted);}
+.recs-empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.9rem;line-height:1.7;}
+.recs-loading{text-align:center;padding:3rem;color:var(--muted);}
+.btn-refresh-recs{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;background:var(--matcha);color:white;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn-refresh-recs:hover{opacity:.85;}
 </style>
 </head>
 <body>
@@ -419,6 +445,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       <button class="nav-btn"         onclick="showTab('alzheimer')">About Alzheimer</button>
       <button class="nav-btn locked"  id="navClassifier" onclick="guardedTab('classifier')">Classifier</button>
       <button class="nav-btn locked"  id="navGames"      onclick="guardedTab('games')">Games</button>
+      <button class="nav-btn"         id="navRecommendations" onclick="guardedTab('recommendations')" style="display:none;">Recommendations</button>
       <button class="nav-btn"         id="navDashboard"  onclick="guardedTab('dashboard')" style="display:none;">Dashboard</button>
       <button class="nav-btn"         id="navLogin"      onclick="showTab('login')">Log in</button>
     </nav>
@@ -926,6 +953,23 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   </div>
 </div>
 
+
+<!-- ══ RECOMMENDATIONS ══════════════════════════════════════ -->
+<div id="tab-recommendations" class="section">
+  <div class="recs-wrap">
+    <div class="recs-header">
+      <h2>My Recommendations</h2>
+      <p>Personalised based on your latest MRI assessment and cognitive exercise performance.</p>
+    </div>
+    <div id="recsContent">
+      <div class="recs-loading">
+        <div style="font-size:2rem;margin-bottom:.8rem;">⏳</div>
+        <p>Loading your recommendations…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer>
   NeuroStage · TFG Biomedical Engineering · Universidad de Deusto · 2026 ·
   Supervisión: Prof. Begoña García-Zapirain &amp; Dr. Marcin Derlatka
@@ -936,10 +980,8 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 const SUPA_URL = "https://uldzsksgzjriqdtozeyw.supabase.co";
 const SUPA_KEY = "sb_publishable_i4_b83eXKpgRwMqu0WNLuw_CB8TVzdS";
 const db = supabase.createClient(SUPA_URL, SUPA_KEY);
-
 // ── API ─────────────────────────────────────────────────────
 const API_URL = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space/predict";
-
 // ── Classes ─────────────────────────────────────────────────
 const CLASSES = {
   NonDemented:      { color:"#4a8c5c", label:"Non-Demented",      desc:"No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group." },
@@ -948,16 +990,186 @@ const CLASSES = {
   ModerateDemented: { color:"#a83232", label:"Moderate Demented",  desc:"Moderate cognitive decline. Significant structural atrophy is likely present. Comprehensive clinical evaluation is strongly advised." }
 };
 const CLASS_ORDER = ["NonDemented","VeryMildDemented","MildDemented","ModerateDemented"];
+// ══════════════════════════════════════════════════════════════
+// RECOMMENDATIONS ENGINE
+// ══════════════════════════════════════════════════════════════
+const REC_DATA = {
+  NonDemented:{
+    label:"Non-Demented",color:"#4a8c5c",
+    base:{
+      cognitive:[
+        "Engage in mentally stimulating activities daily: reading, puzzles, chess or strategy games.",
+        "Learn something new regularly — a language, a musical instrument, or a craft.",
+        "Practice mindfulness or meditation for 10 minutes daily to support cognitive resilience.",
+        "Keep a journal to maintain narrative memory and reflect on your day."
+      ],
+      physical:[
+        "Aim for at least 150 minutes of moderate aerobic activity per week (brisk walking, swimming).",
+        "Include balance and coordination exercises such as yoga or tai chi twice a week.",
+        "Stay physically active throughout the day — short walks after meals have proven cognitive benefits.",
+        "Consider strength training twice a week to support overall brain health."
+      ],
+      nutrition:[
+        "Follow a Mediterranean-style diet rich in vegetables, fish, olive oil and whole grains.",
+        "Limit ultra-processed foods, refined sugar and excessive alcohol consumption.",
+        "Prioritise 7–9 hours of quality sleep; poor sleep is one of the most modifiable dementia risk factors.",
+        "Stay well hydrated — mild dehydration can impair concentration and memory."
+      ],
+      social:[
+        "Maintain active social connections; social isolation significantly increases dementia risk.",
+        "Volunteer, join a club or participate in community activities regularly.",
+        "Schedule regular calls or visits with family and friends.",
+        "Consider group cognitive activities such as book clubs or language exchange groups."
+      ],
+      medical:[
+        "Attend your annual cognitive screening appointment as a preventive measure.",
+        "Keep cardiovascular risk factors (blood pressure, cholesterol) well controlled.",
+        "Discuss any new memory concerns promptly with your neurologist or GP.",
+        "Ensure regular hearing and vision checks, as sensory deficits increase cognitive load."
+      ]
+    }
+  },
+  VeryMildDemented:{
+    label:"Very Mild Decline",color:"#b07d2a",
+    base:{
+      cognitive:[
+        "Dedicate 20–30 minutes daily to structured cognitive exercises: word puzzles, number games or memory apps.",
+        "Use memory aids proactively: calendars, to-do lists, phone reminders and written notes.",
+        "Establish consistent daily routines — predictability reduces cognitive load and stress.",
+        "Practice the memory and orientation games in the NeuroStage app at least 3 times a week."
+      ],
+      physical:[
+        "Walk for at least 30 minutes daily; aerobic exercise has been shown to slow cognitive decline.",
+        "Incorporate gentle yoga or stretching to improve balance and reduce fall risk.",
+        "Avoid prolonged sedentary periods — stand and move for a few minutes every hour.",
+        "Discuss with your doctor whether a structured physiotherapy programme would be beneficial."
+      ],
+      nutrition:[
+        "Prioritise omega-3 rich foods (salmon, sardines, walnuts, flaxseed) for brain health.",
+        "Reduce alcohol intake to a minimum — alcohol accelerates cognitive decline at this stage.",
+        "Maintain a regular meal schedule to support energy levels and concentration.",
+        "Ensure adequate vitamin D and B12 levels through diet or supplementation as advised by your doctor."
+      ],
+      social:[
+        "Stay socially engaged; meaningful conversations and shared activities support cognitive reserve.",
+        "Consider joining a mild cognitive impairment support group in your area or online.",
+        "Involve trusted family members in your daily routine to provide gentle support.",
+        "Share your cognitive assessment results with a close family member or carer."
+      ],
+      medical:[
+        "Schedule a follow-up appointment with your neurologist within the next 3 months.",
+        "Discuss whether neuropsychological evaluation would be appropriate at this stage.",
+        "Review all current medications with your doctor — some can affect cognitive function.",
+        "Ask your specialist about early intervention programmes or clinical trials available to you."
+      ]
+    }
+  },
+  MildDemented:{
+    label:"Mild Decline",color:"#c45820",
+    base:{
+      cognitive:[
+        "Follow a structured daily cognitive stimulation programme with the support of a carer or therapist.",
+        "Use visual cues and labelling around the home to support orientation and daily tasks.",
+        "Engage in reminiscence activities: looking through photos, listening to familiar music.",
+        "Keep cognitive sessions short (15–20 minutes) and calm — consistency matters more than intensity."
+      ],
+      physical:[
+        "Maintain a daily walking routine, ideally accompanied by a familiar person.",
+        "Gentle chair-based exercises or adapted yoga can help maintain mobility and mood.",
+        "Ensure the home environment is safe: good lighting, remove trip hazards, install handrails.",
+        "Physical activity combined with social interaction (group walks, dance classes) is particularly beneficial."
+      ],
+      nutrition:[
+        "Prepare simple, nutritious meals following a consistent schedule.",
+        "Monitor hydration carefully — people with mild dementia often forget to drink.",
+        "Consider a weekly meal planning routine with a family member or carer.",
+        "Avoid skipping meals, as irregular eating can worsen confusion and fatigue."
+      ],
+      social:[
+        "Maintain regular contact with family and friends, keeping interactions calm and familiar.",
+        "Day centres and dementia-friendly community programmes provide valuable structured socialisation.",
+        "Encourage participation in familiar hobbies adapted to current abilities.",
+        "Inform close contacts about the diagnosis so they can provide appropriate support."
+      ],
+      medical:[
+        "Schedule neurological follow-up every 3–6 months to monitor progression.",
+        "Discuss medication options for symptom management with your specialist.",
+        "Ensure a formal legal and financial plan is in place while capacity allows.",
+        "Ask your healthcare team about occupational therapy assessment for daily living support."
+      ],
+      caregiver:[
+        "Seek information about local and national dementia caregiver support services.",
+        "Allow time for your own rest and self-care — caregiver burnout is common and serious.",
+        "Attend a dementia caregiver training programme to learn effective communication strategies.",
+        "Connect with other caregivers through support groups for shared experience and advice."
+      ]
+    }
+  },
+  ModerateDemented:{
+    label:"Moderate Decline",color:"#a83232",
+    base:{
+      cognitive:[
+        "Focus on sensory and pleasurable activities rather than performance-based tasks: music, gardening, art.",
+        "Use simple, familiar activities from the person's life history to stimulate engagement.",
+        "Maintain a highly consistent daily routine to reduce anxiety and disorientation.",
+        "Short, calm interactions are more beneficial than lengthy cognitive exercises at this stage."
+      ],
+      physical:[
+        "Prioritise gentle movement to maintain mobility and prevent complications from inactivity.",
+        "Ensure safe transfer and mobility with appropriate equipment and caregiver support.",
+        "Gentle hand massage or music-assisted movement can provide both physical and emotional benefits.",
+        "Consult a physiotherapist for an individualised safe mobility plan."
+      ],
+      nutrition:[
+        "Ensure adequate nutrition and hydration with close monitoring — swallowing difficulties may be developing.",
+        "Offer foods with varied textures and familiar flavours to encourage eating.",
+        "Consider a formal nutritional assessment with a dietitian.",
+        "Small, frequent meals may be better tolerated than three large ones."
+      ],
+      social:[
+        "Prioritise quality time with close family members in calm, familiar environments.",
+        "Music from the person's past is particularly effective for emotional connection at this stage.",
+        "Avoid overwhelming social situations — small gatherings in familiar settings are preferable.",
+        "Consider specialist day care programmes designed for moderate to advanced dementia."
+      ],
+      medical:[
+        "Maintain close contact with the specialist team for ongoing symptom and behaviour management.",
+        "Review pain management carefully — people with moderate dementia may not report pain verbally.",
+        "Discuss advance care planning with the family and healthcare team.",
+        "Assess home safety comprehensively and consider formal care support options."
+      ],
+      caregiver:[
+        "Explore respite care options to allow regular breaks — this is essential, not optional.",
+        "Contact your national Alzheimer's association for specialist caregiver support and resources.",
+        "Consider a formal care needs assessment to determine what professional support is available.",
+        "Attend a caregiver support group — shared experience with others in the same situation is invaluable."
+      ]
+    }
+  }
+};
+
+const TREND_MODS = {
+  improving:{label:"Improving ↑",css:"trend-up",emoji:"📈",
+    summary:"Your cognitive exercise performance shows a positive trend — keep up the excellent work.",
+    medical:"Your improving exercise scores are encouraging. Discuss this progress with your specialist at your next appointment."},
+  stable:{label:"Stable →",css:"trend-stable",emoji:"➡️",
+    summary:"Your cognitive exercise performance has been consistent. Maintaining this routine is valuable.",
+    medical:"Your exercise scores are stable. Regular monitoring remains important — continue attending scheduled appointments."},
+  worsening:{label:"Declining ↓",css:"trend-down",emoji:"📉",
+    summary:"Your recent exercise scores show a declining trend. It is important to discuss this with your specialist soon.",
+    medical:"The declining trend in your exercise performance should be reviewed by your neurologist. Consider bringing forward your next appointment."},
+  noData:{label:"No data yet",css:"trend-none",emoji:"📊",
+    summary:"Start using the cognitive exercises in the NeuroStage app regularly — they provide valuable data to personalise your recommendations over time.",
+    medical:"Begin tracking your cognitive performance using the NeuroStage games to enable more personalised follow-up recommendations."}
+};
 
 // ── Session state ───────────────────────────────────────────
 let currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null');
-
 // ── Password hash (SHA-256 via Web Crypto API) ──────────────
 async function hashPassword(password) {
   const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
-
 // ── Auth UI helpers ─────────────────────────────────────────
 function switchAuth(tab) {
   document.getElementById('formLogin').classList.toggle('active', tab === 'login');
@@ -966,11 +1178,9 @@ function switchAuth(tab) {
   document.getElementById('loginMsg').className = 'auth-msg';
   document.getElementById('registerMsg').className = 'auth-msg';
 }
-
 // ── Role toggle ──────────────────────────────────────────────
 const STAFF_CODE = 'NEURO2026';
 let regRole = 'patient';
-
 function setRegRole(role) {
   regRole = role;
   document.getElementById('optPatient').classList.toggle('selected', role === 'patient');
@@ -982,7 +1192,6 @@ function setRegRole(role) {
   document.getElementById('regUsername').placeholder      = role === 'patient' ? '12345678A' : 'dr.apellido';
   document.getElementById('btnRegister').textContent      = role === 'patient' ? 'Create patient account' : 'Create doctor account';
 }
-
 // ── Register ────────────────────────────────────────────────
 async function doRegister(e) {
   e.preventDefault();
@@ -991,7 +1200,6 @@ async function doRegister(e) {
   const name        = document.getElementById('regName').value.trim();
   const username    = document.getElementById('regUsername').value.trim().toUpperCase();
   const pass        = document.getElementById('regPassword').value;
-
   // Doctor validation
   if (regRole === 'doctor') {
     const code = document.getElementById('regStaffCode').value.trim().toUpperCase();
@@ -1000,16 +1208,13 @@ async function doRegister(e) {
       return;
     }
   }
-
   const dob         = regRole === 'patient' ? (document.getElementById('regDob').value || null) : null;
   const phone       = regRole === 'patient' ? (document.getElementById('regPhone').value.trim() || null) : null;
   const lastAppt    = regRole === 'patient' ? (document.getElementById('regLastAppt').value || null) : null;
   const neurologist = regRole === 'patient' ? (document.getElementById('regNeurologist').value.trim() || null) : null;
   const colNum      = regRole === 'doctor'  ? (document.getElementById('regColNum').value.trim() || null) : null;
-
   btn.disabled = true; btn.textContent = 'Creating account…';
   msg.className = 'auth-msg';
-
   const { data: existing, error: chkErr } = await db.from('users').select('id').ilike('username', username).maybeSingle();
   if (chkErr) {
     showMsg(msg, 'error', 'Could not connect to the database. Check your network.');
@@ -1019,7 +1224,6 @@ async function doRegister(e) {
     showMsg(msg, 'error', 'This ID is already registered.');
     btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account'; return;
   }
-
   const hash = await hashPassword(pass);
   const { error } = await db.from('users').insert({
     username, full_name: name, date_of_birth: dob, phone,
@@ -1027,7 +1231,6 @@ async function doRegister(e) {
     notes: colNum ? `Nº colegiado: ${colNum}` : null,
     password_hash: hash, role: regRole
   });
-
   if (error) {
     showMsg(msg, 'error', 'Registration failed: ' + error.message);
   } else {
@@ -1036,7 +1239,6 @@ async function doRegister(e) {
   }
   btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
 }
-
 // ── Login ────────────────────────────────────────────────────
 async function doLogin(e) {
   e.preventDefault();
@@ -1044,15 +1246,12 @@ async function doLogin(e) {
   const msg      = document.getElementById('loginMsg');
   const username = document.getElementById('loginUsername').value.trim().toUpperCase();
   const pass     = document.getElementById('loginPassword').value;
-
   btn.disabled = true; btn.textContent = 'Logging in…';
   msg.className = 'auth-msg';
-
   const hash = await hashPassword(pass);
   const { data, error } = await db.from('users')
     .select('id, full_name, role, username, date_of_birth, phone, neurologist, last_appointment')
     .ilike('username', username).eq('password_hash', hash).maybeSingle();
-
   if (error) {
     showMsg(msg, 'error', 'Database error: ' + error.message);
     btn.disabled = false; btn.textContent = 'Log in'; return;
@@ -1061,14 +1260,12 @@ async function doLogin(e) {
     showMsg(msg, 'error', 'Incorrect Patient ID or password.');
     btn.disabled = false; btn.textContent = 'Log in'; return;
   }
-
   currentUser = { id: data.id, name: data.full_name, role: data.role, username: data.username };
   localStorage.setItem('ns_user', JSON.stringify(currentUser));
   updateHeaderAuth();
   showTab('home');
   btn.disabled = false; btn.textContent = 'Log in';
 }
-
 // ── Logout ──────────────────────────────────────────────────
 function logout() {
   currentUser = null;
@@ -1078,24 +1275,21 @@ function logout() {
   updateHeaderAuth();
   showTab('home');
 }
-
 // ── Update header after login/logout ────────────────────────
 function updateHeaderAuth() {
   const loggedIn = !!currentUser;
   document.getElementById('navLogin').style.display = loggedIn ? 'none' : '';
   document.getElementById('userPill').classList.toggle('visible', loggedIn);
-
   // Classifier: all logged-in users
   document.getElementById('navClassifier').classList.toggle('locked', !loggedIn);
-
   // Games: patients only
   const canGames = loggedIn && currentUser.role === 'patient';
   document.getElementById('navGames').classList.toggle('locked', !canGames);
-
   // Dashboard: doctors only (hidden for patients entirely)
   const isDr = loggedIn && currentUser.role === 'doctor';
   document.getElementById('navDashboard').style.display = isDr ? '' : 'none';
-
+  const canRecs = loggedIn && currentUser.role === 'patient';
+  document.getElementById('navRecommendations').style.display = canRecs ? '' : 'none';
   if (loggedIn) {
     const initials = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('userAvatar').textContent = initials;
@@ -1105,35 +1299,32 @@ function updateHeaderAuth() {
     badge.className   = 'role-badge ' + currentUser.role;
   }
 }
-
 function showMsg(el, type, text) {
   el.className = 'auth-msg ' + type;
   el.textContent = text;
 }
-
 // ── Tab navigation ──────────────────────────────────────────
 function showTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   const navMap = { home:'', alzheimer:'', login:'navLogin', classifier:'navClassifier',
-                   games:'navGames', dashboard:'navDashboard' };
+                   games:'navGames', dashboard:'navDashboard', recommendations:'navRecommendations' };
   if (navMap[id]) document.getElementById(navMap[id])?.classList.add('active');
   if (id === 'home')      document.querySelector('.nav-btn').classList.add('active');
   if (id === 'alzheimer') document.querySelectorAll('.nav-btn')[1].classList.add('active');
   if (id === 'dashboard') loadPatients();
+  if (id === 'recommendations' && currentUser) loadRecommendations();
   if (id === 'classifier' && currentUser && currentUser.role === 'doctor') loadPatientsForClassifier();
 }
-
 function guardedTab(id) {
   if (!currentUser) { showTab('login'); return; }
   if (id === 'games'     && currentUser.role !== 'patient') return;
   if (id === 'dashboard' && currentUser.role !== 'doctor')  return;
+  if (id === 'recommendations' && currentUser.role !== 'patient') return;
   showTab(id);
 }
-
 function toggleStage(id) { document.getElementById(id).classList.toggle('open'); }
-
 // ── Classifier ──────────────────────────────────────────────
 const fileInput    = document.getElementById("fileInput");
 const uploadZone   = document.getElementById("uploadZone");
@@ -1144,7 +1335,6 @@ const resultEmpty  = document.getElementById("resultEmpty");
 const resultContent= document.getElementById("resultContent");
 const errorBox     = document.getElementById("errorBox");
 let selectedFile   = null;
-
 uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
 uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
 uploadZone.addEventListener("drop", e => {
@@ -1153,7 +1343,6 @@ uploadZone.addEventListener("drop", e => {
   if (f && f.type.startsWith("image/")) handleFile(f);
 });
 fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
-
 function handleFile(file) {
   selectedFile = file;
   originalSrc  = URL.createObjectURL(file);
@@ -1174,7 +1363,6 @@ function handleFile(file) {
   resultEmpty.style.display = "flex";
   errorBox.classList.remove("visible");
 }
-
 function clearImage() {
   selectedFile = null; originalSrc = null; gradcamSrc = null;
   previewImg.src = "";
@@ -1189,7 +1377,6 @@ function clearImage() {
   errorBox.classList.remove("visible");
   fileInput.value = "";
 }
-
 analyseBtn.addEventListener("click", async () => {
   if (!selectedFile) return;
   if (currentUser && currentUser.role === 'doctor' && !doctorPatient) {
@@ -1218,7 +1405,6 @@ analyseBtn.addEventListener("click", async () => {
     analyseBtn.classList.remove("loading"); analyseBtn.disabled = false;
   }
 });
-
 function displayResults(data) {
   const cls  = data.predicted_class;
   const meta = CLASSES[cls];
@@ -1247,7 +1433,6 @@ function displayResults(data) {
   // Save to Supabase
   savePrediction(data);
 }
-
 // ── Save prediction to Supabase ──────────────────────────────
 async function savePrediction(data) {
   if (!currentUser) return;
@@ -1268,10 +1453,7 @@ async function savePrediction(data) {
     });
   } catch(e) { console.warn('Could not save prediction:', e); }
 }
-
-
 // ══════════════════════════════════════════════════════════════
-
 async function saveGameSession(gameName, score, maxScore, durationSec) {
   if (!currentUser) return;
   try {
@@ -1281,13 +1463,11 @@ async function saveGameSession(gameName, score, maxScore, durationSec) {
     });
   } catch(e) { console.warn('Could not save game session:', e); }
 }
-
 let gameTimers = [];
 function clearGameTimers() {
   gameTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
   gameTimers = [];
 }
-
 function startGame(id) {
   clearGameTimers();
   document.getElementById('gamesLobby').style.display = 'none';
@@ -1302,13 +1482,11 @@ function startGame(id) {
   if (id === 'pattern')      initPattern();
   if (id === 'arithmetic')   initArithmetic();
 }
-
 function backToLobby() {
   clearGameTimers();
   document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
   document.getElementById('gamesLobby').style.display = '';
 }
-
 function showResults(containerId, gameName, score, maxScore, durationSec, detail) {
   const pct   = Math.round((score / maxScore) * 100);
   const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪';
@@ -1327,7 +1505,6 @@ function showResults(containerId, gameName, score, maxScore, durationSec, detail
     </div>`;
   saveGameSession(gameName, score, maxScore, durationSec);
 }
-
 // ── Memory ────────────────────────────────────────────────────
 let memState = {};
 function initMemory() {
@@ -1382,7 +1559,6 @@ function memFlip(card) {
     gameTimers.push(t);
   }
 }
-
 // ── Orientation ───────────────────────────────────────────────
 let orientState = {};
 function buildOrientQuestions() {
@@ -1450,7 +1626,6 @@ function orientAnswer(btn,chosen,correct) {
   },1200);
   gameTimers.push(t);
 }
-
 // ── Sequence ──────────────────────────────────────────────────
 let seqState={};
 const SEQ_COLORS=['green','red','blue','yellow'];
@@ -1500,52 +1675,43 @@ function seqPlayerClick(color) {
     const t3=setTimeout(seqNextRound,900); gameTimers.push(t3);
   }
 }
-
 // ══════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════
-
 function calcAge(dob) {
   if (!dob) return null;
   const diff = Date.now() - new Date(dob).getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
 }
-
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 }
-
 function formatDateTime(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
   return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) +
     ' · ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
 }
-
 function scorePill(score, max) {
   const pct = (score / max) * 100;
   const cls = pct >= 75 ? 'score-hi' : pct >= 40 ? 'score-md' : 'score-lo';
   return `<span class="score-pill ${cls}">${score} / ${max}</span>`;
 }
-
 function formatDuration(sec) {
   const m = Math.floor(sec / 60), s = sec % 60;
   return `${m}:${String(s).padStart(2,'0')}`;
 }
-
 async function loadPatients() {
   const grid = document.getElementById('patientsGrid');
   grid.innerHTML = '<div class="dash-empty"><span>⏳</span>Loading patients…</div>';
   document.getElementById('patientDetail').style.display = 'none';
-
   const { data, error } = await db
     .from('users')
     .select('id, username, full_name, date_of_birth, phone, neurologist, last_appointment, created_at')
     .eq('role', 'patient')
     .order('full_name', { ascending: true });
-
   if (error || !data) {
     grid.innerHTML = '<div class="dash-empty"><span>⚠️</span>Could not load patients.</div>';
     return;
@@ -1555,10 +1721,8 @@ async function loadPatients() {
     document.getElementById('dashCount').textContent = '0 patients';
     return;
   }
-
   document.getElementById('dashCount').textContent =
     `${data.length} patient${data.length !== 1 ? 's' : ''}`;
-
   grid.innerHTML = '';
   data.forEach(p => {
     const initials = p.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1584,16 +1748,13 @@ async function loadPatients() {
     grid.appendChild(card);
   });
 }
-
 async function selectPatient(p) {
   document.querySelectorAll('.patient-card').forEach(c => c.classList.remove('selected'));
   const card = document.getElementById('pc-' + p.id);
   if (card) { card.classList.add('selected'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
-
   const detail   = document.getElementById('patientDetail');
   const initials = p.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const age      = calcAge(p.date_of_birth);
-
   detail.style.display = '';
   detail.innerHTML = `
     <div class="detail-top">
@@ -1630,14 +1791,11 @@ async function selectPatient(p) {
       <div class="section-title" style="margin-top:1.6rem;margin-bottom:.85rem;">Game session history</div>
       <div id="gameHistoryWrap"><div class="dash-empty"><span>⏳</span>Loading…</div></div>
     </div>`;
-
   detail.scrollIntoView({ behavior:'smooth', block:'start' });
-
   // Load predictions
   const { data: preds } = await db
     .from('predictions').select('*')
     .eq('patient_id', p.id).order('created_at', { ascending: false });
-
   const predWrap = document.getElementById('predHistoryWrap');
   if (!preds || preds.length === 0) {
     predWrap.innerHTML = '<div class="dash-empty"><span>🧠</span>No predictions recorded yet.</div>';
@@ -1670,12 +1828,10 @@ async function selectPatient(p) {
       <thead><tr><th>Stage</th><th>Confidence</th><th>Probabilities</th><th>Date</th></tr></thead>
       <tbody>${predRows}</tbody></table></div>`;
   }
-
   // Load game sessions
   const { data: sessions } = await db
     .from('game_sessions').select('*')
     .eq('patient_id', p.id).order('created_at', { ascending: false });
-
   const gameWrap = document.getElementById('gameHistoryWrap');
   if (!sessions || sessions.length === 0) {
     gameWrap.innerHTML = '<div class="dash-empty"><span>🎮</span>No game sessions recorded yet.</div>';
@@ -1695,27 +1851,22 @@ async function selectPatient(p) {
     <thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead>
     <tbody>${gameRows}</tbody></table></div>`;
 }
-
 async function exportPatientCSV(patientId, patientName, username) {
   const [{ data: preds }, { data: games }] = await Promise.all([
     db.from('predictions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
     db.from('game_sessions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false })
   ]);
-
   let csv = `NeuroStage · Patient Data Export\nPatient:,${patientName}\nID:,${username}\nExported:,${new Date().toLocaleString('en-GB')}\n\n`;
-
   csv += `MRI PREDICTIONS\nDate,Predicted Stage,Confidence (%),Non-Demented (%),Very Mild (%),Mild (%),Moderate (%)\n`;
   (preds||[]).forEach(r => {
     csv += `${formatDateTime(r.created_at)},${r.predicted_class},${(r.confidence*100).toFixed(2)},${(r.prob_non_demented*100).toFixed(2)},${(r.prob_very_mild*100).toFixed(2)},${(r.prob_mild*100).toFixed(2)},${(r.prob_moderate*100).toFixed(2)}\n`;
   });
   if (!preds || preds.length === 0) csv += `No predictions recorded\n`;
-
   csv += `\nGAME SESSIONS\nDate,Game,Score,Max Score,Result (%),Duration (s)\n`;
   (games||[]).forEach(s => {
     csv += `${formatDateTime(s.created_at)},${s.game_name},${s.score},${s.max_score},${Math.round((s.score/s.max_score)*100)},${s.duration_sec}\n`;
   });
   if (!games || games.length === 0) csv += `No game sessions recorded\n`;
-
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -1724,26 +1875,22 @@ async function exportPatientCSV(patientId, patientName, username) {
   a.click();
   URL.revokeObjectURL(url);
 }
-
 // ══════════════════════════════════════════════════════════════
 // DOCTOR PATIENT SELECTOR (classifier)
 // ══════════════════════════════════════════════════════════════
 let doctorPatient = null;   // patient selected by doctor for current analysis
 let classifierPatients = []; // cached patient list
-
 async function loadPatientsForClassifier() {
   const box = document.getElementById('doctorPatientSelector');
   box.classList.add('visible');
   doctorPatient = null;
   document.getElementById('selectedPatientPill').classList.remove('visible');
   document.getElementById('noPatientWarn').classList.remove('visible');
-
   if (classifierPatients.length === 0) {
     const { data } = await db.from('users').select('id, username, full_name')
       .eq('role', 'patient').order('full_name', { ascending: true });
     classifierPatients = data || [];
   }
-
   const sel = document.getElementById('patientSelectCLF');
   sel.innerHTML = '<option value="">— Select patient —</option>';
   classifierPatients.forEach(p => {
@@ -1753,7 +1900,6 @@ async function loadPatientsForClassifier() {
     sel.appendChild(opt);
   });
 }
-
 function selectAnalysisPatient(id) {
   const warn = document.getElementById('noPatientWarn');
   const pill = document.getElementById('selectedPatientPill');
@@ -1775,13 +1921,11 @@ function selectAnalysisPatient(id) {
   }
   updateAnalyseBtn();
 }
-
 function updateAnalyseBtn() {
   const needsPatient = currentUser && currentUser.role === 'doctor';
   const patientOk    = !needsPatient || !!doctorPatient;
   analyseBtn.disabled = !selectedFile || !patientOk;
 }
-
 // ══════════════════════════════════════════════════════════════
 // GRAD-CAM
 // ══════════════════════════════════════════════════════════════
@@ -1789,7 +1933,6 @@ const GRADCAM_URL  = "https://cristinaborbolla-alzheimer-mri-classifier.hf.space
 let   gradcamSrc   = null;
 let   originalSrc  = null;
 let   currentView  = 'original';
-
 function showView(view) {
   currentView = view;
   document.getElementById('btnOriginal').classList.toggle('active', view === 'original');
@@ -1800,7 +1943,6 @@ function showView(view) {
     document.getElementById('previewImg').src = originalSrc || '';
   }
 }
-
 async function fetchGradCAM(file) {
   const status = document.getElementById('gradcamStatus');
   status.textContent = '⏳ Generating Grad-CAM…';
@@ -1821,7 +1963,6 @@ async function fetchGradCAM(file) {
     console.warn('Grad-CAM error:', e);
   }
 }
-
 // ══════════════════════════════════════════════════════════════
 // CHARTS (dashboard)
 // ══════════════════════════════════════════════════════════════
@@ -1829,7 +1970,6 @@ const chartInstances = {};
 function destroyChart(id) {
   if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
 }
-
 function renderPredChart(preds) {
   destroyChart('chartPreds');
   const canvas = document.getElementById('chartPreds');
@@ -1838,16 +1978,13 @@ function renderPredChart(preds) {
     canvas.parentElement.querySelector('.chart-box-title').textContent = 'Prediction trend (no data)';
     return;
   }
-
   const stageColors = ['#4a8c5c','#b07d2a','#c45820','#a83232'];
   const stageNames  = ['Non-Demented','Very Mild','Mild','Moderate'];
-
   // Sort by date ascending for the line
   const sorted = [...preds].reverse();
   const labels  = sorted.map(p => new Date(p.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}));
   const values  = sorted.map(p => p.predicted_index);
   const colors  = sorted.map(p => stageColors[p.predicted_index] || '#999');
-
   chartInstances['chartPreds'] = new Chart(canvas, {
     type: 'line',
     data: {
@@ -1879,16 +2016,13 @@ function renderPredChart(preds) {
     }
   });
 }
-
 function renderGamesChart(sessions) {
   destroyChart('chartGames');
   const canvas = document.getElementById('chartGames');
   if (!canvas) return;
   if (!sessions || sessions.length === 0) return;
-
   const gameColors = { memory:'#94B49F', orientation:'#3050b0', sequence:'#b07d2a' };
   const gameNames  = ['memory','orientation','sequence'];
-
   const datasets = gameNames.map(g => {
     const gs = sessions.filter(s => s.game_name === g).reverse();
     return {
@@ -1901,11 +2035,9 @@ function renderGamesChart(sessions) {
       pointRadius: 5, tension: 0.3, fill: false
     };
   }).filter(d => d.data.length > 0);
-
   // Use max session count as x labels
   const maxLen = Math.max(...datasets.map(d => d.data.length));
   const labels = Array.from({length: maxLen}, (_,i) => `Session ${i+1}`);
-
   chartInstances['chartGames'] = new Chart(canvas, {
     type: 'line',
     data: { labels, datasets },
@@ -1920,7 +2052,6 @@ function renderGamesChart(sessions) {
     }
   });
 }
-
 // ══════════════════════════════════════════════════════════════
 // WHAT'S MISSING
 // ══════════════════════════════════════════════════════════════
@@ -1928,14 +2059,12 @@ const WM_OBJECTS = ['🍎','🍌','🐱','🐶','🚗','⚽','🎸','🌺','🎯
                     '🎨','🦋','🌙','⭐','🏠','🎪','🍦','🦁','🌻','🎭',
                     '🐸','🍇','🎀','🚀','🌈','🐠','🎃','🍩','🦊','🎵'];
 let wmState = {};
-
 function initWhatsMissing() {
   wmState = { round:0, score:0, maxRounds:8, startTime:Date.now() };
   document.getElementById('wmResults').innerHTML = '';
   document.getElementById('wmScore').textContent = 'Score: 0 / 8';
   wmNextRound();
 }
-
 function wmNextRound() {
   wmState.round++;
   if (wmState.round > wmState.maxRounds) {
@@ -1947,17 +2076,14 @@ function wmNextRound() {
   document.getElementById('wmRoundStat').textContent = `Round ${wmState.round} / ${wmState.maxRounds}`;
   document.getElementById('wmOpts').innerHTML = '';
   document.getElementById('wmCountdown').textContent = 'Look carefully at all the objects…';
-
   const pool = [...WM_OBJECTS].sort(()=>Math.random()-.5);
   const gridObjs = pool.slice(0,9);
   const missingIdx = Math.floor(Math.random()*9);
   const missing = gridObjs[missingIdx];
   wmState.missing = missing;
-
   const grid = document.getElementById('wmGrid');
   grid.innerHTML = gridObjs.map((o,i)=>
     `<div class="wm-cell" id="wmc-${i}">${o}</div>`).join('');
-
   // Countdown then hide
   let secs = 4;
   const tick = setInterval(() => {
@@ -1968,7 +2094,6 @@ function wmNextRound() {
       const cell = document.getElementById(`wmc-${missingIdx}`);
       if (cell) { cell.classList.add('hidden'); cell.textContent = '?'; }
       document.getElementById('wmCountdown').textContent = 'Which object disappeared?';
-
       const distractors = pool.slice(9,12);
       const opts = [missing,...distractors].sort(()=>Math.random()-.5);
       document.getElementById('wmOpts').innerHTML = opts.map(o=>
@@ -1978,7 +2103,6 @@ function wmNextRound() {
   }, 1000);
   gameTimers.push(tick);
 }
-
 function wmAnswer(btn, chosen, correct) {
   document.querySelectorAll('.wm-opt').forEach(b=>b.disabled=true);
   if (chosen===correct){ btn.classList.add('correct'); wmState.score++; }
@@ -1987,7 +2111,6 @@ function wmAnswer(btn, chosen, correct) {
   document.getElementById('wmScore').textContent=`Score: ${wmState.score} / ${wmState.maxRounds}`;
   const t=setTimeout(wmNextRound,1200); gameTimers.push(t);
 }
-
 // ══════════════════════════════════════════════════════════════
 // PATTERN
 // ══════════════════════════════════════════════════════════════
@@ -2000,7 +2123,6 @@ const PAT_COLORS = [
   {name:'orange', hex:'#e87c3e'},
 ];
 let patState = {};
-
 function buildPattern(round) {
   const nColors = round<=3 ? 2 : round<=6 ? 3 : 4;
   const colors  = [...PAT_COLORS].sort(()=>Math.random()-.5).slice(0,nColors);
@@ -2012,14 +2134,12 @@ function buildPattern(round) {
   const options = [answer,...distractors].sort(()=>Math.random()-.5);
   return {seq,answer,options};
 }
-
 function initPattern() {
   patState={round:0,score:0,maxRounds:8,startTime:Date.now()};
   document.getElementById('patResults').innerHTML='';
   document.getElementById('patScore').textContent='Score: 0 / 8';
   patNextRound();
 }
-
 function patNextRound() {
   patState.round++;
   if (patState.round>patState.maxRounds) {
@@ -2031,20 +2151,16 @@ function patNextRound() {
   document.getElementById('patRoundStat').textContent=`Round ${patState.round} / ${patState.maxRounds}`;
   document.getElementById('patScore').textContent=`Score: ${patState.score} / ${patState.maxRounds}`;
   document.getElementById('patInfo').textContent='What colour comes next?';
-
   const {seq,answer,options}=buildPattern(patState.round);
   patState.answer=answer.name;
-
   document.getElementById('patSequence').innerHTML=
     seq.map(c=>`<div class="pat-cell" style="background:${c.hex}"></div>`).join('')+
     '<div class="pat-question">?</div>';
-
   document.getElementById('patOpts').innerHTML=options.map(c=>
     `<button class="pat-opt" data-color="${c.name}" style="background:${c.hex}"
       onclick="patAnswer(this,'${c.name}','${answer.name}')"></button>`
   ).join('');
 }
-
 function patAnswer(btn,chosen,correct) {
   document.querySelectorAll('.pat-opt').forEach(b=>b.disabled=true);
   if (chosen===correct){ btn.classList.add('correct'); patState.score++; }
@@ -2053,12 +2169,10 @@ function patAnswer(btn,chosen,correct) {
   document.getElementById('patScore').textContent=`Score: ${patState.score} / ${patState.maxRounds}`;
   const t=setTimeout(patNextRound,1000); gameTimers.push(t);
 }
-
 // ══════════════════════════════════════════════════════════════
 // ARITHMETIC
 // ══════════════════════════════════════════════════════════════
 let arithState = {};
-
 function buildArith(round) {
   const op = Math.random()>.45 ? '+' : '-';
   let a,b;
@@ -2077,14 +2191,12 @@ function buildArith(round) {
   const level = round<=3?'Easy':round<=6?'Medium':'Hard';
   return {display:`${a} ${op} ${b} =`,answer,options,level};
 }
-
 function initArithmetic() {
   arithState={round:0,score:0,maxRounds:10,startTime:Date.now()};
   document.getElementById('arithResults').innerHTML='';
   document.getElementById('arithScore').textContent='Score: 0 / 10';
   arithNextRound();
 }
-
 function arithNextRound() {
   arithState.round++;
   if (arithState.round>arithState.maxRounds) {
@@ -2102,7 +2214,6 @@ function arithNextRound() {
     `<button class="arith-opt" onclick="arithAnswer(this,${o},${answer})">${o}</button>`
   ).join('');
 }
-
 function arithAnswer(btn,chosen,correct) {
   document.querySelectorAll('.arith-opt').forEach(b=>b.disabled=true);
   if (chosen===correct){ btn.classList.add('correct'); arithState.score++; }
@@ -2112,6 +2223,110 @@ function arithAnswer(btn,chosen,correct) {
   const t=setTimeout(arithNextRound,1000); gameTimers.push(t);
 }
 
+// ══════════════════════════════════════════════════════════════
+// RECOMMENDATIONS FUNCTIONS
+// ══════════════════════════════════════════════════════════════
+function computeGameTrend(sessions) {
+  if (!sessions || sessions.length < 4) return 'noData';
+  const sorted = [...sessions].sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+  const scores = sorted.map(s => (s.score / s.max_score) * 100);
+  const mid = Math.floor(scores.length / 2);
+  const firstHalf  = scores.slice(0, mid).reduce((a,b)=>a+b,0) / mid;
+  const secondHalf = scores.slice(mid).reduce((a,b)=>a+b,0) / (scores.length - mid);
+  const diff = secondHalf - firstHalf;
+  if (diff > 5)  return 'improving';
+  if (diff < -5) return 'worsening';
+  return 'stable';
+}
+
+function computePredTrend(predictions) {
+  if (!predictions || predictions.length < 2) return null;
+  const sorted = [...predictions].sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+  const diff = sorted[sorted.length-1].predicted_index - sorted[0].predicted_index;
+  if (diff > 0) return 'worsening';
+  if (diff < 0) return 'improving';
+  return 'stable';
+}
+
+async function loadRecommendations() {
+  if (!currentUser) return;
+  const container = document.getElementById('recsContent');
+  container.innerHTML = '<div class="recs-loading"><div style="font-size:2rem;margin-bottom:.8rem;">⏳</div><p>Loading your personalised recommendations…</p></div>';
+
+  try {
+    const [{ data: preds }, { data: sessions }] = await Promise.all([
+      db.from('predictions').select('*').eq('patient_id', currentUser.id).order('created_at',{ascending:false}).limit(10),
+      db.from('game_sessions').select('*').eq('patient_id', currentUser.id).order('created_at',{ascending:false}).limit(20)
+    ]);
+
+    const latestPred = preds && preds.length > 0 ? preds[0] : null;
+    const stageName  = latestPred ? latestPred.predicted_class : null;
+    const gameTrend  = computeGameTrend(sessions);
+    const predTrend  = computePredTrend(preds);
+
+    if (!latestPred && (!sessions || sessions.length === 0)) {
+      container.innerHTML = '<div class="recs-empty"><div style="font-size:2.5rem;margin-bottom:1rem;opacity:.4">🧠</div><p>No assessment data available yet.<br>Upload an MRI image in the Classifier or complete some cognitive exercises<br>to receive personalised recommendations.</p></div>';
+      return;
+    }
+
+    const stage    = stageName || 'VeryMildDemented';
+    const recData  = REC_DATA[stage] || REC_DATA['NonDemented'];
+    const trendMod = TREND_MODS[gameTrend] || TREND_MODS['noData'];
+    const predDate = latestPred ? new Date(latestPred.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : null;
+
+    let summaryText = stageName
+      ? 'Based on your most recent MRI classification (<strong>' + recData.label + '</strong>' + (predDate ? ', ' + predDate : '') + '), the following recommendations have been prepared for you. '
+      : 'The following recommendations are based on your cognitive exercise performance, as no MRI assessment has been recorded yet. ';
+    summaryText += trendMod.summary;
+
+    const base = recData.base;
+    const categories = [
+      {icon:"🧠", title:"Cognitive Stimulation", items: base.cognitive},
+      {icon:"🏃", title:"Physical Activity",     items: base.physical},
+      {icon:"🥗", title:"Nutrition & Sleep",     items: base.nutrition},
+      {icon:"👥", title:"Social Connection",     items: base.social},
+      {icon:"🏥", title:"Medical Follow-up",     items: [...base.medical, trendMod.medical]},
+    ];
+    if (base.caregiver) categories.push({icon:"💚", title:"For Caregivers", items: base.caregiver});
+
+    const gameTrendHTML = '<span class="trend-indicator ' + trendMod.css + '">' + trendMod.emoji + ' Exercises: ' + trendMod.label + '</span>';
+    let predTrendHTML = '';
+    if (predTrend && preds && preds.length >= 2) {
+      const pt = TREND_MODS[predTrend] || TREND_MODS['stable'];
+      predTrendHTML = '<span class="trend-indicator ' + pt.css + '" style="margin-left:.4rem">' + pt.emoji + ' Assessment: ' + pt.label + '</span>';
+    }
+
+    const cardsHTML = categories.map(cat =>
+      '<div class="rec-card">' +
+        '<div class="rec-card-header">' +
+          '<span class="rec-card-icon">' + cat.icon + '</span>' +
+          '<span class="rec-card-title">' + cat.title + '</span>' +
+        '</div>' +
+        '<ul class="rec-list">' +
+          cat.items.map(item => '<li>' + item + '</li>').join('') +
+        '</ul>' +
+      '</div>'
+    ).join('');
+
+    container.innerHTML =
+      '<div class="recs-summary-card">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">' +
+          '<span style="background:' + recData.color + '22;color:' + recData.color + ';font-size:.75rem;font-weight:700;padding:.25rem .85rem;border-radius:99px;border:1px solid ' + recData.color + '44;">' + recData.label + '</span>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:.4rem;">' + gameTrendHTML + predTrendHTML + '</div>' +
+        '</div>' +
+        '<p style="font-size:.92rem;line-height:1.75;color:var(--text);">' + summaryText + '</p>' +
+        '<p style="font-size:.76rem;color:var(--muted);margin-top:.75rem;font-style:italic;">⚠ These recommendations are generated automatically for informational purposes only and do not constitute medical advice. Always consult your neurologist or healthcare professional.</p>' +
+      '</div>' +
+      '<div class="recs-grid">' + cardsHTML + '</div>' +
+      '<div style="text-align:center;margin-top:1.5rem;">' +
+        '<button class="btn-refresh-recs" onclick="loadRecommendations()">🔄 Refresh recommendations</button>' +
+      '</div>';
+
+  } catch(e) {
+    container.innerHTML = '<div class="recs-empty"><p>Could not load recommendations. Please try again.</p></div>';
+    console.error('Recommendations error:', e);
+  }
+}
 // ── Init ────────────────────────────────────────────────────
 updateHeaderAuth();
 </script>
