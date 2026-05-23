@@ -1,20 +1,19 @@
 {
-  "name": "NeuroClass · Alzheimer MRI Classifier",
+  "name": "NeuroClass",
   "short_name": "NeuroClass",
-  "description": "Clasificación de Alzheimer mediante MRI con deep learning",
+  "description": "Alzheimer MRI Classifier · Universidad de Deusto",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#6366f1",
-  "orientation": "portrait",
+  "background_color": "#F6FAF5",
+  "theme_color": "#94B49F",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/static/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
