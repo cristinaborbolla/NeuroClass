@@ -400,11 +400,14 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .arith-opt:disabled{cursor:not-allowed;}
 
 @media(max-width:680px){
-  .clf-wrap{grid-template-columns:1fr;}
-  .hero h1{font-size:2.1rem;}
-  .info-strip,.stage-features{grid-template-columns:1fr;}
-  .nav-btn{padding:.38rem .65rem;font-size:.78rem;}
-  .user-name{display:none;}
+  nav{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    max-width: calc(100vw - 140px);
+  }
+  nav::-webkit-scrollbar{ display: none; }
 }
 
 /* ══ RECOMMENDATIONS ════════════════════════════════════════ */
