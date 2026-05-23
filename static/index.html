@@ -7,6 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
 <style>
 :root {
   --bg:        #F6FAF5;
@@ -28,6 +31,7 @@
   --shadow:    0 1px 12px rgba(44,62,48,.06);
   --c0:#4a8c5c; --c1:#b07d2a; --c2:#c45820; --c3:#a83232;
 }
+  
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:16px;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
@@ -2329,6 +2333,15 @@ async function loadRecommendations() {
 }
 // ── Init ────────────────────────────────────────────────────
 updateHeaderAuth();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registrado:', reg.scope))
+        .catch(err => console.error('SW error:', err));
+    });
+  }
 </script>
 </body>
 </html>
