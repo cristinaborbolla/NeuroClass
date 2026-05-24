@@ -450,8 +450,8 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     <nav id="mainNav">
       <button class="nav-btn active"  onclick="showTab('home')">Home</button>
       <button class="nav-btn"         onclick="showTab('alzheimer')">About Alzheimer</button>
-      <button class="nav-btn locked"  id="navClassifier" onclick="guardedTab('classifier')">Classifier</button>
-      <button class="nav-btn locked"  id="navGames"      onclick="guardedTab('games')">Games</button>
+      <button class="nav-btn" id="navClassifier" onclick="showTab('classifier')" style="display:none;">Classifier</button>
+      <button class="nav-btn" id="navGames"      onclick="showTab('games')"      style="display:none;">Games</button>
       <button class="nav-btn"         id="navRecommendations" onclick="guardedTab('recommendations')" style="display:none;">Recommendations</button>
       <button class="nav-btn"         id="navDashboard"  onclick="guardedTab('dashboard')" style="display:none;">Dashboard</button>
       <button class="nav-btn"         id="navLogin"      onclick="showTab('login')">Log in</button>
@@ -1288,10 +1288,9 @@ function updateHeaderAuth() {
   document.getElementById('navLogin').style.display = loggedIn ? 'none' : '';
   document.getElementById('userPill').classList.toggle('visible', loggedIn);
   // Classifier: all logged-in users
-  document.getElementById('navClassifier').classList.toggle('locked', !loggedIn);
-  // Games: patients only
+  document.getElementById('navClassifier').style.display = loggedIn ? '' : 'none';  // Games: patients only
   const canGames = loggedIn && currentUser.role === 'patient';
-  document.getElementById('navGames').classList.toggle('locked', !canGames);
+  document.getElementById('navGames').style.display = canGames ? '' : 'none';
   // Dashboard: doctors only (hidden for patients entirely)
   const isDr = loggedIn && currentUser.role === 'doctor';
   document.getElementById('navDashboard').style.display = isDr ? '' : 'none';
