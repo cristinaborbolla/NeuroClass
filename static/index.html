@@ -2448,27 +2448,6 @@ async function loadRecommendations() {
     console.error('Recommendations error:', e);
   }
 }
-  // MRI predictions
-  if (preds && preds.length > 0) {
-    const stageColors = { NonDemented:'#4a8c5c', VeryMildDemented:'#b07d2a', MildDemented:'#c45820', ModerateDemented:'#a83232' };
-    const stageLabels = { NonDemented:'Non-Demented', VeryMildDemented:'Very Mild', MildDemented:'Mild', ModerateDemented:'Moderate' };
-    html += '<div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:.75rem;">MRI assessment history</div>';
-    html += '<div style="overflow-x:auto;"><table class="pred-tbl"><thead><tr><th>Stage</th><th>Confidence</th><th>Date</th></tr></thead><tbody>';
-    preds.slice(0,10).forEach(r => {
-      const col = stageColors[r.predicted_class] || '#999';
-      const lbl = stageLabels[r.predicted_class] || r.predicted_class;
-      html += `<tr>
-        <td><span class="stage-dot" style="background:${col}"></span>${lbl}</td>
-        <td><strong>${(r.confidence*100).toFixed(1)}%</strong></td>
-        <td style="color:var(--muted)">${formatDateTime(r.created_at)}</td>
-      </tr>`;
-    });
-    html += '</tbody></table></div>';
-  }
-
-  html += '</div>';
-  return html;
-}
 
 // ══════════════════════════════════════════════════════════════
 // GAME PERFORMANCE ANALYSIS
