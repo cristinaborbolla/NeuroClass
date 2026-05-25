@@ -600,7 +600,9 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         </div>
         <div class="field">
           <label>Neurologist <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
-          <input type="text" id="regNeurologist" placeholder="Dr. Ana Martínez">
+          <select id="regNeurologist">
+            <option value="">— Select your neurologist —</option>
+          </select>
         </div>
       </div>
 
@@ -1190,7 +1192,7 @@ function switchAuth(tab) {
 // ── Role toggle ──────────────────────────────────────────────
 const STAFF_CODE = 'NEURO2026';
 let regRole = 'patient';
-function setRegRole(role) {
+async function setRegRole(role) {
   regRole = role;
   document.getElementById('optPatient').classList.toggle('selected', role === 'patient');
   document.getElementById('optDoctor').classList.toggle('selected', role === 'doctor');
@@ -1200,6 +1202,36 @@ function setRegRole(role) {
   document.getElementById('regUsernameLbl').textContent   = role === 'patient' ? 'Patient ID (DNI / NHC)' : 'Username';
   document.getElementById('regUsername').placeholder      = role === 'patient' ? '12345678A' : 'dr.apellido';
   document.getElementById('btnRegister').textContent      = role === 'patient' ? 'Create patient account' : 'Create doctor account';
+
+  // Cargar médicos registrados en el desplegable (solo cuando es paciente)
+  if (role === 'patient') {
+    const sel = document.getElementById('regNeurologist');
+    // Solo cargamos una vez
+    if (sel.options.length <= 1) {
+      const opt = document.createElement('option');
+      opt.value = ''; opt.textContent = '⏳ Loading…'; opt.disabled = true;
+      sel.appendChild(opt);
+      const { data: doctors } = await db
+        .from('users')
+        .select('full_name')
+        .eq('role', 'doctor')
+        .order('full_name', { ascending: true });
+      // Quitar el "Loading…"
+      sel.removeChild(sel.lastChild);
+      if (!doctors || doctors.length === 0) {
+        const none = document.createElement('option');
+        none.value = ''; none.textContent = '— No doctors registered yet —'; none.disabled = true;
+        sel.appendChild(none);
+      } else {
+        doctors.forEach(d => {
+          const o = document.createElement('option');
+          o.value = d.full_name;   // guardamos el nombre exacto → sirve para filtrar
+          o.textContent = d.full_name;
+          sel.appendChild(o);
+        });
+      }
+    }
+  }
 }
 // ── Register ────────────────────────────────────────────────
 async function doRegister(e) {
@@ -1313,6 +1345,19 @@ function showMsg(el, type, text) {
 }
 // ── Tab navigation ──────────────────────────────────────────
 function showTab(id) {
+  // Limpiar classifier al salir
+  const prevSection = document.querySelector('.section.active');
+  if (prevSection && prevSection.id === 'tab-classifier' && id !== 'classifier') {
+    clearImage();
+    resultContent.classList.remove("visible");
+    resultEmpty.style.display = "flex";
+    errorBox.classList.remove("visible");
+    document.getElementById("viewToggle").classList.remove("visible");
+    document.getElementById("gradcamStatus").textContent = "";
+    doctorPatient = null;
+    document.getElementById('selectedPatientPill')?.classList.remove('visible');
+    document.getElementById('patientSelectCLF').value = '';
+  }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
@@ -1719,6 +1764,7 @@ async function loadPatients() {
     .from('users')
     .select('id, username, full_name, date_of_birth, phone, neurologist, last_appointment, created_at')
     .eq('role', 'patient')
+    .eq('neurologist', currentUser.name)
     .order('full_name', { ascending: true });
   if (error || !data) {
     grid.innerHTML = '<div class="dash-empty"><span>⚠️</span>Could not load patients.</div>';
@@ -1896,7 +1942,9 @@ async function loadPatientsForClassifier() {
   document.getElementById('noPatientWarn').classList.remove('visible');
   if (classifierPatients.length === 0) {
     const { data } = await db.from('users').select('id, username, full_name')
-      .eq('role', 'patient').order('full_name', { ascending: true });
+      .eq('role', 'patient')
+      .eq('neurologist', currentUser.name)
+      .order('full_name', { ascending: true });
     classifierPatients = data || [];
   }
   const sel = document.getElementById('patientSelectCLF');
@@ -2029,8 +2077,11 @@ function renderGamesChart(sessions) {
   const canvas = document.getElementById('chartGames');
   if (!canvas) return;
   if (!sessions || sessions.length === 0) return;
-  const gameColors = { memory:'#94B49F', orientation:'#3050b0', sequence:'#b07d2a' };
-  const gameNames  = ['memory','orientation','sequence'];
+  const gameColors = {
+    memory:'#94B49F', orientation:'#3050b0', sequence:'#b07d2a',
+    whatsmissing:'#c45820', pattern:'#9b6bc4', arithmetic:'#4a8c5c'
+  };
+  const gameNames = ['memory','orientation','sequence','whatsmissing','pattern','arithmetic'];
   const datasets = gameNames.map(g => {
     const gs = sessions.filter(s => s.game_name === g).reverse();
     return {
@@ -2328,13 +2379,70 @@ async function loadRecommendations() {
       '<div class="recs-grid">' + cardsHTML + '</div>' +
       '<div style="text-align:center;margin-top:1.5rem;">' +
         '<button class="btn-refresh-recs" onclick="loadRecommendations()">🔄 Refresh recommendations</button>' +
-      '</div>';
+      '</div>' +
+      buildPatientGameHistory(sessions, preds);
 
   } catch(e) {
     container.innerHTML = '<div class="recs-empty"><p>Could not load recommendations. Please try again.</p></div>';
     console.error('Recommendations error:', e);
   }
 }
+function buildPatientGameHistory(sessions, preds) {
+  const gameEmoji = {
+    memory:'🃏', orientation:'🗓️', sequence:'🔢',
+    whatsmissing:'👁️', pattern:'🎨', arithmetic:'➕'
+  };
+  let html = '<div style="margin-top:2.5rem;border-top:1px solid var(--border);padding-top:2rem;">';
+  html += '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:1.7rem;font-weight:500;margin-bottom:.3rem;">My Activity History</h2>';
+  html += '<p style="color:var(--muted);font-size:.88rem;margin-bottom:1.4rem;">Your last sessions and MRI assessments.</p>';
+
+  // Game sessions
+  if (sessions && sessions.length > 0) {
+    html += '<div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:.75rem;">Recent game sessions</div>';
+    html += '<div style="overflow-x:auto;margin-bottom:1.8rem;"><table class="games-tbl"><thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead><tbody>';
+    sessions.slice(0, 15).forEach(s => {
+      const pct = Math.round((s.score / s.max_score) * 100);
+      const pill = pct >= 75
+        ? `<span class="score-pill score-hi">${s.score}/${s.max_score}</span>`
+        : pct >= 40
+          ? `<span class="score-pill score-md">${s.score}/${s.max_score}</span>`
+          : `<span class="score-pill score-lo">${s.score}/${s.max_score}</span>`;
+      const dur = `${Math.floor(s.duration_sec/60)}:${String(s.duration_sec%60).padStart(2,'0')}`;
+      html += `<tr>
+        <td>${gameEmoji[s.game_name]||'🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</td>
+        <td>${pill}</td>
+        <td>${pct}%</td>
+        <td>${dur}</td>
+        <td style="color:var(--muted)">${formatDateTime(s.created_at)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  } else {
+    html += '<p style="color:var(--muted);font-size:.88rem;margin-bottom:1.5rem;">No game sessions recorded yet. Play some games to track your progress here!</p>';
+  }
+
+  // MRI predictions
+  if (preds && preds.length > 0) {
+    const stageColors = { NonDemented:'#4a8c5c', VeryMildDemented:'#b07d2a', MildDemented:'#c45820', ModerateDemented:'#a83232' };
+    const stageLabels = { NonDemented:'Non-Demented', VeryMildDemented:'Very Mild', MildDemented:'Mild', ModerateDemented:'Moderate' };
+    html += '<div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:.75rem;">MRI assessment history</div>';
+    html += '<div style="overflow-x:auto;"><table class="pred-tbl"><thead><tr><th>Stage</th><th>Confidence</th><th>Date</th></tr></thead><tbody>';
+    preds.slice(0,10).forEach(r => {
+      const col = stageColors[r.predicted_class] || '#999';
+      const lbl = stageLabels[r.predicted_class] || r.predicted_class;
+      html += `<tr>
+        <td><span class="stage-dot" style="background:${col}"></span>${lbl}</td>
+        <td><strong>${(r.confidence*100).toFixed(1)}%</strong></td>
+        <td style="color:var(--muted)">${formatDateTime(r.created_at)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+  
 // ── Init ────────────────────────────────────────────────────
 updateHeaderAuth();
 </script>
