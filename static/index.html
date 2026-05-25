@@ -2398,12 +2398,10 @@ async function loadRecommendations() {
     ];
     if (base.caregiver) categories.push({title:"For Caregivers", items: base.caregiver});
 
-    const gameTrendHTML = '<span class="trend-indicator ' + trendMod.css + '">' + trendMod.emoji + ' Exercises: ' + trendMod.label + '</span>';
-    let predTrendHTML = '';
+    const gameTrendHTML = '<span class="trend-indicator ' + trendMod.css + '">Exercises: ' + trendMod.label + '</span>';    let predTrendHTML = '';
     if (predTrend && preds && preds.length >= 2) {
       const pt = TREND_MODS[predTrend] || TREND_MODS['stable'];
-      predTrendHTML = '<span class="trend-indicator ' + pt.css + '" style="margin-left:.4rem">' + pt.emoji + ' Assessment: ' + pt.label + '</span>';
-    }
+      predTrendHTML = '<span class="trend-indicator ' + pt.css + '" style="margin-left:.4rem">Assessment: ' + pt.label + '</span>';    }
     // Badge de stage efectivo (si difiere del MRI, se marca)
     const effectiveMeta = REC_DATA[effectiveStage];
     const stageBadgeExtra = (effectiveStage !== stageName && stageName)
@@ -2413,8 +2411,8 @@ async function loadRecommendations() {
     const cardsHTML = categories.map(cat =>
       '<div class="rec-card">' +
         '<div class="rec-card-header">' +
-          '<span class="rec-card-icon">' + cat.icon + '</span>' +
-          '<span class="rec-card-title">' + cat.title + '</span>' +
+        '<span class="rec-card-icon"></span>' +
+        '<span class="rec-card-title">' + cat.title + '</span>' +
         '</div>' +
         '<ul class="rec-list">' +
           cat.items.map(item => '<li>' + item + '</li>').join('') +
