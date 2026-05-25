@@ -683,7 +683,29 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         </div>
         <div class="prob-list" id="probList"></div>
         <div class="desc-box" id="descBox"></div>
-      </div>
+        <div class="uncertainty-box" id="uncertaintyBox" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      padding:.9rem 1.5rem .5rem;border-top:1px solid var(--border);">
+            <span style="font-size:.72rem;font-weight:600;text-transform:uppercase;
+                         letter-spacing:.08em;color:var(--muted);">
+              Uncertainty · MC Dropout (n=30)
+            </span>
+            <span id="uncertaintyBadge" style="font-size:.72rem;font-weight:700;
+                  padding:.2rem .75rem;border-radius:99px;"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem;
+                      padding:.4rem 1.5rem 1rem;font-size:.8rem;">
+            <span style="color:var(--muted);min-width:52px;">Entropy</span>
+            <div class="prob-bar-bg" style="flex:1;">
+              <div class="prob-bar-fill" id="entropyBar"
+                   style="width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);">
+              </div>
+            </div>
+            <span id="entropyVal" style="color:var(--muted);min-width:80px;text-align:right;">—</span>
+          </div>
+        </div>
+        <div class="gradcam-status" id="uncertaintyStatus"></div>
+              </div>
     </div>
   </div>
 </div>
@@ -1351,6 +1373,8 @@ function showTab(id) {
     doctorPatient = null;
     document.getElementById('selectedPatientPill')?.classList.remove('visible');
     document.getElementById('patientSelectCLF').value = '';
+    document.getElementById("uncertaintyBox").style.display = "none";
+    document.getElementById("uncertaintyStatus").textContent = "";
   }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1443,6 +1467,7 @@ analyseBtn.addEventListener("click", async () => {
     // Show toggle and fetch Grad-CAM in background
     document.getElementById("viewToggle").classList.add("visible");
     fetchGradCAM(selectedFile);
+    fetchMCDropout(selectedFile);
   } catch(err) {
     errorBox.textContent = "Error: " + err.message;
     errorBox.classList.add("visible");
@@ -1460,6 +1485,8 @@ function displayResults(data) {
   document.getElementById("diagnosisClass").textContent      = meta.label;
   document.getElementById("diagnosisClass").style.color      = meta.color;
   document.getElementById("confVal").textContent             = conf + "%";
+  document.getElementById("uncertaintyBox").style.display = "none";
+  document.getElementById("uncertaintyStatus").textContent = "⏳ Computing uncertainty…";
   const probList = document.getElementById("probList");
   probList.innerHTML = "";
   CLASS_ORDER.forEach(c => {
@@ -1467,7 +1494,7 @@ function displayResults(data) {
     const m   = CLASSES[c];
     const item = document.createElement("div");
     item.innerHTML = `
-      <div class="prob-row"><span class="prob-name">${m.label}</span><span class="prob-pct">${pct}%</span></div>
+      <div class="prob-row"><span class="prob-name">${m.label}</span><span class="prob-pct" data-class="${c}">${pct}%</span></div>
       <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:0%;background:${m.color}" data-target="${pct}"></div></div>`;
     probList.appendChild(item);
   });
@@ -1980,6 +2007,7 @@ function updateAnalyseBtn() {
 // GRAD-CAM
 // ══════════════════════════════════════════════════════════════
 const GRADCAM_URL  = "https://neuroclass-alzheimer-mri-classifier.hf.space/gradcam";
+const MCDROPOUT_URL = "https://neuroclass-alzheimer-mri-classifier.hf.space/mcdropout";
 let   gradcamSrc   = null;
 let   originalSrc  = null;
 let   currentView  = 'original';
@@ -2483,7 +2511,55 @@ function getEffectiveStage(stageName, gameTrend, gameAnalysis) {
   if ((severeDrop || broadWeakness) && idx < 3) idx++;
   return order[idx];
 }
-  
+async function fetchMCDropout(file) {
+  const status = document.getElementById("uncertaintyStatus");
+  const fd = new FormData();
+  fd.append("file", file);
+  try {
+    const res  = await fetch(MCDROPOUT_URL, { method: "POST", body: fd });
+    const data = await res.json();
+    if (data.entropy !== undefined) {
+      displayUncertainty(data);
+      status.textContent = "";
+    } else {
+      status.textContent = "Uncertainty unavailable";
+    }
+  } catch(e) {
+    status.textContent = "Uncertainty unavailable";
+    console.warn("MC Dropout error:", e);
+  }
+}
+
+function displayUncertainty(data) {
+  // ── Badge de nivel ───────────────────────────────────────
+  const badge = document.getElementById("uncertaintyBadge");
+  const colors = { low: "#4a8c5c", medium: "#b07d2a", high: "#a83232" };
+  const labels = { low: "Low uncertainty", medium: "Medium uncertainty", high: "High uncertainty" };
+  badge.textContent = labels[data.uncertainty_level];
+  badge.style.background = colors[data.uncertainty_level] + "22";
+  badge.style.color       = colors[data.uncertainty_level];
+  badge.style.border      = "1px solid " + colors[data.uncertainty_level] + "55";
+
+  // ── Barra de entropía ────────────────────────────────────
+  // Máximo teórico para 4 clases = log(4) ≈ 1.386
+  const entropyPct = Math.min((data.entropy / 1.386) * 100, 100).toFixed(1);
+  document.getElementById("entropyBar").style.width = entropyPct + "%";
+  document.getElementById("entropyBar").style.background = colors[data.uncertainty_level];
+  document.getElementById("entropyVal").textContent = data.entropy.toFixed(3) + " / 1.386";
+
+  // ── ± std en las barras de probabilidad existentes ───────
+  CLASS_ORDER.forEach(c => {
+    const span = document.querySelector(`[data-class="${c}"]`);
+    if (span && data.mc_std[c] !== undefined) {
+      const std = (data.mc_std[c] * 100).toFixed(1);
+      // Extrae solo el número actual (sin ± previo si se llama dos veces)
+      const base = span.textContent.split(" ±")[0];
+      span.textContent = base + " ± " + std + "%";
+    }
+  });
+
+  document.getElementById("uncertaintyBox").style.display = "block";
+}  
 // ── Init ────────────────────────────────────────────────────
 updateHeaderAuth();
 </script>
