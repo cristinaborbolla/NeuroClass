@@ -47,6 +47,13 @@ _model_json = _model_json.replace('"mixed_float16"', '"float32"')
 _model_json = _model_json.replace('"float16"',       '"float32"')
 model_f32   = tf.keras.models.model_from_json(_model_json)
 model_f32.set_weights(model.get_weights())
+for layer in model_f32.layers:
+    if isinstance(layer, tf.keras.layers.BatchNormalization):
+        layer.trainable = False
+
+n_bn = sum(1 for l in model_f32.layers if isinstance(l, tf.keras.layers.BatchNormalization))
+n_do = sum(1 for l in model_f32.layers if isinstance(l, tf.keras.layers.Dropout))
+print(f"[INFO] MC Dropout: {n_bn} BatchNorm frozen, {n_do} Dropout active")
 print("[INFO] Float32 Grad-CAM model ready.")
 
 
@@ -222,36 +229,23 @@ def gradcam():
         'predicted_index': pred_index
     })
 
-# ── Función auxiliar MC Dropout ──────────────────────────────
-def mc_forward(model, tensor, n_samples=30):
-    all_preds = np.zeros((n_samples, 4), dtype=np.float32)
-    for s in range(n_samples):
-        x = tf.constant(tensor, dtype=tf.float32)
-        for layer in model.layers:
-            if isinstance(layer, tf.keras.layers.Dropout):
-                x = layer(x, training=True)
-            else:
-                x = layer(x, training=False)
-        all_preds[s] = x.numpy()[0]
-    return all_preds
-
 
 # ── Endpoint ─────────────────────────────────────────────────
 @app.route("/mcdropout", methods=["POST"])
 def mcdropout():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
-
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "Empty file."}), 400
-
     try:
-        img_ready = preprocess_image(file.read())   # (1, 200, 190, 1)
+        img_ready = preprocess_image(file.read())
     except Exception as e:
         return jsonify({"error": f"Image processing error: {str(e)}"}), 400
 
-    mc_preds = mc_forward(model_f32, img_ready, n_samples=30)
+    mc_preds = np.zeros((30, 4), dtype=np.float32)
+    for s in range(30):
+        mc_preds[s] = model_f32(img_ready, training=True).numpy()[0]
 
     mc_mean  = np.mean(mc_preds, axis=0)
     mc_std   = np.std(mc_preds,  axis=0)
