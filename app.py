@@ -222,23 +222,53 @@ def gradcam():
         'predicted_index': pred_index
     })
 
-@app.route("/mcdropout", methods=["POST"])
+# ── Función auxiliar MC Dropout ──────────────────────────────
 def mc_forward(model, tensor, n_samples=30):
-    """
-    MC Dropout correcto: activa solo Dropout, mantiene BatchNorm
-    en modo inferencia (usa running statistics, no batch statistics).
-    """
     all_preds = np.zeros((n_samples, 4), dtype=np.float32)
     for s in range(n_samples):
         x = tf.constant(tensor, dtype=tf.float32)
         for layer in model.layers:
             if isinstance(layer, tf.keras.layers.Dropout):
-                x = layer(x, training=True)   # ← Dropout activo
+                x = layer(x, training=True)
             else:
-                x = layer(x, training=False)  # ← BatchNorm usa running stats
+                x = layer(x, training=False)
         all_preds[s] = x.numpy()[0]
     return all_preds
-    
+
+
+# ── Endpoint ─────────────────────────────────────────────────
+@app.route("/mcdropout", methods=["POST"])
+def mcdropout():
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "Empty file."}), 400
+
+    try:
+        img_ready = preprocess_image(file.read())   # (1, 200, 190, 1)
+    except Exception as e:
+        return jsonify({"error": f"Image processing error: {str(e)}"}), 400
+
+    mc_preds = mc_forward(model_f32, img_ready, n_samples=30)
+
+    mc_mean  = np.mean(mc_preds, axis=0)
+    mc_std   = np.std(mc_preds,  axis=0)
+    entropy  = float(-np.sum(mc_mean * np.log(mc_mean + 1e-8)))
+    mean_unc = float(np.mean(mc_std))
+
+    if   entropy < 0.3: level = "low"
+    elif entropy < 0.7: level = "medium"
+    else:               level = "high"
+
+    return jsonify({
+        "mc_mean":           dict(zip(CLASS_NAMES, mc_mean.tolist())),
+        "mc_std":            dict(zip(CLASS_NAMES, mc_std.tolist())),
+        "entropy":           round(entropy, 4),
+        "mean_uncertainty":  round(mean_unc, 4),
+        "uncertainty_level": level
+    })
 # ─────────────────────────────────────────────────────────────────────────────
 # START SERVER
 # ─────────────────────────────────────────────────────────────────────────────
