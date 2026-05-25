@@ -536,7 +536,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   <div class="auth-card">
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuth('login')">Log in</button>
-      <button class="auth-tab"        onclick="switchAuth('register')">New patient</button>
+      <button class="auth-tab"        onclick="switchAuth('register')">Sign up</button>
     </div>
 
     <!-- Login form -->
@@ -547,7 +547,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" required>
+        <input type="password" id="loginPassword" placeholder="password" required>
       </div>
       <div class="auth-msg" id="loginMsg"></div>
       <button type="submit" class="btn-auth" id="btnLogin">Log in</button>
@@ -560,14 +560,10 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       <!-- Role selector -->
       <div class="role-selector">
         <label class="role-opt selected" id="optPatient" onclick="setRegRole('patient')">
-          <div class="role-icon">🧑‍⚕️</div>
           <div class="role-lbl">Patient</div>
-          <div class="role-desc">Cognitive games &amp; my results</div>
         </label>
         <label class="role-opt" id="optDoctor" onclick="setRegRole('doctor')">
-          <div class="role-icon">👨‍⚕️</div>
           <div class="role-lbl">Doctor</div>
-          <div class="role-desc">Patient management &amp; history</div>
         </label>
       </div>
 
@@ -599,7 +595,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           </div>
         </div>
         <div class="field">
-          <label>Neurologist <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label>
+          <label>Neurologist</label>
           <select id="regNeurologist">
             <option value="">— Select your neurologist —</option>
           </select>
@@ -609,18 +605,18 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       <!-- Doctor-only fields -->
       <div id="doctorFields" style="display:none;">
         <div class="field">
-          <label>Número de colegiado</label>
+          <label>membership number</label>
           <input type="text" id="regColNum" placeholder="e.g. 28-12345">
         </div>
         <div class="field">
           <label>Staff code <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(provided by your centre)</span></label>
-          <input type="text" id="regStaffCode" placeholder="••••••••">
+          <input type="text" id="regStaffCode" placeholder="code">
         </div>
       </div>
 
       <div class="field">
         <label>Password <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(min. 8 characters)</span></label>
-        <input type="password" id="regPassword" placeholder="••••••••" minlength="8" required>
+        <input type="password" id="regPassword" placeholder="password" minlength="8" required>
       </div>
       <div class="auth-msg" id="registerMsg"></div>
       <button type="submit" class="btn-auth" id="btnRegister">Create patient account</button>
@@ -657,11 +653,11 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         </div>
         <div class="preview-wrap" id="previewWrap"><img id="previewImg" src="" alt="MRI preview"></div>
         <div class="view-toggle" id="viewToggle">
-          <button class="view-toggle-btn active" id="btnOriginal" onclick="showView('original')">🖼 Original</button>
-          <button class="view-toggle-btn"         id="btnGradcam"  onclick="showView('gradcam')">🔥 Grad-CAM</button>
+          <button class="view-toggle-btn active" id="btnOriginal" onclick="showView('original')">Original</button>
+          <button class="view-toggle-btn"         id="btnGradcam"  onclick="showView('gradcam')">Grad-CAM</button>
         </div>
         <div class="gradcam-status" id="gradcamStatus"></div>
-        <button class="btn-change" id="changeBtn" onclick="clearImage()">🔄 Change image</button>
+        <button class="btn-change" id="changeBtn" onclick="clearImage()">Change image</button>
         <button class="btn-analyse" id="analyseBtn" disabled>
           <span class="btn-label">Analyse image</span>
           <div class="spinner"></div>
@@ -925,7 +921,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 
     <div class="info-strip">
       <div class="info-card">
-        <h3>🔬 How the model works</h3>
+        <h3>How the model works</h3>
         <ul>
           <li>Input: axial brain MRI slice (grayscale)</li>
           <li>Preprocessing: CLAHE contrast enhancement</li>
@@ -936,7 +932,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         </ul>
       </div>
       <div class="info-card">
-        <h3>⚠️ Clinical disclaimer</h3>
+        <h3>Clinical disclaimer</h3>
         <ul>
           <li>This tool is a research prototype</li>
           <li>Not validated for clinical use</li>
@@ -1160,16 +1156,16 @@ const REC_DATA = {
 };
 
 const TREND_MODS = {
-  improving:{label:"Improving ↑",css:"trend-up",emoji:"📈",
+  improving:{label:"Improving ↑",css:"trend-up",
     summary:"Your cognitive exercise performance shows a positive trend — keep up the excellent work.",
     medical:"Your improving exercise scores are encouraging. Discuss this progress with your specialist at your next appointment."},
-  stable:{label:"Stable →",css:"trend-stable",emoji:"➡️",
+  stable:{label:"Stable →",css:"trend-stable",
     summary:"Your cognitive exercise performance has been consistent. Maintaining this routine is valuable.",
     medical:"Your exercise scores are stable. Regular monitoring remains important — continue attending scheduled appointments."},
-  worsening:{label:"Declining ↓",css:"trend-down",emoji:"📉",
+  worsening:{label:"Declining ↓",css:"trend-down",
     summary:"Your recent exercise scores show a declining trend. It is important to discuss this with your specialist soon.",
     medical:"The declining trend in your exercise performance should be reviewed by your neurologist. Consider bringing forward your next appointment."},
-  noData:{label:"No data yet",css:"trend-none",emoji:"📊",
+  noData:{label:"No data yet",css:"trend-none",
     summary:"Start using the cognitive exercises in the NeuroClass app regularly — they provide valuable data to personalise your recommendations over time.",
     medical:"Begin tracking your cognitive performance using the NeuroClass games to enable more personalised follow-up recommendations."}
 };
@@ -2394,13 +2390,13 @@ async function loadRecommendations() {
 
     const base = recData.base;
     const categories = [
-      {icon:"🧠", title:"Cognitive Stimulation", items: cognitivePlus},
-      {icon:"🏃", title:"Physical Activity",     items: base.physical},
-      {icon:"🥗", title:"Nutrition & Sleep",     items: base.nutrition},
-      {icon:"👥", title:"Social Connection",     items: base.social},
-      {icon:"🏥", title:"Medical Follow-up",     items: [...base.medical, trendMod.medical]},
+      {title:"Cognitive Stimulation", items: cognitivePlus},
+      {title:"Physical Activity",     items: base.physical},
+      {title:"Nutrition & Sleep",     items: base.nutrition},
+      {title:"Social Connection",     items: base.social},
+      {title:"Medical Follow-up",     items: [...base.medical, trendMod.medical]},
     ];
-    if (base.caregiver) categories.push({icon:"💚", title:"For Caregivers", items: base.caregiver});
+    if (base.caregiver) categories.push({title:"For Caregivers", items: base.caregiver});
 
     const gameTrendHTML = '<span class="trend-indicator ' + trendMod.css + '">' + trendMod.emoji + ' Exercises: ' + trendMod.label + '</span>';
     let predTrendHTML = '';
@@ -2440,7 +2436,7 @@ async function loadRecommendations() {
       '</div>' +
       '<div class="recs-grid">' + cardsHTML + '</div>' +
       '<div style="text-align:center;margin-top:1.5rem;">' +
-        '<button class="btn-refresh-recs" onclick="loadRecommendations()">🔄 Refresh recommendations</button>' +
+        '<button class="btn-refresh-recs" onclick="loadRecommendations()">Refresh recommendations</button>' +
       '</div>';
 
   } catch(e) {
