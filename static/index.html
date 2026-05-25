@@ -2075,39 +2075,65 @@ function renderPredChart(preds) {
 function renderGamesChart(sessions) {
   destroyChart('chartGames');
   const canvas = document.getElementById('chartGames');
-  if (!canvas) return;
-  if (!sessions || sessions.length === 0) return;
+  if (!canvas || !sessions || sessions.length === 0) return;
+
   const gameColors = {
     memory:'#94B49F', orientation:'#3050b0', sequence:'#b07d2a',
     whatsmissing:'#c45820', pattern:'#9b6bc4', arithmetic:'#4a8c5c'
   };
-  const gameNames = ['memory','orientation','sequence','whatsmissing','pattern','arithmetic'];
-  const datasets = gameNames.map(g => {
-    const gs = sessions.filter(s => s.game_name === g).reverse();
+  const gameLabels = {
+    memory:'Memory', orientation:'Orientation', sequence:'Sequence',
+    whatsmissing:"What's Missing", pattern:'Pattern', arithmetic:'Arithmetic'
+  };
+
+  // Eje X: fechas únicas ordenadas de todas las sesiones
+  const allDates = [...new Set(
+    sessions.map(s => new Date(s.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}))
+  )];
+
+  const datasets = Object.keys(gameColors).map(g => {
+    const gs = sessions
+      .filter(s => s.game_name === g)
+      .sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+    if (gs.length === 0) return null;
+
+    // Mapear cada sesión a su posición en el eje X de fechas
+    const dataPoints = allDates.map(d => {
+      const match = gs.filter(s =>
+        new Date(s.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) === d
+      );
+      if (match.length === 0) return null;
+      // Si hay varias sesiones el mismo día, promedio
+      const avg = match.reduce((sum, s) => sum + Math.round((s.score/s.max_score)*100), 0) / match.length;
+      return Math.round(avg);
+    });
+
     return {
-      label: g.charAt(0).toUpperCase() + g.slice(1),
-      data: gs.map(s => Math.round((s.score/s.max_score)*100)),
-      labels_custom: gs.map(s => new Date(s.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})),
+      label: gameLabels[g],
+      data: dataPoints,
       borderColor: gameColors[g],
       backgroundColor: gameColors[g] + '22',
-      pointBackgroundColor: gameColors[g],
-      pointRadius: 5, tension: 0.3, fill: false
+      pointBackgroundColor: dataPoints.map(v => v !== null ? gameColors[g] : 'transparent'),
+      pointRadius: dataPoints.map(v => v !== null ? 5 : 0),
+      spanGaps: false,
+      tension: 0.3,
+      fill: false
     };
-  }).filter(d => d.data.length > 0);
-  // Use max session count as x labels
-  const maxLen = Math.max(...datasets.map(d => d.data.length));
-  const labels = Array.from({length: maxLen}, (_,i) => `Session ${i+1}`);
+  }).filter(Boolean);
+
   chartInstances['chartGames'] = new Chart(canvas, {
     type: 'line',
-    data: { labels, datasets },
+    data: { labels: allDates, datasets },
     options: {
       responsive: true, maintainAspectRatio: true,
       scales: {
-        y: { min: 0, max: 100, ticks: { callback: v => v+'%', font:{size:10} }, grid:{color:'#e8f2e3'}},
-        x: { ticks: { font:{size:10} }, grid:{display:false}}
+        y: { min:0, max:100, ticks:{ callback: v => v+'%', font:{size:10} }, grid:{color:'#e8f2e3'} },
+        x: { ticks:{ font:{size:10} }, grid:{display:false} }
       },
-      plugins: { legend: { labels:{ boxWidth:10, font:{size:10} }},
-        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` }}}
+      plugins: {
+        legend: { labels:{ boxWidth:10, font:{size:10} } },
+        tooltip: { callbacks: { label: ctx => ctx.parsed.y !== null ? `${ctx.dataset.label}: ${ctx.parsed.y}%` : '' } }
+      }
     }
   });
 }
@@ -2311,36 +2337,64 @@ async function loadRecommendations() {
   if (!currentUser) return;
   const container = document.getElementById('recsContent');
   container.innerHTML = '<div class="recs-loading"><div style="font-size:2rem;margin-bottom:.8rem;">⏳</div><p>Loading your personalised recommendations…</p></div>';
-
   try {
     const [{ data: preds }, { data: sessions }] = await Promise.all([
       db.from('predictions').select('*').eq('patient_id', currentUser.id).order('created_at',{ascending:false}).limit(10),
-      db.from('game_sessions').select('*').eq('patient_id', currentUser.id).order('created_at',{ascending:false}).limit(20)
+      db.from('game_sessions').select('*').eq('patient_id', currentUser.id).order('created_at',{ascending:false}).limit(30)
     ]);
 
-    const latestPred = preds && preds.length > 0 ? preds[0] : null;
-    const stageName  = latestPred ? latestPred.predicted_class : null;
-    const gameTrend  = computeGameTrend(sessions);
-    const predTrend  = computePredTrend(preds);
+    const latestPred  = preds && preds.length > 0 ? preds[0] : null;
+    const stageName   = latestPred ? latestPred.predicted_class : null;
+    const gameTrend   = computeGameTrend(sessions);
+    const predTrend   = computePredTrend(preds);
+    const gameAnalysis = analyzeGamePerformance(sessions);
 
     if (!latestPred && (!sessions || sessions.length === 0)) {
       container.innerHTML = '<div class="recs-empty"><div style="font-size:2.5rem;margin-bottom:1rem;opacity:.4">🧠</div><p>No assessment data available yet.<br>Upload an MRI image in the Classifier or complete some cognitive exercises<br>to receive personalised recommendations.</p></div>';
       return;
     }
 
-    const stage    = stageName || 'VeryMildDemented';
-    const recData  = REC_DATA[stage] || REC_DATA['NonDemented'];
+    // Stage efectivo: puede subir si los juegos muestran declive significativo
+    const effectiveStage = getEffectiveStage(stageName || 'VeryMildDemented', gameTrend, gameAnalysis);
+    const recData  = REC_DATA[effectiveStage] || REC_DATA['VeryMildDemented'];
     const trendMod = TREND_MODS[gameTrend] || TREND_MODS['noData'];
     const predDate = latestPred ? new Date(latestPred.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : null;
 
-    let summaryText = stageName
-      ? 'Based on your most recent MRI classification (<strong>' + recData.label + '</strong>' + (predDate ? ', ' + predDate : '') + '), the following recommendations have been prepared for you. '
-      : 'The following recommendations are based on your cognitive exercise performance, as no MRI assessment has been recorded yet. ';
+    // Construir recomendaciones cognitivas enriquecidas con análisis de juegos
+    let cognitivePlus = [...recData.base.cognitive];
+    if (gameAnalysis && gameAnalysis.weakGames.length > 0) {
+      gameAnalysis.weakGames.forEach(g => {
+        if (GAME_DOMAIN_RECS[g]) cognitivePlus.push(GAME_DOMAIN_RECS[g]);
+      });
+    }
+
+    // Texto resumen adaptado al rendimiento real
+    let summaryText = '';
+    if (stageName) {
+      const mriLabel = REC_DATA[stageName]?.label || stageName;
+      summaryText = 'Based on your most recent MRI classification (<strong>' + mriLabel + '</strong>' + (predDate ? ', ' + predDate : '') + '). ';
+      if (effectiveStage !== stageName) {
+        summaryText += 'However, your cognitive exercise performance indicates a <strong>more cautious approach is advisable</strong>, so recommendations have been adjusted to reflect your current functional level. ';
+      }
+    } else {
+      summaryText = 'The following recommendations are based on your cognitive exercise performance, as no MRI assessment has been recorded yet. ';
+    }
+    if (gameAnalysis) {
+      const pct = Math.round(gameAnalysis.overallAvg);
+      if (gameAnalysis.weakGames.length > 0) {
+        const weakLabels = gameAnalysis.weakGames.map(g => g.charAt(0).toUpperCase()+g.slice(1)).join(', ');
+        summaryText += `Your overall exercise score is <strong>${pct}%</strong>. Areas needing more practice: <strong>${weakLabels}</strong>. `;
+      } else if (gameAnalysis.overallAvg >= 75) {
+        summaryText += `Your overall exercise score is <strong>${pct}%</strong> — excellent cognitive engagement. `;
+      } else {
+        summaryText += `Your overall exercise score is <strong>${pct}%</strong>. `;
+      }
+    }
     summaryText += trendMod.summary;
 
     const base = recData.base;
     const categories = [
-      {icon:"🧠", title:"Cognitive Stimulation", items: base.cognitive},
+      {icon:"🧠", title:"Cognitive Stimulation", items: cognitivePlus},
       {icon:"🏃", title:"Physical Activity",     items: base.physical},
       {icon:"🥗", title:"Nutrition & Sleep",     items: base.nutrition},
       {icon:"👥", title:"Social Connection",     items: base.social},
@@ -2354,6 +2408,11 @@ async function loadRecommendations() {
       const pt = TREND_MODS[predTrend] || TREND_MODS['stable'];
       predTrendHTML = '<span class="trend-indicator ' + pt.css + '" style="margin-left:.4rem">' + pt.emoji + ' Assessment: ' + pt.label + '</span>';
     }
+    // Badge de stage efectivo (si difiere del MRI, se marca)
+    const effectiveMeta = REC_DATA[effectiveStage];
+    const stageBadgeExtra = (effectiveStage !== stageName && stageName)
+      ? ' <span style="font-size:.68rem;font-weight:600;color:var(--muted);margin-left:.4rem;">(adjusted from MRI stage)</span>'
+      : '';
 
     const cardsHTML = categories.map(cat =>
       '<div class="rec-card">' +
@@ -2370,7 +2429,10 @@ async function loadRecommendations() {
     container.innerHTML =
       '<div class="recs-summary-card">' +
         '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">' +
-          '<span style="background:' + recData.color + '22;color:' + recData.color + ';font-size:.75rem;font-weight:700;padding:.25rem .85rem;border-radius:99px;border:1px solid ' + recData.color + '44;">' + recData.label + '</span>' +
+          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;">' +
+            '<span style="background:' + effectiveMeta.color + '22;color:' + effectiveMeta.color + ';font-size:.75rem;font-weight:700;padding:.25rem .85rem;border-radius:99px;border:1px solid ' + effectiveMeta.color + '44;">' + effectiveMeta.label + '</span>' +
+            stageBadgeExtra +
+          '</div>' +
           '<div style="display:flex;flex-wrap:wrap;gap:.4rem;">' + gameTrendHTML + predTrendHTML + '</div>' +
         '</div>' +
         '<p style="font-size:.92rem;line-height:1.75;color:var(--text);">' + summaryText + '</p>' +
@@ -2379,48 +2441,13 @@ async function loadRecommendations() {
       '<div class="recs-grid">' + cardsHTML + '</div>' +
       '<div style="text-align:center;margin-top:1.5rem;">' +
         '<button class="btn-refresh-recs" onclick="loadRecommendations()">🔄 Refresh recommendations</button>' +
-      '</div>' +
-      buildPatientGameHistory(sessions, preds);
+      '</div>';
 
   } catch(e) {
     container.innerHTML = '<div class="recs-empty"><p>Could not load recommendations. Please try again.</p></div>';
     console.error('Recommendations error:', e);
   }
 }
-function buildPatientGameHistory(sessions, preds) {
-  const gameEmoji = {
-    memory:'🃏', orientation:'🗓️', sequence:'🔢',
-    whatsmissing:'👁️', pattern:'🎨', arithmetic:'➕'
-  };
-  let html = '<div style="margin-top:2.5rem;border-top:1px solid var(--border);padding-top:2rem;">';
-  html += '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:1.7rem;font-weight:500;margin-bottom:.3rem;">My Activity History</h2>';
-  html += '<p style="color:var(--muted);font-size:.88rem;margin-bottom:1.4rem;">Your last sessions and MRI assessments.</p>';
-
-  // Game sessions
-  if (sessions && sessions.length > 0) {
-    html += '<div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:.75rem;">Recent game sessions</div>';
-    html += '<div style="overflow-x:auto;margin-bottom:1.8rem;"><table class="games-tbl"><thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead><tbody>';
-    sessions.slice(0, 15).forEach(s => {
-      const pct = Math.round((s.score / s.max_score) * 100);
-      const pill = pct >= 75
-        ? `<span class="score-pill score-hi">${s.score}/${s.max_score}</span>`
-        : pct >= 40
-          ? `<span class="score-pill score-md">${s.score}/${s.max_score}</span>`
-          : `<span class="score-pill score-lo">${s.score}/${s.max_score}</span>`;
-      const dur = `${Math.floor(s.duration_sec/60)}:${String(s.duration_sec%60).padStart(2,'0')}`;
-      html += `<tr>
-        <td>${gameEmoji[s.game_name]||'🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</td>
-        <td>${pill}</td>
-        <td>${pct}%</td>
-        <td>${dur}</td>
-        <td style="color:var(--muted)">${formatDateTime(s.created_at)}</td>
-      </tr>`;
-    });
-    html += '</tbody></table></div>';
-  } else {
-    html += '<p style="color:var(--muted);font-size:.88rem;margin-bottom:1.5rem;">No game sessions recorded yet. Play some games to track your progress here!</p>';
-  }
-
   // MRI predictions
   if (preds && preds.length > 0) {
     const stageColors = { NonDemented:'#4a8c5c', VeryMildDemented:'#b07d2a', MildDemented:'#c45820', ModerateDemented:'#a83232' };
@@ -2441,6 +2468,49 @@ function buildPatientGameHistory(sessions, preds) {
 
   html += '</div>';
   return html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// GAME PERFORMANCE ANALYSIS
+// ══════════════════════════════════════════════════════════════
+const GAME_DOMAIN_RECS = {
+  memory:       "Your visual memory scores are below average — practice describing scenes from memory, reviewing and recreating drawings, or using photo albums to stimulate visual recall.",
+  orientation:  "Your temporal orientation scores need attention — build a morning habit of reviewing the day, date and season without checking your phone first.",
+  sequence:     "Your sequential memory scores suggest working memory could be strengthened — practice recalling short sequences (phone numbers, shopping lists) without writing them down.",
+  whatsmissing: "Your visual attention scores are below average — try spot-the-difference activities, describing a scene in detail after briefly viewing it, or mindful observation exercises.",
+  pattern:      "Your pattern recognition scores suggest visuospatial exercises could help — jigsaw puzzles, shape-matching activities, or finding repeating patterns in everyday objects.",
+  arithmetic:   "Your mental arithmetic scores suggest regular numerical practice — calculate change when shopping, add up bills mentally, or use number-based games daily."
+};
+
+function analyzeGamePerformance(sessions) {
+  if (!sessions || sessions.length === 0) return null;
+  const gameAvgs = {}, gameCounts = {};
+  sessions.forEach(s => {
+    const pct = (s.score / s.max_score) * 100;
+    if (!gameAvgs[s.game_name]) { gameAvgs[s.game_name] = 0; gameCounts[s.game_name] = 0; }
+    gameAvgs[s.game_name] += pct;
+    gameCounts[s.game_name]++;
+  });
+  Object.keys(gameAvgs).forEach(g => { gameAvgs[g] = gameAvgs[g] / gameCounts[g]; });
+  const played = Object.keys(gameAvgs);
+  const weakGames   = played.filter(g => gameAvgs[g] < 50);
+  const strongGames = played.filter(g => gameAvgs[g] >= 75);
+  const overallAvg  = played.reduce((sum, g) => sum + gameAvgs[g], 0) / played.length;
+  return { gameAvgs, weakGames, strongGames, overallAvg, playedCount: played.length };
+}
+
+// Ajusta el stage efectivo según el rendimiento en juegos
+function getEffectiveStage(stageName, gameTrend, gameAnalysis) {
+  const order = ['NonDemented','VeryMildDemented','MildDemented','ModerateDemented'];
+  let idx = order.indexOf(stageName);
+  if (idx === -1) idx = 1;
+  if (!gameAnalysis) return order[idx];
+  // Si los juegos muestran declive significativo (muchas áreas débiles + tendencia empeorand)
+  // se usan las recomendaciones del siguiente nivel para mayor precaución
+  const severeDrop = gameTrend === 'worsening' && gameAnalysis.weakGames.length >= 2;
+  const broadWeakness = gameAnalysis.overallAvg < 45 && gameAnalysis.playedCount >= 3;
+  if ((severeDrop || broadWeakness) && idx < 3) idx++;
+  return order[idx];
 }
   
 // ── Init ────────────────────────────────────────────────────
