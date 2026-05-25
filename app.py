@@ -222,7 +222,40 @@ def gradcam():
         'predicted_index': pred_index
     })
 
+@app.route("/mcdropout", methods=["POST"])
+def mcdropout():
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
 
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "Empty file."}), 400
+
+    try:
+        img_ready = preprocess_image(file.read())   # (1, 200, 190, 1)
+    except Exception as e:
+        return jsonify({"error": f"Image processing error: {str(e)}"}), 400
+
+    mc_preds = np.zeros((30, 4), dtype=np.float32)
+    for s in range(30):
+        mc_preds[s] = model_f32(img_ready, training=True).numpy()[0]
+
+    mc_mean  = np.mean(mc_preds, axis=0)
+    mc_std   = np.std(mc_preds,  axis=0)
+    entropy  = float(-np.sum(mc_mean * np.log(mc_mean + 1e-8)))
+    mean_unc = float(np.mean(mc_std))
+
+    if   entropy < 0.3: level = "low"
+    elif entropy < 0.7: level = "medium"
+    else:               level = "high"
+
+    return jsonify({
+        "mc_mean":           dict(zip(CLASS_NAMES, mc_mean.tolist())),
+        "mc_std":            dict(zip(CLASS_NAMES, mc_std.tolist())),
+        "entropy":           round(entropy, 4),
+        "mean_uncertainty":  round(mean_unc, 4),
+        "uncertainty_level": level
+    })
 # ─────────────────────────────────────────────────────────────────────────────
 # START SERVER
 # ─────────────────────────────────────────────────────────────────────────────
