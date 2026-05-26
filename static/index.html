@@ -54,6 +54,11 @@ nav{display:flex;gap:.2rem;}
 /* user pill */
 .user-pill{display:none;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:.3rem .85rem .3rem .5rem;font-size:.8rem;}
 .user-pill.visible{display:flex;}
+@media(max-width:768px){
+  .user-name{display:none;}
+  .role-badge{display:none;}
+  .btn-logout{padding:.35rem .6rem;font-size:.72rem;}
+}
 .user-avatar{width:26px;height:26px;border-radius:50%;background:var(--matcha);color:white;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;}
 .user-name{font-weight:500;color:var(--text);}
 .role-badge{font-size:.65rem;font-weight:600;padding:.15rem .5rem;border-radius:99px;text-transform:uppercase;letter-spacing:.05em;}
@@ -457,6 +462,46 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 }
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#2c3e30;color:white;padding:.75rem 1.2rem;border-radius:10px;font-size:.85rem;font-weight:500;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none;z-index:999;}
 .toast.show{opacity:1;transform:translateY(0);}
+.game-modal-overlay{position:fixed;inset:0;background:rgba(44,62,48,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem;}
+.game-modal{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;max-width:400px;width:100%;box-shadow:0 8px 32px rgba(44,62,48,.15);text-align:center;}
+.game-modal-emoji{font-size:2.5rem;margin-bottom:.8rem;}
+.game-modal-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:500;margin-bottom:.6rem;}
+.game-modal-desc{font-size:.88rem;color:var(--muted);line-height:1.7;margin-bottom:1.5rem;}
+.game-modal-tip{background:var(--cream);border-radius:8px;padding:.7rem 1rem;font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;text-align:left;border-left:3px solid var(--matcha);}
+.btn-start-game{width:100%;padding:.85rem;background:var(--matcha);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;}
+.btn-start-game:hover{opacity:.88;}
+  
+/* ══ VIRTUAL ASSISTANT ══════════════════════════════════════ */
+.assistant-bubble{position:fixed;bottom:5.5rem;right:1.5rem;z-index:150;display:none;flex-direction:column;align-items:flex-end;gap:.75rem;}
+.assistant-bubble.visible{display:flex;}
+.assistant-speech{background:white;border:1px solid var(--border);border-radius:16px 16px 4px 16px;padding:.9rem 1.1rem 1rem;max-width:260px;font-size:.85rem;line-height:1.65;color:var(--text);box-shadow:0 4px 20px rgba(44,62,48,.13);position:relative;animation:speechPop .2s ease;}
+@keyframes speechPop{from{opacity:0;transform:scale(.9) translateY(4px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.assistant-speech-close{position:absolute;top:.45rem;right:.6rem;background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--muted);line-height:1;}
+.assistant-avatar-btn{width:56px;height:56px;border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(44,62,48,.2);font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;position:relative;}
+.assistant-avatar-btn:hover{transform:scale(1.08);}
+.assistant-settings-btn{position:absolute;bottom:-2px;right:-2px;width:20px;height:20px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+/* Setup modal */
+.assistant-setup-overlay{position:fixed;inset:0;background:rgba(44,62,48,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.assistant-setup-card{background:var(--surface2);border-radius:var(--radius);padding:2rem;max-width:440px;width:100%;box-shadow:0 8px 40px rgba(44,62,48,.2);max-height:90vh;overflow-y:auto;}
+.assistant-setup-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:500;margin-bottom:.4rem;text-align:center;}
+.assistant-setup-sub{font-size:.88rem;color:var(--muted);text-align:center;margin-bottom:1.8rem;line-height:1.6;}
+.assistant-section-lbl{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.6rem;}
+.avatar-emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:.5rem;margin-bottom:1.4rem;}
+.avatar-emoji-opt{aspect-ratio:1/1;border:2px solid var(--border);border-radius:10px;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:border-color .15s,background .15s;}
+.avatar-emoji-opt:hover{border-color:var(--matcha);background:var(--surface);}
+.avatar-emoji-opt.selected{border-color:var(--matcha);background:#edf7ee;}
+.avatar-color-grid{display:flex;gap:.65rem;margin-bottom:1.4rem;flex-wrap:wrap;}
+.avatar-color-opt{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;}
+.avatar-color-opt:hover{transform:scale(1.12);}
+.avatar-color-opt.selected{border-color:var(--text);}
+.assistant-name-input{width:100%;padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.95rem;color:var(--text);background:var(--bg);outline:none;margin-bottom:1.4rem;transition:border-color .15s;}
+.assistant-name-input:focus{border-color:var(--matcha);}
+.assistant-preview{display:flex;align-items:center;gap:.85rem;padding:1rem;background:var(--surface);border-radius:10px;margin-bottom:1.4rem;}
+.assistant-preview-avatar{width:50px;height:50px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(44,62,48,.15);font-size:1.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.assistant-preview-text{font-size:.84rem;color:var(--text);line-height:1.6;}
+.btn-save-assistant{width:100%;padding:.85rem;background:var(--matcha);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn-save-assistant:hover{opacity:.88;}
+.btn-cancel-assistant{width:100%;margin-top:.6rem;padding:.7rem;background:none;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--muted);font-size:.9rem;}
 </style>
 </head>
 <body>
@@ -745,37 +790,37 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           <div class="game-emoji">🃏</div>
           <div class="game-title">Memory</div>
           <div class="game-desc">Find all matching pairs of cards. Tests visual memory and concentration.</div>
-          <button class="game-start-btn" onclick="startGame('memory')">Play</button>
+          <button class="game-start-btn" onclick="showGameModal('memory')">Play</button>
         </div>
         <div class="game-card">
           <div class="game-emoji">🗓️</div>
           <div class="game-title">Orientation</div>
           <div class="game-desc">Answer questions about today's date, month, year and season. Tests temporal orientation.</div>
-          <button class="game-start-btn" onclick="startGame('orientation')">Play</button>
+          <button class="game-start-btn" onclick="showGameModal('orientation')">Play</button>
         </div>
         <div class="game-card">
           <div class="game-emoji">🔢</div>
           <div class="game-title">Sequence</div>
           <div class="game-desc">Repeat the colour sequence shown on screen. Tests short-term memory and attention.</div>
-          <button class="game-start-btn" onclick="startGame('sequence')">Play</button>
+          <button class="game-start-btn" onclick="showGameModal('sequence')">Play</button>
         </div>
         <div class="game-card">
           <div class="game-emoji">👁️</div>
           <div class="game-title">What's Missing?</div>
           <div class="game-desc">A grid of objects appears briefly, then one vanishes. Identify which one disappeared. Tests visual short-term memory.</div>
-          <button class="game-start-btn" onclick="startGame('whatsmissing')">Play</button>
+          <button class="game-start-btn" onclick="showGameModal('whatsmissing')">Play</button>
         </div>
         <div class="game-card">
           <div class="game-emoji">🎨</div>
           <div class="game-title">Pattern</div>
           <div class="game-desc">A colour sequence is shown with one element missing. Select the colour that comes next. Tests visuospatial memory.</div>
-          <button class="game-start-btn" onclick="startGame('pattern')">Play</button>
+          <button class="game-start-btn" onclick="showGameModal('pattern')">Play</button>
         </div>
         <div class="game-card">
           <div class="game-emoji">➕</div>
           <div class="game-title">Arithmetic</div>
           <div class="game-desc">Simple additions and subtractions with four answer choices. Difficulty increases gradually. Tests working memory.</div>
-          <button class="game-start-btn" onclick="startGame('arithmetic')">Play</button>
+          <button class="game-start-btn" onclick="showGameModal('arithmetic')">Play</button>
         </div>
       </div>
     </div>
@@ -1020,9 +1065,22 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 <footer>
   NeuroClass · TFG Biomedical Engineering · Universidad de Deusto · 2026 ·
   Supervisión: Prof. Begoña García-Zapirain &amp; Dr. Marcin Derlatka
-  <div class="toast" id="toast"></div>
 </footer>
 
+<div class="toast" id="toast"></div>
+
+<!-- ══ VIRTUAL ASSISTANT BUBBLE ══ -->
+<div class="assistant-bubble" id="assistantBubble">
+  <div class="assistant-speech" id="assistantSpeech" style="display:none;">
+    <button class="assistant-speech-close" onclick="dismissAssistant()">✕</button>
+    <div id="assistantSpeechBody"></div>
+  </div>
+  <div style="position:relative;display:inline-block;">
+    <div class="assistant-avatar-btn" id="assistantAvatarBtn" onclick="toggleAssistant()">🐻</div>
+    <button class="assistant-settings-btn" onclick="showAssistantSetup(false)" title="Customise">⚙</button>
+  </div>
+</div>
+  
 <script>
 // ── Supabase ────────────────────────────────────────────────
 const SUPA_URL = "https://uldzsksgzjriqdtozeyw.supabase.co";
@@ -1226,6 +1284,12 @@ function switchAuth(tab) {
   document.getElementById('loginMsg').className = 'auth-msg';
   document.getElementById('registerMsg').className = 'auth-msg';
 }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 // ── Role toggle ──────────────────────────────────────────────
 const STAFF_CODE = 'NEURO2026';
 let regRole = 'patient';
@@ -1358,11 +1422,9 @@ function updateHeaderAuth() {
   const loggedIn = !!currentUser;
   document.getElementById('navLogin').style.display = loggedIn ? 'none' : '';
   document.getElementById('userPill').classList.toggle('visible', loggedIn);
-  // Classifier: all logged-in users
-  document.getElementById('navClassifier').style.display = loggedIn ? '' : 'none';  // Games: patients only
+  document.getElementById('navClassifier').style.display = loggedIn ? '' : 'none';
   const canGames = loggedIn && currentUser.role === 'patient';
   document.getElementById('navGames').style.display = canGames ? '' : 'none';
-  // Dashboard: doctors only (hidden for patients entirely)
   const isDr = loggedIn && currentUser.role === 'doctor';
   document.getElementById('navDashboard').style.display = isDr ? '' : 'none';
   const canRecs = loggedIn && currentUser.role === 'patient';
@@ -1374,6 +1436,13 @@ function updateHeaderAuth() {
     const badge = document.getElementById('roleBadge');
     badge.textContent = currentUser.role;
     badge.className   = 'role-badge ' + currentUser.role;
+  }
+  if (loggedIn && currentUser.role === 'patient') {
+    setTimeout(loadAssistant, 100);
+  } else {
+    assistantState = null;
+    document.getElementById('assistantBubble')?.classList.remove('visible');
+    dismissAssistant();
   }
 }
 function showMsg(el, type, text) {
@@ -1408,6 +1477,8 @@ function showTab(id) {
   if (id === 'dashboard') loadPatients();
   if (id === 'recommendations' && currentUser) loadRecommendations();
   if (id === 'classifier' && currentUser && currentUser.role === 'doctor') loadPatientsForClassifier();
+  triggerAssistantTab(id);
+
 }
 function guardedTab(id) {
   if (!currentUser) { showTab('login'); return; }
@@ -1546,6 +1617,7 @@ async function savePrediction(data) {
       prob_moderate:     data.probabilities['ModerateDemented'],
       confidence:        data.probabilities[data.predicted_class]
     });
+    showToast('✓ Prediction saved');
   } catch(e) { console.warn('Could not save prediction:', e); }
 }
 // ══════════════════════════════════════════════════════════════
@@ -1563,6 +1635,35 @@ function clearGameTimers() {
   gameTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
   gameTimers = [];
 }
+const GAME_INFO = {
+  memory:       { emoji:'🃏', title:'Memory',         desc:'Find all matching pairs of cards before time runs out.', tip:'💡 Tip: focus on position, not just the image.' },
+  orientation:  { emoji:'🗓️', title:'Orientation',    desc:'Answer 6 questions about today\'s date, month, year and season.', tip:'💡 Tip: take your time, there is no time limit.' },
+  sequence:     { emoji:'🔢', title:'Sequence',        desc:'Watch the colour sequence light up, then repeat it in the same order.', tip:'💡 Tip: say the colours out loud as they appear.' },
+  whatsmissing: { emoji:'👁️', title:'What\'s Missing?', desc:'Memorise the grid of objects, then identify which one disappeared.', tip:'💡 Tip: scan the grid row by row.' },
+  pattern:      { emoji:'🎨', title:'Pattern',         desc:'A colour sequence is shown with one element missing. Select the colour that comes next.', tip:'💡 Tip: look for the repeating rhythm in the colours.' },
+  arithmetic:   { emoji:'➕', title:'Arithmetic',      desc:'Solve simple additions and subtractions. Difficulty increases gradually.', tip:'💡 Tip: don\'t rush — accuracy matters more than speed.' }
+};
+
+function showGameModal(id) {
+  const info = GAME_INFO[id];
+  const overlay = document.createElement('div');
+  overlay.className = 'game-modal-overlay';
+  overlay.id = 'gameModal';
+  overlay.innerHTML = `
+    <div class="game-modal">
+      <div class="game-modal-emoji">${info.emoji}</div>
+      <div class="game-modal-title">${info.title}</div>
+      <div class="game-modal-desc">${info.desc}</div>
+      <div class="game-modal-tip">${info.tip}</div>
+      <button class="btn-start-game" onclick="closeModalAndStart('${id}')">Start game</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function closeModalAndStart(id) {
+  document.getElementById('gameModal')?.remove();
+  startGame(id);
+}
 function startGame(id) {
   clearGameTimers();
   document.getElementById('gamesLobby').style.display = 'none';
@@ -1570,6 +1671,7 @@ function startGame(id) {
   const map = { memory:'viewMemory', orientation:'viewOrientation', sequence:'viewSequence',
                 whatsmissing:'viewWhatsMissing', pattern:'viewPattern', arithmetic:'viewArithmetic' };
   document.getElementById(map[id]).classList.add('active');
+  setTimeout(() => showGameAssistant(id), 300);
   if (id === 'memory')       initMemory();
   if (id === 'orientation')  initOrientation();
   if (id === 'sequence')     initSequence();
@@ -2602,6 +2704,176 @@ function displayUncertainty(data) {
 
   document.getElementById("uncertaintyBox").style.display = "block";
 }  
+
+// ══════════════════════════════════════════════════════════════
+// VIRTUAL ASSISTANT
+// ══════════════════════════════════════════════════════════════
+const ASSISTANT_EMOJIS = ['🐻','🐱','🦊','🐶','🐸','🦁','🐼','🐨','🦋','⭐','🌸','🤖'];
+const ASSISTANT_COLORS = ['#94B49F','#e8a0b5','#4a7fc1','#9b6bc4','#e87c3e','#e8b84b'];
+
+const ASSISTANT_MSGS = {
+  home:            (u,a) => `Hi <strong>${u}</strong>! 👋 I'm <strong>${a}</strong> and I'll guide you through NeuroClass. Go to <strong>Games</strong> to train your brain or to <strong>Classifier</strong> to analyse an MRI scan.`,
+  classifier:      (_,a) => `Hi! 🧠 I'm <strong>${a}</strong>. To run an analysis, <strong>drag and drop</strong> your MRI image into the box, or click to browse. Then press <strong>Analyse image</strong>!`,
+  games:           (_,a) => `Let's train your brain! 🎮 I'm <strong>${a}</strong>. Pick any game below — try to play <strong>at least 3 different ones</strong> each session for the best results.`,
+  recommendations: (u,a) => `These tips are just for you, <strong>${u}</strong>! 💡 <strong>${a}</strong> put them together based on your MRI results and game scores. Take your time reading them.`
+};
+
+const GAME_MSGS = {
+  memory:       { emoji:'🃏', title:'Memory',           tip:'Find all matching pairs of cards. Click two cards to flip them — if they match, they stay open. Find all 8 pairs to win!' },
+  orientation:  { emoji:'🗓️', title:'Orientation',      tip:'Answer 6 questions about today\'s date, month, year and season. There\'s no time limit, so take your time!' },
+  sequence:     { emoji:'🔢', title:'Sequence',          tip:'Watch the colour buttons light up in a sequence, then repeat it in the same order. The sequence gets longer each round!' },
+  whatsmissing: { emoji:'👁️', title:"What's Missing?",   tip:'Look carefully at the grid of objects, then one will disappear. Choose which one is missing from the options below.' },
+  pattern:      { emoji:'🎨', title:'Pattern',           tip:'A colour sequence is shown with one gap. Choose the colour that logically comes next in the pattern.' },
+  arithmetic:   { emoji:'➕', title:'Arithmetic',        tip:'Solve simple additions and subtractions. Choose the correct answer from the four options. Difficulty increases gradually.' }
+};
+
+let assistantState = null;
+let assistantTimer = null;
+
+function loadAssistant() {
+  if (!currentUser || currentUser.role !== 'patient') return;
+  const saved = localStorage.getItem('nc_ast_' + currentUser.id);
+  assistantState = saved ? JSON.parse(saved) : null;
+  if (!assistantState) {
+    showAssistantSetup(true);
+  } else {
+    document.getElementById('assistantBubble').classList.add('visible');
+    applyAssistantAvatar();
+  }
+}
+
+function applyAssistantAvatar() {
+  if (!assistantState) return;
+  const btn = document.getElementById('assistantAvatarBtn');
+  if (btn) { btn.style.background = assistantState.color; btn.textContent = assistantState.emoji; }
+}
+
+function showAssistantMsg(html) {
+  if (!assistantState) return;
+  if (assistantTimer) clearTimeout(assistantTimer);
+  document.getElementById('assistantSpeechBody').innerHTML = html;
+  document.getElementById('assistantSpeech').style.display = 'block';
+  assistantTimer = setTimeout(dismissAssistant, 7000);
+}
+
+function dismissAssistant() {
+  document.getElementById('assistantSpeech').style.display = 'none';
+  if (assistantTimer) clearTimeout(assistantTimer);
+}
+
+function toggleAssistant() {
+  const speech = document.getElementById('assistantSpeech');
+  if (speech.style.display === 'none' || !speech.style.display) {
+    const tabId = document.querySelector('.section.active')?.id?.replace('tab-', '');
+    triggerAssistantTab(tabId);
+  } else {
+    dismissAssistant();
+  }
+}
+
+function triggerAssistantTab(tabId) {
+  if (!assistantState || !currentUser || currentUser.role !== 'patient') return;
+  const u = currentUser.name.split(' ')[0];
+  const a = assistantState.name;
+  const msg = ASSISTANT_MSGS[tabId]?.(u, a);
+  if (msg) showAssistantMsg(msg);
+}
+
+function showGameAssistant(gameId) {
+  if (!assistantState) return;
+  const info = GAME_MSGS[gameId];
+  if (!info) return;
+  const a = assistantState.name;
+  showAssistantMsg(`<strong>${info.emoji} ${info.title}</strong><br>${info.tip}<br><br><em style="font-size:.78rem;color:var(--muted)">— ${a}</em>`);
+}
+
+// ── Setup modal ──────────────────────────────────────────────
+let _setupDraft = {};
+
+function showAssistantSetup(firstTime = false) {
+  document.getElementById('assistantSetupOverlay')?.remove();
+  _setupDraft = assistantState
+    ? { ...assistantState }
+    : { emoji:'🐻', color:'#94B49F', name:'' };
+
+  const overlay = document.createElement('div');
+  overlay.className = 'assistant-setup-overlay';
+  overlay.id = 'assistantSetupOverlay';
+  overlay.innerHTML = `
+    <div class="assistant-setup-card">
+      <div class="assistant-setup-title">${firstTime ? 'Meet your guide! 👋' : 'Customise your guide'}</div>
+      <div class="assistant-setup-sub">${firstTime
+        ? 'Choose a companion to guide you through NeuroClass. You can change this anytime!'
+        : 'Update your companion\'s look and name.'}</div>
+
+      <div class="assistant-section-lbl">Choose a character</div>
+      <div class="avatar-emoji-grid">
+        ${ASSISTANT_EMOJIS.map(e =>
+          `<div class="avatar-emoji-opt${e===_setupDraft.emoji?' selected':''}"
+            onclick="pickEmoji(this,'${e}')">${e}</div>`).join('')}
+      </div>
+
+      <div class="assistant-section-lbl">Choose a colour</div>
+      <div class="avatar-color-grid">
+        ${ASSISTANT_COLORS.map(c =>
+          `<div class="avatar-color-opt${c===_setupDraft.color?' selected':''}"
+            style="background:${c}" onclick="pickColor(this,'${c}')"></div>`).join('')}
+      </div>
+
+      <div class="assistant-section-lbl">Give it a name</div>
+      <input class="assistant-name-input" id="astNameInput" type="text"
+        placeholder="e.g. Luna, Max, Nilo…" maxlength="12"
+        value="${_setupDraft.name}" oninput="updateAstPreview()">
+
+      <div class="assistant-preview">
+        <div class="assistant-preview-avatar" id="astPreviewAvatar"
+          style="background:${_setupDraft.color}">${_setupDraft.emoji}</div>
+        <div class="assistant-preview-text">
+          Hi! I'm <strong id="astPreviewName">${_setupDraft.name || '…'}</strong> and I'll guide you through NeuroClass. Nice to meet you! 😊
+        </div>
+      </div>
+
+      <button class="btn-save-assistant" onclick="saveAssistant(${firstTime})">
+        ${firstTime ? "Let's go! 🚀" : 'Save changes'}
+      </button>
+      ${!firstTime ? `<button class="btn-cancel-assistant"
+        onclick="document.getElementById('assistantSetupOverlay').remove()">Cancel</button>` : ''}
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function pickEmoji(el, emoji) {
+  document.querySelectorAll('.avatar-emoji-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  _setupDraft.emoji = emoji;
+  updateAstPreview();
+}
+
+function pickColor(el, color) {
+  document.querySelectorAll('.avatar-color-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  _setupDraft.color = color;
+  updateAstPreview();
+}
+
+function updateAstPreview() {
+  _setupDraft.name = document.getElementById('astNameInput')?.value || '';
+  document.getElementById('astPreviewAvatar').style.background = _setupDraft.color;
+  document.getElementById('astPreviewAvatar').textContent = _setupDraft.emoji;
+  document.getElementById('astPreviewName').textContent = _setupDraft.name || '…';
+}
+
+function saveAssistant(firstTime) {
+  const name = document.getElementById('astNameInput')?.value.trim();
+  if (!name) { document.getElementById('astNameInput').focus(); return; }
+  _setupDraft.name = name;
+  assistantState = { ..._setupDraft };
+  localStorage.setItem('nc_ast_' + currentUser.id, JSON.stringify(assistantState));
+  document.getElementById('assistantSetupOverlay')?.remove();
+  document.getElementById('assistantBubble').classList.add('visible');
+  applyAssistantAvatar();
+  if (firstTime) setTimeout(() => triggerAssistantTab('home'), 500);
+}
 // ── Init ────────────────────────────────────────────────────
 updateHeaderAuth();
 </script>
