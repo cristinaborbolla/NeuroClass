@@ -455,6 +455,8 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   .features{grid-template-columns:1fr;}
   .hero h1{font-size:1.8rem;}
 }
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#2c3e30;color:white;padding:.75rem 1.2rem;border-radius:10px;font-size:.85rem;font-weight:500;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;transform:translateY(0);}
 </style>
 </head>
 <body>
@@ -1018,6 +1020,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 <footer>
   NeuroClass · TFG Biomedical Engineering · Universidad de Deusto · 2026 ·
   Supervisión: Prof. Begoña García-Zapirain &amp; Dr. Marcin Derlatka
+  <div class="toast" id="toast"></div>
 </footer>
 
 <script>
