@@ -251,7 +251,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .mem-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .4s;border-radius:10px;}
 .mem-card.flipped .mem-inner,.mem-card.matched .mem-inner{transform:rotateY(180deg);}
 .mem-front,.mem-back{position:absolute;inset:0;border-radius:10px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;}
-.mem-front{background:var(--matcha);font-size:1.4rem;}
+.mem-front{background:var(--rose);font-size:1.4rem;}
 .mem-back{background:var(--surface2);border:1px solid var(--border);font-size:1.8rem;transform:rotateY(180deg);}
 .mem-card.matched .mem-front,.mem-card.matched .mem-back{border:2px solid var(--matcha);background:#edf7ee;}
 /* Orientation */
@@ -2708,14 +2708,14 @@ function displayUncertainty(data) {
 // ══════════════════════════════════════════════════════════════
 // VIRTUAL ASSISTANT
 // ══════════════════════════════════════════════════════════════
-const ASSISTANT_EMOJIS = ['🐻','🐱','🦊','🐶','🐸','🦁','🐼','🐨','🦋','⭐','🌸','🤖'];
+const ASSISTANT_EMOJIS = ['🐻','🐱','🦊','🐶','🐸','🦁','🐼','🐨','🐥','🐯','🐵','🐸'];
 const ASSISTANT_COLORS = ['#94B49F','#e8a0b5','#4a7fc1','#9b6bc4','#e87c3e','#e8b84b'];
 
 const ASSISTANT_MSGS = {
-  home:            (u,a) => `Hi <strong>${u}</strong>! 👋 I'm <strong>${a}</strong> and I'll guide you through NeuroClass. Go to <strong>Games</strong> to train your brain or to <strong>Classifier</strong> to analyse an MRI scan.`,
-  classifier:      (_,a) => `Hi! 🧠 I'm <strong>${a}</strong>. To run an analysis, <strong>drag and drop</strong> your MRI image into the box, or click to browse. Then press <strong>Analyse image</strong>!`,
-  games:           (_,a) => `Let's train your brain! 🎮 I'm <strong>${a}</strong>. Pick any game below — try to play <strong>at least 3 different ones</strong> each session for the best results.`,
-  recommendations: (u,a) => `These tips are just for you, <strong>${u}</strong>! 💡 <strong>${a}</strong> put them together based on your MRI results and game scores. Take your time reading them.`
+  home:            (u,a) => `Hi <strong>${u}</strong>! I'm <strong>${a}</strong> and I'll guide you through NeuroClass. Go to <strong>Games</strong> to train your brain or to <strong>Classifier</strong> to analyse an MRI scan.`,
+  classifier:      (_,a) => `To run an analysis, <strong>drag and drop</strong> your MRI image into the box, or click to browse. Then press <strong>Analyse image</strong>!`,
+  games:           (_,a) => `Let's train your brain! Pick any game below — try to play <strong>at least 3 different ones</strong> each session for the best results.`,
+  recommendations: (u,a) => `These tips are just for you, <strong>${u}</strong>! <strong>${a}</strong> put them together based on your MRI results and game scores. Take your time reading them.`
 };
 
 const GAME_MSGS = {
