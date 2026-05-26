@@ -2773,7 +2773,11 @@ function toggleAssistant() {
   const speech = document.getElementById('assistantSpeech');
   if (speech.style.display === 'none' || !speech.style.display) {
     const tabId = document.querySelector('.section.active')?.id?.replace('tab-', '');
-    triggerAssistantTab(tabId);
+    if (!assistantState || !currentUser) return;
+    const u = currentUser.name.split(' ')[0];
+    const a = assistantState.name;
+    const msg = ASSISTANT_MSGS[tabId]?.(u, a);
+    if (msg) showAssistantMsg(msg);
   } else {
     dismissAssistant();
   }
@@ -2781,10 +2785,12 @@ function toggleAssistant() {
 
 function triggerAssistantTab(tabId) {
   if (!assistantState || !currentUser || currentUser.role !== 'patient') return;
-  const u = currentUser.name.split(' ')[0];
-  const a = assistantState.name;
-  const msg = ASSISTANT_MSGS[tabId]?.(u, a);
-  if (msg) showAssistantMsg(msg);
+  if (tabId === 'home' && !assistantVisited.has('home')) {
+    assistantVisited.add('home');
+    const u = currentUser.name.split(' ')[0];
+    const a = assistantState.name;
+    showAssistantMsg(ASSISTANT_MSGS.home(u, a));
+  }
 }
 
 function showGameAssistant(gameId) {
