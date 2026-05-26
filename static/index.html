@@ -36,7 +36,7 @@
   
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:16px;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
 
 /* ── Header ── */
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -408,14 +408,17 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .arith-opt:disabled{cursor:not-allowed;}
 
 @media(max-width:680px){
+  header{overflow:hidden;}
+  .header-right{overflow:hidden;min-width:0;flex:1;}
   nav{
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    flex-wrap: nowrap;
-    max-width: calc(100vw - 140px);
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    flex-wrap:nowrap;
+    min-width:0;
+    flex:1;
   }
-  nav::-webkit-scrollbar{ display: none; }
+  nav::-webkit-scrollbar{display:none;}
 }
 
 /* ══ RECOMMENDATIONS ════════════════════════════════════════ */
