@@ -502,6 +502,11 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .btn-save-assistant{width:100%;padding:.85rem;background:var(--matcha);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
 .btn-save-assistant:hover{opacity:.88;}
 .btn-cancel-assistant{width:100%;margin-top:.6rem;padding:.7rem;background:none;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--muted);font-size:.9rem;}
+
+@keyframes pulse {
+  0%,100% { transform: scale(1); box-shadow: 0 4px 16px rgba(44,62,48,.2); }
+  50%      { transform: scale(1.15); box-shadow: 0 6px 24px rgba(44,62,48,.35); }
+}
 </style>
 </head>
 <body>
@@ -1671,7 +1676,6 @@ function startGame(id) {
   const map = { memory:'viewMemory', orientation:'viewOrientation', sequence:'viewSequence',
                 whatsmissing:'viewWhatsMissing', pattern:'viewPattern', arithmetic:'viewArithmetic' };
   document.getElementById(map[id]).classList.add('active');
-  setTimeout(() => showGameAssistant(id), 300);
   if (id === 'memory')       initMemory();
   if (id === 'orientation')  initOrientation();
   if (id === 'sequence')     initSequence();
@@ -2735,7 +2739,8 @@ function loadAssistant() {
   const saved = localStorage.getItem('nc_ast_' + currentUser.id);
   assistantState = saved ? JSON.parse(saved) : null;
   if (!assistantState) {
-    showAssistantSetup(true);
+    document.getElementById('assistantBubble').classList.add('visible');
+    document.getElementById('assistantAvatarBtn').style.animation = 'pulse 1.5s ease-in-out 3';
   } else {
     document.getElementById('assistantBubble').classList.add('visible');
     applyAssistantAvatar();
