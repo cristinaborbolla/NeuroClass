@@ -336,6 +336,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .mini-bar-fill{height:100%;border-radius:99px;}
 /* Export */
 .btn-export{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;color:var(--text);cursor:pointer;transition:background .15s;margin-left:auto;}
+.export-group{display:flex;align-items:center;gap:.5rem;margin-left:auto;flex-wrap:wrap;}
 .btn-export:hover{background:var(--bg);}
 .detail-top-actions{display:flex;align-items:center;gap:.75rem;flex:1;}
 
@@ -437,6 +438,23 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .recs-loading{text-align:center;padding:3rem;color:var(--muted);}
 .btn-refresh-recs{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;background:var(--matcha);color:white;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
 .btn-refresh-recs:hover{opacity:.85;}
+
+@media(max-width:768px){
+  .clf-wrap{grid-template-columns:1fr;}
+  .charts-row{grid-template-columns:1fr;}
+  .info-strip{grid-template-columns:1fr;}
+  .stage-features{grid-template-columns:1fr;}
+  .games-lobby{grid-template-columns:1fr;}
+  .patients-grid{grid-template-columns:1fr;}
+  .recs-grid{grid-template-columns:1fr;}
+  .hero h1{font-size:2.1rem;}
+  .detail-top-actions{flex-wrap:wrap;}
+  .export-group{flex-wrap:wrap;}
+}
+@media(max-width:420px){
+  .features{grid-template-columns:1fr;}
+  .hero h1{font-size:1.8rem;}
+}
 </style>
 </head>
 <body>
@@ -1839,9 +1857,10 @@ async function selectPatient(p) {
           <div class="detail-name">${p.full_name}</div>
           <div class="detail-sub">${p.username} · Registered ${formatDate(p.created_at)}</div>
         </div>
-        <button class="btn-export" onclick="exportPatientCSV('${p.id}','${p.full_name.replace(/'/g,"\\'")}','${p.username}')">
-          ⬇ Export CSV
-        </button>
+        <div class="export-group">
+          <button class="btn-export" onclick="exportPredictionsCSV('${p.id}','${p.username}')">⬇ MRI Data</button>
+          <button class="btn-export" onclick="exportGamesCSV('${p.id}','${p.username}')">⬇ Games Data</button>
+        </div>
       </div>
     </div>
     <div class="detail-body">
@@ -1926,29 +1945,49 @@ async function selectPatient(p) {
     <thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead>
     <tbody>${gameRows}</tbody></table></div>`;
 }
-async function exportPatientCSV(patientId, patientName, username) {
-  const [{ data: preds }, { data: games }] = await Promise.all([
-    db.from('predictions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
-    db.from('game_sessions').select('*').eq('patient_id', patientId).order('created_at', { ascending: false })
-  ]);
-  let csv = `NeuroClass · Patient Data Export\nPatient:,${patientName}\nID:,${username}\nExported:,${new Date().toLocaleString('en-GB')}\n\n`;
-  csv += `MRI PREDICTIONS\nDate,Predicted Stage,Confidence (%),Non-Demented (%),Very Mild (%),Mild (%),Moderate (%)\n`;
-  (preds||[]).forEach(r => {
-    csv += `${formatDateTime(r.created_at)},${r.predicted_class},${(r.confidence*100).toFixed(2)},${(r.prob_non_demented*100).toFixed(2)},${(r.prob_very_mild*100).toFixed(2)},${(r.prob_mild*100).toFixed(2)},${(r.prob_moderate*100).toFixed(2)}\n`;
-  });
-  if (!preds || preds.length === 0) csv += `No predictions recorded\n`;
-  csv += `\nGAME SESSIONS\nDate,Game,Score,Max Score,Result (%),Duration (s)\n`;
-  (games||[]).forEach(s => {
-    csv += `${formatDateTime(s.created_at)},${s.game_name},${s.score},${s.max_score},${Math.round((s.score/s.max_score)*100)},${s.duration_sec}\n`;
-  });
-  if (!games || games.length === 0) csv += `No game sessions recorded\n`;
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `neuroclass_${username}_${new Date().toISOString().slice(0,10)}.csv`;
+
+function downloadCSV(content, filename) {
+  const blob = new Blob(['\uFEFF' + content], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
   a.click();
-  URL.revokeObjectURL(url);
+}
+
+async function exportPredictionsCSV(patientId, username) {
+  const {data} = await db.from('predictions').select('*')
+    .eq('patient_id', patientId).order('created_at',{ascending:true});
+  const LABELS = {NonDemented:'Non-Demented',VeryMildDemented:'Very Mild Demented',
+    MildDemented:'Mild Demented',ModerateDemented:'Moderate Demented'};
+  let csv = 'Date\tPredicted Stage\tConfidence (%)\tNon-Demented (%)\tVery Mild (%)\tMild (%)\tModerate (%)\n';
+  (data||[]).forEach(r => {
+    csv += `${formatDateTime(r.created_at)}\t${LABELS[r.predicted_class]||r.predicted_class}\t`
+         + `${(r.confidence*100).toFixed(2)}\t${(r.prob_non_demented*100).toFixed(2)}\t`
+         + `${(r.prob_very_mild*100).toFixed(2)}\t${(r.prob_mild*100).toFixed(2)}\t`
+         + `${(r.prob_moderate*100).toFixed(2)}\n`;
+  });
+  if(data?.length){
+    const avg = data.reduce((s,r)=>s+r.confidence*100,0)/data.length;
+    csv += `\nTotal predictions\t${data.length}\nAverage confidence\t\t${avg.toFixed(2)}\n`;
+  }
+  downloadCSV(csv, `neuroclass_MRI_${username}_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+async function exportGamesCSV(patientId, username) {
+  const {data} = await db.from('game_sessions').select('*')
+    .eq('patient_id', patientId).order('created_at',{ascending:true});
+  const LABELS = {memory:'Memory',orientation:'Orientation',sequence:'Sequence',
+    whatsmissing:"What's Missing",pattern:'Pattern',arithmetic:'Arithmetic'};
+  let csv = 'Date\tGame\tScore\tMax Score\tResult (%)\tDuration (s)\n';
+  (data||[]).forEach(s => {
+    csv += `${formatDateTime(s.created_at)}\t${LABELS[s.game_name]||s.game_name}\t`
+         + `${s.score}\t${s.max_score}\t${Math.round(s.score/s.max_score*100)}\t${s.duration_sec}\n`;
+  });
+  if(data?.length){
+    const overall = data.reduce((sum,s)=>sum+Math.round(s.score/s.max_score*100),0)/data.length;
+    csv += `\nOverall average\t\t\t\t${overall.toFixed(1)}\nTotal sessions\t${data.length}\n`;
+  }
+  downloadCSV(csv, `neuroclass_games_${username}_${new Date().toISOString().slice(0,10)}.csv`);
 }
 // ══════════════════════════════════════════════════════════════
 // DOCTOR PATIENT SELECTOR (classifier)
