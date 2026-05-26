@@ -1959,16 +1959,16 @@ async function exportPredictionsCSV(patientId, username) {
     .eq('patient_id', patientId).order('created_at',{ascending:true});
   const LABELS = {NonDemented:'Non-Demented',VeryMildDemented:'Very Mild Demented',
     MildDemented:'Mild Demented',ModerateDemented:'Moderate Demented'};
-  let csv = 'Date\tPredicted Stage\tConfidence (%)\tNon-Demented (%)\tVery Mild (%)\tMild (%)\tModerate (%)\n';
+  let csv = 'Date,Predicted Stage,Confidence (%),Non-Demented (%),Very Mild (%),Mild (%),Moderate (%)\n';
   (data||[]).forEach(r => {
-    csv += `${formatDateTime(r.created_at)}\t${LABELS[r.predicted_class]||r.predicted_class}\t`
-         + `${(r.confidence*100).toFixed(2)}\t${(r.prob_non_demented*100).toFixed(2)}\t`
-         + `${(r.prob_very_mild*100).toFixed(2)}\t${(r.prob_mild*100).toFixed(2)}\t`
+    csv += `${formatDateTime(r.created_at)},${LABELS[r.predicted_class]||r.predicted_class},`
+         + `${(r.confidence*100).toFixed(2)},${(r.prob_non_demented*100).toFixed(2)},`
+         + `${(r.prob_very_mild*100).toFixed(2)},${(r.prob_mild*100).toFixed(2)},`
          + `${(r.prob_moderate*100).toFixed(2)}\n`;
   });
   if(data?.length){
     const avg = data.reduce((s,r)=>s+r.confidence*100,0)/data.length;
-    csv += `\nTotal predictions\t${data.length}\nAverage confidence\t\t${avg.toFixed(2)}\n`;
+    csv += `\nTotal predictions,${data.length}\nAverage confidence,,${avg.toFixed(2)}\n`;
   }
   downloadCSV(csv, `neuroclass_MRI_${username}_${new Date().toISOString().slice(0,10)}.csv`);
 }
@@ -1978,14 +1978,14 @@ async function exportGamesCSV(patientId, username) {
     .eq('patient_id', patientId).order('created_at',{ascending:true});
   const LABELS = {memory:'Memory',orientation:'Orientation',sequence:'Sequence',
     whatsmissing:"What's Missing",pattern:'Pattern',arithmetic:'Arithmetic'};
-  let csv = 'Date\tGame\tScore\tMax Score\tResult (%)\tDuration (s)\n';
+  let csv = 'Date,Game,Score,Max Score,Result (%),Duration (s)\n';
   (data||[]).forEach(s => {
-    csv += `${formatDateTime(s.created_at)}\t${LABELS[s.game_name]||s.game_name}\t`
-         + `${s.score}\t${s.max_score}\t${Math.round(s.score/s.max_score*100)}\t${s.duration_sec}\n`;
+    csv += `${formatDateTime(s.created_at)},${LABELS[s.game_name]||s.game_name},`
+         + `${s.score},${s.max_score},${Math.round(s.score/s.max_score*100)},${s.duration_sec}\n`;
   });
   if(data?.length){
     const overall = data.reduce((sum,s)=>sum+Math.round(s.score/s.max_score*100),0)/data.length;
-    csv += `\nOverall average\t\t\t\t${overall.toFixed(1)}\nTotal sessions\t${data.length}\n`;
+    csv += `\nOverall average,,,,${overall.toFixed(1)}\nTotal sessions,${data.length}\n`;
   }
   downloadCSV(csv, `neuroclass_games_${username}_${new Date().toISOString().slice(0,10)}.csv`);
 }
