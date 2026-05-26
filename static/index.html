@@ -2719,7 +2719,7 @@ const ASSISTANT_EMOJIS = ['🐻','🐱','🦊','🐶','🐸','🦁','🐼','🐨
 const ASSISTANT_COLORS = ['#94B49F','#e8a0b5','#4a7fc1','#9b6bc4','#e87c3e','#e8b84b'];
 
 const ASSISTANT_MSGS = {
-  home:            (u,a) => `Hi <strong>${u}</strong>! I'm <strong>${a}</strong> and I'll guide you through NeuroClass. Go to <strong>Games</strong> to train your brain or to <strong>Classifier</strong> to analyse an MRI scan.`,
+  home:            (u,a) => `Hi <strong>${u}</strong>!I'm <strong>${a}</strong> and I'll guide you through NeuroClass. Go to <strong>Games</strong> to train your brain or to <strong>Classifier</strong> to analyse an MRI scan.<br><br>If you ever need help in any section, just tap me!!`,
   classifier:      (_,a) => `To run an analysis, <strong>drag and drop</strong> your MRI image into the box, or click to browse. Then press <strong>Analyse image</strong>!`,
   games:           (_,a) => `Let's train your brain! Pick any game below — try to play <strong>at least 3 different ones</strong> each session for the best results.`,
   recommendations: (u,a) => `These tips are just for you, <strong>${u}</strong>! <strong>${a}</strong> put them together based on your MRI results and game scores. Take your time reading them.`
@@ -2815,7 +2815,7 @@ function showAssistantSetup(firstTime = false) {
   overlay.id = 'assistantSetupOverlay';
   overlay.innerHTML = `
     <div class="assistant-setup-card">
-      <div class="assistant-setup-title">${firstTime ? 'Meet your guide! 👋' : 'Customise your guide'}</div>
+      <div class="assistant-setup-title">${firstTime ? 'Meet your guide!' : 'Customise your guide'}</div>
       <div class="assistant-setup-sub">${firstTime
         ? 'Choose a companion to guide you through NeuroClass. You can change this anytime!'
         : 'Update your companion\'s look and name.'}</div>
