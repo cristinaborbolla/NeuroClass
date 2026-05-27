@@ -1291,6 +1291,7 @@ function switchAuth(tab) {
   document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
   document.getElementById('loginMsg').className = 'auth-msg';
   document.getElementById('registerMsg').className = 'auth-msg';
+  if (tab === 'register') setRegRole(regRole);
 }
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -2736,17 +2737,27 @@ const GAME_MSGS = {
 
 let assistantState = null;
 let assistantTimer = null;
+const assistantVisited = new Set();
 
 function loadAssistant() {
   if (!currentUser || currentUser.role !== 'patient') return;
   const saved = localStorage.getItem('nc_ast_' + currentUser.id);
   assistantState = saved ? JSON.parse(saved) : null;
+  document.getElementById('assistantBubble').classList.add('visible');
   if (!assistantState) {
-    document.getElementById('assistantBubble').classList.add('visible');
+    // Usuario nuevo: pulsa y abre el setup automáticamente
     document.getElementById('assistantAvatarBtn').style.animation = 'pulse 1.5s ease-in-out 3';
+    setTimeout(() => showAssistantSetup(true), 1400);
   } else {
-    document.getElementById('assistantBubble').classList.add('visible');
+    // Usuario con asistente configurado: muestra bienvenida
     applyAssistantAvatar();
+    const u = currentUser.name.split(' ')[0];
+    const a = assistantState.name;
+    setTimeout(() => showAssistantMsg(
+      `Hi <strong>${u}</strong>! I'm <strong>${a}</strong><br>` +
+      `I'm here to help you navigate every section of NeuroClass. ` +
+      `Just tap me whenever you need guidance!`
+    ), 800);
   }
 }
 
@@ -2843,12 +2854,12 @@ function showAssistantSetup(firstTime = false) {
         <div class="assistant-preview-avatar" id="astPreviewAvatar"
           style="background:${_setupDraft.color}">${_setupDraft.emoji}</div>
         <div class="assistant-preview-text">
-          Hi! I'm <strong id="astPreviewName">${_setupDraft.name || '…'}</strong> and I'll guide you through NeuroClass. Nice to meet you! 😊
+          Hi! I'm <strong id="astPreviewName">${_setupDraft.name || '…'}</strong> and I'll guide you through NeuroClass. Nice to meet you!
         </div>
       </div>
 
       <button class="btn-save-assistant" onclick="saveAssistant(${firstTime})">
-        ${firstTime ? "Let's go! 🚀" : 'Save changes'}
+        ${firstTime ? "Let's go!" : 'Save changes'}
       </button>
       ${!firstTime ? `<button class="btn-cancel-assistant"
         onclick="document.getElementById('assistantSetupOverlay').remove()">Cancel</button>` : ''}
@@ -2886,7 +2897,14 @@ function saveAssistant(firstTime) {
   document.getElementById('assistantSetupOverlay')?.remove();
   document.getElementById('assistantBubble').classList.add('visible');
   applyAssistantAvatar();
-  if (firstTime) setTimeout(() => triggerAssistantTab('home'), 500);
+  if (firstTime) {
+    const u = currentUser.name.split(' ')[0];
+    const a = assistantState.name;
+    setTimeout(() => showAssistantMsg(
+      `Nice to meet you, <strong>${u}</strong>! I'm <strong>${a}</strong><br>` +
+      `Tap me anytime and I'll explain what each section of the app does. Let's go!`
+    ), 500);
+  }
 }
 // ── Init ────────────────────────────────────────────────────
 updateHeaderAuth();
