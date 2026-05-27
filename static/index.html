@@ -79,6 +79,71 @@ nav{display:flex;gap:.2rem;}
 .card-icon{width:28px;height:28px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
 .card-body{padding:1.4rem;}
 
+/* Hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: .4rem;
+  flex-shrink: 0;
+}
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: transform .2s, opacity .2s;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile dropdown */
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  top: 64px;
+  background: rgba(44,62,48,.25);
+  z-index: 98;
+}
+.mobile-nav-overlay.visible { display: block; }
+
+.mobile-nav-dropdown {
+  display: none;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: .5rem;
+  z-index: 99;
+  box-shadow: 0 4px 20px rgba(44,62,48,.12);
+  flex-direction: column;
+}
+.mobile-nav-dropdown.open { display: flex; }
+.mobile-nav-dropdown .nav-btn {
+  text-align: left;
+  padding: .75rem 1rem;
+  border-radius: 9px;
+  font-size: .92rem;
+}
+
+/* Mostrar hamburguesa y ocultar nav horizontal en móvil */
+@media(max-width: 768px) {
+  #mainNav { display: none !important; }
+  .hamburger { display: flex; }
+  .user-name { display: none; }
+  .role-badge { display: none; }
+  .btn-logout { padding: .35rem .6rem; font-size: .72rem; }
+}
+
 /* ══ LOGIN / REGISTER ══════════════════════════════════════ */
 #tab-login{display:none;}
 #tab-login.active{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 64px - 53px);padding:2rem 1rem;}
@@ -117,14 +182,14 @@ nav{display:flex;gap:.2rem;}
 .auth-divider{text-align:center;font-size:.78rem;color:var(--muted);}
 
 /* ══ HOME ══════════════════════════════════════════════════ */
-.hero{max-width:900px;margin:0 auto;padding:4rem 2rem 3rem;text-align:center;}
+.hero{max-width:900px;margin:0 auto;padding:3rem 2rem 1.5rem;text-align:center;}
 .hero-tag{display:inline-block;background:var(--rose);color:#7a3050;font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .9rem;border-radius:99px;margin-bottom:1.4rem;}
 .hero h1{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:500;line-height:1.15;letter-spacing:-.02em;margin-bottom:1.1rem;}
 .hero h1 em{font-style:italic;color:var(--matcha-dk);}
 .hero p{font-size:1.05rem;color:var(--muted);line-height:1.75;max-width:560px;margin:0 auto 2.5rem;}
 .hero-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--matcha);color:white;border:none;padding:.8rem 2rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s;}
 .hero-btn:hover{background:var(--matcha-dk);}
-.stats-strip{background:var(--matcha-slt);padding:2.5rem 2rem;}
+.stats-strip{background:var(--matcha-slt);padding:1rem 2rem 2rem;}
 .stats-inner{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1.5rem;text-align:center;}
 .stat-val{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:500;color:var(--matcha-dk);line-height:1;}
 .stat-lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.3rem;}
@@ -458,6 +523,8 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   .hero h1{font-size:2.1rem;}
   .detail-top-actions{flex-wrap:wrap;}
   .export-group{flex-wrap:wrap;}
+  .hero { padding: 2rem 1.5rem 1rem; }
+  .stats-strip { padding: .75rem 1rem 1.5rem; }
 }
 @media(max-width:420px){
   .features{grid-template-columns:1fr;}
@@ -529,6 +596,9 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       <button class="nav-btn"         id="navDashboard"  onclick="guardedTab('dashboard')" style="display:none;">Dashboard</button>
       <button class="nav-btn"         id="navLogin"      onclick="showTab('login')">Log in</button>
     </nav>
+    <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
     <div class="user-pill" id="userPill">
       <div class="user-avatar" id="userAvatar">?</div>
       <span class="user-name" id="userName"></span>
@@ -538,6 +608,9 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   </div>
 </header>
 
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-nav-dropdown" id="mobileNavDropdown"></div>
+  
 <!-- ══ HOME ══════════════════════════════════════════════════ -->
 <div id="tab-home" class="section active">
   <div class="hero">
@@ -1299,6 +1372,34 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
+  
+function toggleMobileMenu() {
+  const dropdown = document.getElementById('mobileNavDropdown');
+  const btn      = document.getElementById('hamburger');
+  const isOpen   = dropdown.classList.contains('open');
+  if (isOpen) {
+    closeMobileMenu();
+  } else {
+    // Poblar con los botones visibles del nav principal
+    const nav     = document.getElementById('mainNav');
+    const buttons = Array.from(nav.querySelectorAll('.nav-btn'))
+      .filter(b => b.style.display !== 'none');
+    dropdown.innerHTML = buttons.map(b =>
+      `<button class="nav-btn${b.classList.contains('active') ? ' active' : ''}"
+        onclick="closeMobileMenu();${b.getAttribute('onclick')}">${b.textContent}</button>`
+    ).join('');
+    dropdown.classList.add('open');
+    document.getElementById('mobileNavOverlay').classList.add('visible');
+    btn.classList.add('open');
+  }
+}
+
+function closeMobileMenu() {
+  document.getElementById('mobileNavDropdown').classList.remove('open');
+  document.getElementById('mobileNavOverlay').classList.remove('visible');
+  document.getElementById('hamburger').classList.remove('open');
+}
+  
 // ── Role toggle ──────────────────────────────────────────────
 const STAFF_CODE = 'NEURO2026';
 let regRole = 'patient';
@@ -1460,6 +1561,7 @@ function showMsg(el, type, text) {
 }
 // ── Tab navigation ──────────────────────────────────────────
 function showTab(id) {
+  closeMobileMenu();
   // Limpiar classifier al salir
   const prevSection = document.querySelector('.section.active');
   if (prevSection && prevSection.id === 'tab-classifier' && id !== 'classifier') {
