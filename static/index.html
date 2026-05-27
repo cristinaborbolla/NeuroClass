@@ -251,7 +251,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .mem-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .4s;border-radius:10px;}
 .mem-card.flipped .mem-inner,.mem-card.matched .mem-inner{transform:rotateY(180deg);}
 .mem-front,.mem-back{position:absolute;inset:0;border-radius:10px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;}
-.mem-front{background:var(--rose);font-size:1.4rem;}
+.mem-front{background:var(--rose-dk);font-size:1.4rem;}
 .mem-back{background:var(--surface2);border:1px solid var(--border);font-size:1.8rem;transform:rotateY(180deg);}
 .mem-card.matched .mem-front,.mem-card.matched .mem-back{border:2px solid var(--matcha);background:#edf7ee;}
 /* Orientation */
@@ -399,9 +399,9 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 /* ══ ARITHMETIC ═════════════════════════════════════════════ */
 .arith-wrap{max-width:360px;margin:0 auto;text-align:center;}
 .arith-level-badge{display:inline-block;font-size:.72rem;font-weight:600;padding:.2rem .7rem;border-radius:99px;margin-bottom:1rem;background:var(--cream);color:var(--muted);border:1px solid var(--border);}
-.arith-problem{font-family:'Cormorant Garamond',serif;font-size:3.8rem;font-weight:500;line-height:1;margin-bottom:2rem;color:var(--text);}
+.arith-problem{font-family:'DM Sans',serif;font-size:3.8rem;font-weight:500;line-height:1;margin-bottom:2rem;color:var(--text);}
 .arith-opts{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
-.arith-opt{padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface2);font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text);}
+.arith-opt{padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface2);font-family:'DM Sans',serif;font-size:2.2rem;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text);}
 .arith-opt:hover:not(:disabled){border-color:var(--matcha);background:var(--surface);}
 .arith-opt.correct{border-color:#4a8c5c!important;background:#edf7ee!important;}
 .arith-opt.wrong{border-color:#a83232!important;background:#fef2f2!important;}
@@ -1752,7 +1752,9 @@ function memFlip(card) {
     if (memState.matched === 8) {
       clearInterval(memState.timerInterval);
       const elapsed = Math.floor((Date.now()-memState.startTime)/1000);
-      const t = setTimeout(() => showResults('memResults','memory',8,8,elapsed,
+      const efficiency = Math.max(0, 1 - (memState.attempts - 8) / 16);
+      const score = Math.round(efficiency * 8);
+      const t = setTimeout(() => showResults('memResults','memory', score, 8, elapsed,
         `All pairs found in ${memState.attempts} attempt${memState.attempts!==1?'s':''}`), 600);
       gameTimers.push(t);
     }
@@ -1870,7 +1872,7 @@ function seqPlayerClick(color) {
     document.getElementById('seqInfo').textContent='✗ Wrong!';
     document.getElementById('seqStatus').textContent=`You completed ${seqState.round-1} round${seqState.round-1!==1?'s':''}`;
     const elapsed=Math.floor((Date.now()-seqState.startTime)/1000);
-    const t2=setTimeout(()=>showResults('seqResults','sequence',seqState.round-1,20,elapsed,
+    const t2=setTimeout(()=>showResults('seqResults','sequence',seqState.round-1,10,elapsed,
       `Reached round ${seqState.round} · sequence length ${seqState.sequence.length}`),900);
     gameTimers.push(t2); return;
   }
@@ -2486,7 +2488,7 @@ function arithAnswer(btn,chosen,correct) {
 // RECOMMENDATIONS FUNCTIONS
 // ══════════════════════════════════════════════════════════════
 function computeGameTrend(sessions) {
-  if (!sessions || sessions.length < 4) return 'noData';
+  if (!sessions || sessions.length < 2) return 'noData';
   const sorted = [...sessions].sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
   const scores = sorted.map(s => (s.score / s.max_score) * 100);
   const mid = Math.floor(scores.length / 2);
@@ -2644,8 +2646,9 @@ function analyzeGamePerformance(sessions) {
   });
   Object.keys(gameAvgs).forEach(g => { gameAvgs[g] = gameAvgs[g] / gameCounts[g]; });
   const played = Object.keys(gameAvgs);
-  const weakGames   = played.filter(g => gameAvgs[g] < 50);
-  const strongGames = played.filter(g => gameAvgs[g] >= 75);
+  const WEAK_THRESHOLD = { sequence: 30, memory: 50, orientation: 60,
+                         whatsmissing: 50, pattern: 50, arithmetic: 50 };
+  const weakGames = played.filter(g => gameAvgs[g] < (WEAK_THRESHOLD[g] ?? 50));  const strongGames = played.filter(g => gameAvgs[g] >= 75);
   const overallAvg  = played.reduce((sum, g) => sum + gameAvgs[g], 0) / played.length;
   return { gameAvgs, weakGames, strongGames, overallAvg, playedCount: played.length };
 }
