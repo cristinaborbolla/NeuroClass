@@ -6,22 +6,34 @@
 
 // ─── Palette (soft) ──────────────────────────────────────────
 const _NC = {
-  matcha:    [148, 180, 159],
-  matchaDk:  [118, 158, 128],
-  matchaLt:  [218, 236, 222],
-  cream:     [252, 250, 244],
-  creamDk:   [240, 235, 220],
-  dark:      [52,  68,  56],
-  mid:       [108, 135, 115],
-  muted:     [158, 178, 163],
-  light:     [247, 251, 247],
-  border:    [195, 220, 190],
+  // ─── Backgrounds ─────────────────────────────
+  bg:        [246, 250, 245],   // #F6FAF5
+  surface:   [232, 242, 227],   // #E8F2E3
+  surface2:  [255, 255, 255],   // #FFFFFF
+
+  // ─── Cream tones ─────────────────────────────
+  creamLt:   [250, 248, 242],   // #FAF8F2
+  cream:     [248, 243, 228],   // #F8F3E4
+  creamDk:   [243, 237, 218],   // #F3EDDA
+
+  // ─── Borders ─────────────────────────────────
+  border:    [183, 214, 176],   // #B7D6B0
+
+  // ─── Matcha scale ────────────────────────────
+  matcha:    [148, 180, 159],   // #94B49F
+  matchaDk:  [110, 145, 120],   // #6E9178
+  matchaLt:  [183, 214, 176],   // #B7D6B0
+  matchaSlt: [211, 235, 206],   // #D3EBCE
+
+  // ─── Text ─────────────────────────────────────
+  dark:      [44,  62,  48],    // #2C3E30
+  muted:     [122, 144, 128],   // #7A9080
+  light:     [246, 250, 245],   // #F6FAF5
   white:     [255, 255, 255],
-  stageNone: [138, 198, 155],
-  stageVMild:[238, 196, 118],
-  stageMild: [238, 158, 108],
-  stageMod:  [225, 118, 118],
-  blue:      [80,  110, 200],
+  stageNone: [148, 180, 159],
+  stageVMild:[211, 235, 206],
+  stageMild: [250, 202, 215],   // rose
+  stageMod:  [232, 160, 181],   // rose-dk
 };
 
 const _STAGE = {
@@ -90,14 +102,14 @@ function _makePDF(){
 // ─── Page header ─────────────────────────────────────────────
 function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   rct(0,0,PW,3,_NC.matcha);
-  rct(0,3,PW,33,_NC.light);
+  rct(0,3,PW,33,_NC.surface);
   hline(36,_NC.border,0.3);
   rct(M,8,14,14,_NC.matcha,2);
-  t('NC',M+2,18,20,'bold','left',_NC.white);
+  t('NC',M+2,18,20,'bold','left',_NC.surface2);
   serif('NeuroClass',M+18,15,16,'left',_NC.matchaDk);
-  t(subtitle,M+18,22,12,'normal','left',_NC.mid);
+  t(subtitle,M+18,22,9,'normal','left',_NC.muted);
   t('Patient',PW-M,10,9,'bold','right',_NC.muted);
-  serif(p.name||'—',PW-M,18,12,'right',_NC.dark);
+  serif(p.name||'—',PW-M,18,13,'right',_NC.dark);
   t('DOB: '+(p.dob||'—')+'   ·   ID: '+(p.dni||'—'),PW-M,24,8,'normal','right',_NC.muted);
   t('Generated: '+_fmtDT(),PW-M,30,8,'normal','right',_NC.muted);
   return 42;
@@ -105,15 +117,15 @@ function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
 
 // ─── Section header ───────────────────────────────────────────
 function _sectionHeader(label,y,M,CW,rct,t){
-  rct(M,y,CW,9,_NC.light);
+  rct(M,y,CW,9,_NC.surface);
   rct(M,y,3,9,_NC.matcha);
-  t(label.toUpperCase(),M+7,y+6.5,7.5,'bold','left',_NC.mid);
+  t(label.toUpperCase(),M+7,y+6.5,9,'bold','left',_NC.muted);
   return y+13;
 }
 
 // ─── Info row ─────────────────────────────────────────────────
 function _infoRow(label,value,y,M,t,isLast,doc){
-  t(label,M+5,y+7,8,'normal','left',_NC.muted);
+  t(label,M+5,y+7,10,'normal','left',_NC.muted);
   t(value||'—',M+62,y+7,8.5,'bold','left',_NC.dark);
   if(!isLast){doc.setDrawColor(..._NC.border);doc.setLineWidth(0.15);doc.line(M,y+11,M+174,y+11);}
   return y+11;
@@ -128,7 +140,7 @@ function _confBars(allConf,predicted,y,M,CW,fill,t,doc){
     doc.setFont('helvetica',sel?'bold':'normal');doc.setFontSize(8);
     doc.setTextColor(...(sel?_NC.dark:_NC.muted));
     doc.text(_STAGE[s].label,M,y+4.5);
-    fill(_NC.matchaLt);doc.roundedRect(bx,y,bw,5,2,2,'F');
+    fill(_NC.cream);doc.roundedRect(bx,y,bw,5,2,2,'F');
     if(val>0.005){fill(_STAGE[s].color);doc.roundedRect(bx,y,bw*val,5,2,2,'F');}
     doc.setFont('helvetica',sel?'bold':'normal');
     doc.setTextColor(...(sel?_NC.matchaDk:_NC.muted));
@@ -145,24 +157,24 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
     return y+15;
   }
   const c1=74,c2=58,c3=CW-c1-c2;
-  rct(M,y,CW,10,_NC.matchaDk);
-  t('Cognitive Domain',M+5,y+7,8,'bold','left',_NC.white);
-  t('Exercise',M+c1+5,y+7,8,'bold','left',_NC.white);
-  t('Trend',M+c1+c2+5,y+7,8,'bold','left',_NC.white);
+  rct(M,y,CW,10,_NC.border);
+  t('Cognitive Domain',M+5,y+7,10,'bold','left',_NC.surface2);
+  t('Exercise',M+c1+5,y+7,10,'bold','left',_NC.surface2);
+  t('Trend',M+c1+c2+5,y+7,10,'bold','left',_NC.surface2);
   y+=10;
   _DOMAINS.forEach((d,i)=>{
     const info=domains[d.key];
-    rct(M,y,CW,11,i%2===0?_NC.white:_NC.light);
-    t(d.label,M+5,y+8,8.5,'normal','left',_NC.dark);
-    t(d.game,M+c1+5,y+8,8,'normal','left',_NC.mid);
+    rct(M,y,CW,11,i%2===0?_NC.surface2:_NC.surface); 
+    t(d.label,M+5,y+8,9,'bold','left',_NC.dark);
+    t(d.game,M+c1+5,y+8,9,'normal','left',_NC.muted);
     if(!info){
-      t('No data',M+c1+c2+5,y+8,8,'italic','left',_NC.muted);
+      t('No data',M+c1+c2+5,y+8,9,'italic','left',_NC.muted);
     } else {
       const tLabel=info.trend==='improving'?'Improving':info.trend==='declining'?'Declining':'Stable';
       const tCol  =info.trend==='improving'?_NC.stageNone:info.trend==='declining'?_NC.stageMod:_NC.stageVMild;
-      const pw=44;
+      const pw = c3 - 20;
       rct(M+c1+c2+5,y+2.5,pw,7,tCol,2);
-      t(tLabel,M+c1+c2+5+pw/2,y+8,7.5,'bold','center',_NC.white);
+      t(tLabel,M+c1+c2+5+pw/2,y+8,9,'bold','center',_NC.white);
       t('('+info.sessions+' sess.)',M+c1+c2+pw+8,y+8,7,'normal','left',_NC.muted);
     }
     doc.setDrawColor(..._NC.border);doc.setLineWidth(0.15);doc.line(M,y+11,M+CW,y+11);
@@ -174,8 +186,8 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
 // ─── Clinical notes ───────────────────────────────────────────
 function _notesSection(notes,y,M,CW,rct,t,doc,PH){
   if(!notes||notes.length===0){
-    rct(M,y,CW,14,_NC.light,2);
-    t('No clinical notes recorded for this patient.',M+6,y+9.5,8,'italic','left',_NC.muted);
+    rct(M,y,CW,10,_NC.surface,2);
+    t('No clinical notes recorded for this patient.',M+6,y+9.5,9,'italic','left',_NC.muted);
     return y+18;
   }
   notes.forEach(n=>{
@@ -196,14 +208,14 @@ function _editableNotesField(y, M, CW, doc, sk, t, PH) {
   if (y + 45 > PH - 22) { doc.addPage(); y = 18; }
   doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
   doc.setTextColor(..._NC.mid);
-  doc.text('ADDITIONAL NOTES (EDITABLE IN PDF READER)', M + 7, y + 6.5);
+  doc.text('ADDITIONAL NOTES', M + 7, y + 6.5);
   // Visible border box
   doc.setLineWidth(0.4); doc.setDrawColor(..._NC.border);
   doc.roundedRect(M, y + 9, CW, 32, 2, 2);
   // Light background
-  doc.setFillColor(..._NC.light);
+  doc.setFillColor(..._NC.surface);
   doc.roundedRect(M, y + 9, CW, 32, 2, 2, 'F');
-  t('Click here to type when viewing in a PDF reader (Adobe, Preview, etc.)', M + 5, y + 20, 7, 'italic', 'left', _NC.muted);
+  t('Click here to type when viewing in a PDF reader (Adobe, Preview, etc.)', M + 5, y + 20, 9, 'italic', 'left', _NC.muted);
   // AcroForm editable field
   try {
     const tf = new doc.AcroFormTextField();
