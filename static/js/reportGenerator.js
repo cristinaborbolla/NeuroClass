@@ -17,11 +17,11 @@ const _NC = {
   light:     [245, 249, 245],
   border:    [183, 214, 176],
   white:     [255, 255, 255],
-  stageNone: [74,  140,  92],
-  stageVMild:[176, 125,  42],
-  stageMild: [196,  88,  32],
-  stageMod:  [168,  50,  50],
-  blue:      [48,   80, 176],
+  stageNone: [116, 176, 133],
+  stageVMild:[224, 177, 99],
+  stageMild: [227, 129, 77],
+  stageMod:  [212, 89,  89],
+  blue:      [48,  80, 176],
 };
 
 const _STAGE = {
@@ -173,7 +173,7 @@ function _domainTable(domains, y, M, CW, rct, t, fill, doc) {
     if (!info) {
       t('No data',M+colW[0]+colW[1]+4,y+5.5,6.5,'italic','left',_NC.muted);
     } else {
-      const trendLabel = info.trend==='improving' ? '↑ Improving' : info.trend==='declining' ? '↓ Declining' : '→ Stable';
+      const trendLabel = info.trend==='improving' ? 'Improving' : info.trend==='declining' ? 'Declining' : 'Stable';
       const trendCol   = info.trend==='improving' ? _NC.stageNone : info.trend==='declining' ? _NC.stageMod : _NC.stageVMild;
       const pillW = 38;
       rct(M+colW[0]+colW[1]+4,y+1.5,pillW,5,trendCol,2);
@@ -333,24 +333,25 @@ async function generateEvolutionReport({ patient, doctor, predictions, gameSessi
     const first=_STAGE[sorted[0].predicted_class]||_STAGE.NonDemented;
     const last =_STAGE[sorted[sorted.length-1].predicted_class]||_STAGE.NonDemented;
     const fi=first.idx, li=last.idx;
-    const trendLabel = li>fi?'Worsening ↑':li<fi?'Improving ↓':'Stable →';
+    const trendLabel = li>fi?'Worsening':li<fi?'Improving':'Stable';
     const trendCol   = li>fi?_NC.stageMod:li<fi?_NC.stageNone:_NC.stageVMild;
 
-    rct(M,y,CW,20,_NC.light);
+    rct(M,y,CW,32,_NC.light);
     // First stage pill
     rct(M+4,y+5,58,10,first.color,3);
     t(first.label,M+4+29,y+11,6.5,'bold','center',_NC.white);
-    t(_fmt(sorted[0].created_at),M+4+29,y+18,5.5,'normal','center',_NC.muted);
+    t(_fmt(sorted[0].created_at),M+4+29,y+19,5.5,'normal','center',_NC.muted);
     // Arrow
-    t('→',PW/2,y+12,11,'bold','center',_NC.border);
+    t('->',PW/2,y+12,10,'bold','center',_NC.border);
     // Last stage pill
     rct(PW-M-62,y+5,58,10,last.color,3);
     t(last.label,PW-M-62+29,y+11,6.5,'bold','center',_NC.white);
-    t(_fmt(sorted[sorted.length-1].created_at),PW-M-62+29,y+18,5.5,'normal','center',_NC.muted);
-    // Trend badge
-    rct(PW-M-28,y+7,26,8,trendCol,3);
-    t(trendLabel,PW-M-15,y+12.5,6,'bold','center',_NC.white);
-    y+=26;
+    t(_fmt(sorted[sorted.length-1].created_at),PW-M-62+29,y+19,5.5,'normal','center',_NC.muted);
+    // Trend badge below pills, centered
+    const tw=54;
+    rct(M+CW/2-tw/2,y+23,tw,8,trendCol,3);
+    t(trendLabel,M+CW/2,y+28.5,7,'bold','center',_NC.white);
+    y+=38;
   }
 
   // ── Prediction history ────────────────────────────────────
