@@ -2371,14 +2371,65 @@ async function fetchGradCAM(file) {
     const data = await res.json();
     if (data.gradcam_image) {
       gradcamSrc = data.gradcam_image;
-      status.textContent = '✓ Grad-CAM ready — click 🔥 to view';
+      status.textContent = 'Grad-CAM ready, click to view';
       document.getElementById('btnGradcam').disabled = false;
+      await saveGradcamImage(gradcamSrc);
+
     } else {
       status.textContent = 'Grad-CAM not available';
     }
   } catch(e) {
     status.textContent = 'Grad-CAM unavailable';
     console.warn('Grad-CAM error:', e);
+  }
+}
+
+async function saveGradcamImage(gradcamDataUrl) {
+  if (!currentUser) return;
+  const isDoctor  = currentUser.role === 'doctor';
+  const patientId = isDoctor ? (doctorPatient ? doctorPatient.id : null) : currentUser.id;
+  if (!patientId) return;
+
+  // Comprobar consentimiento del paciente
+  const { data: userData } = await db.from('users')
+    .select('image_consent')
+    .eq('id', patientId)
+    .single();
+  if (!userData || userData.image_consent !== true) return;
+
+  // Convertir data URL a blob
+  const res   = await fetch(gradcamDataUrl);
+  const blob  = await res.blob();
+
+  // Nombre único para el archivo
+  const filename = patientId + '_' + Date.now() + '.jpg';
+
+  // Subir a Supabase Storage
+  const { error: uploadError } = await db.storage
+    .from('gradcam-images')
+    .upload(filename, blob, { contentType: 'image/jpeg', upsert: false });
+
+  if (uploadError) { console.warn('Gradcam upload error:', uploadError); return; }
+
+  // Obtener URL firmada válida 1 año
+  const { data: signedData } = await db.storage
+    .from('gradcam-images')
+    .createSignedUrl(filename, 31536000);
+
+  if (!signedData) return;
+
+  // Guardar URL en la predicción más reciente de este paciente
+  const { data: lastPred } = await db.from('predictions')
+    .select('id')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (lastPred) {
+    await db.from('predictions')
+      .update({ gradcam_url: signedData.signedUrl })
+      .eq('id', lastPred.id);
   }
 }
 // ══════════════════════════════════════════════════════════════
