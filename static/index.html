@@ -2272,7 +2272,7 @@ async function generateReportFromDashboard(predictionId) {
         phone:         p.phone || '—',
         neurologist:   p.neurologist || '—',
         lastAppt:      p.last_appointment || null,
-        totalSessions: preds?.length || 1,
+        totalSessions: 1,
       },
       doctor:  { id: currentUser.id, name: currentUser.name, dni: currentUser.username, colegiado: doctorData?.notes?.replace('Nº colegiado: ', '') || '—' },
       prediction: {
