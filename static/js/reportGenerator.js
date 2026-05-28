@@ -89,17 +89,17 @@ function _makePDF(){
 
 // ─── Page header ─────────────────────────────────────────────
 function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
-  rct(0,0,PW,3,_NC.matchaDk);
+  rct(0,0,PW,3,_NC.matcha);
   rct(0,3,PW,33,_NC.light);
   hline(36,_NC.border,0.3);
-  rct(M,8,14,14,_NC.matchaDk,2);
-  t('NC',M+2,18,8,'bold','left',_NC.white);
-  serif('NeuroClass',M+18,15,13,'left',_NC.matchaDk);
-  t(subtitle,M+18,22,7.5,'normal','left',_NC.mid);
-  t('Patient',PW-M,10,7,'bold','right',_NC.muted);
-  serif(p.name||'—',PW-M,18,10,'right',_NC.dark);
-  t('DOB: '+(p.dob||'—')+'   ·   ID: '+(p.dni||'—'),PW-M,24,7,'normal','right',_NC.muted);
-  t('Generated: '+_fmtDT(),PW-M,30,6.5,'normal','right',_NC.muted);
+  rct(M,8,14,14,_NC.matcha,2);
+  t('NC',M+2,18,20,'bold','left',_NC.white);
+  serif('NeuroClass',M+18,15,16,'left',_NC.matchaDk);
+  t(subtitle,M+18,22,12,'normal','left',_NC.mid);
+  t('Patient',PW-M,10,9,'bold','right',_NC.muted);
+  serif(p.name||'—',PW-M,18,12,'right',_NC.dark);
+  t('DOB: '+(p.dob||'—')+'   ·   ID: '+(p.dni||'—'),PW-M,24,8,'normal','right',_NC.muted);
+  t('Generated: '+_fmtDT(),PW-M,30,8,'normal','right',_NC.muted);
   return 42;
 }
 
