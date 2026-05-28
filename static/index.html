@@ -2143,6 +2143,18 @@ async function selectPatient(p) {
       <div id="predHistoryWrap"><div class="dash-empty"><span>⏳</span>Loading…</div></div>
       <div class="section-title" style="margin-top:1.6rem;margin-bottom:.85rem;">Game session history</div>
       <div id="gameHistoryWrap"><div class="dash-empty"><span>⏳</span>Loading…</div></div>
+      <div class="section-title" style="margin-top:1.6rem;margin-bottom:.85rem;">Clinical notes</div>
+      <div id="notesWrap">
+        <textarea id="noteInput" placeholder="Add a clinical note for this patient…"
+          style="width:100%;padding:.8rem;border:1px solid var(--border);border-radius:9px;
+          font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);
+          background:var(--bg);resize:vertical;min-height:80px;outline:none;"></textarea>
+        <button onclick="saveNote('${p.id}')"
+          style="margin-top:.6rem;padding:.55rem 1.4rem;background:var(--matcha);color:white;
+          border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;
+          font-weight:600;cursor:pointer;">Save note</button>
+        <div id="notesList" style="margin-top:1rem;"></div>
+      </div>
     </div>`;
   detail.scrollIntoView({ behavior:'smooth', block:'start' });
   // Load predictions
@@ -2204,8 +2216,41 @@ async function selectPatient(p) {
   gameWrap.innerHTML = `<div style="overflow-x:auto;"><table class="games-tbl">
     <thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead>
     <tbody>${gameRows}</tbody></table></div>`;
+  loadNotes(p.id);
 }
 
+async function saveNote(patientId) {
+  const input = document.getElementById('noteInput');
+  const note  = input.value.trim();
+  if (!note) { showToast('Write a note first'); return; }
+  const { error } = await db.from('doctor_notes').insert({
+    patient_id: patientId,
+    doctor_id:  currentUser.id,
+    note:       note,
+  });
+  if (error) { showToast('Error saving note'); return; }
+  input.value = '';
+  showToast('✓ Note saved');
+  loadNotes(patientId);
+}
+
+async function loadNotes(patientId) {
+  const { data } = await db.from('doctor_notes')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: false });
+  const wrap = document.getElementById('notesList');
+  if (!data || data.length === 0) {
+    wrap.innerHTML = '<div style="font-size:.82rem;color:var(--muted);">No notes yet.</div>';
+    return;
+  }
+  wrap.innerHTML = data.map(n => `
+    <div style="background:var(--cream);border-radius:9px;padding:.8rem 1rem;margin-bottom:.6rem;border-left:3px solid var(--matcha);">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">${formatDateTime(n.created_at)}</div>
+      <div style="font-size:.85rem;color:var(--text);line-height:1.6;">${n.note}</div>
+    </div>`).join('');
+}
+  
 async function generateReportFromDashboard(predictionId) {
   const p = selectedDashboardPatient;
   if (!p) { showToast('No patient selected'); return; }
