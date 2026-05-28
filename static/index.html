@@ -1554,13 +1554,22 @@ async function doRegister(e) {
   }
 
   const { data: authData, error: authError } = await db.auth.signUp({ email, password: pass });
+  const { data: authData, error: authError } = await db.auth.signUp({ email, password: pass });
   if (authError) {
     showMsg(msg, 'error', authError.message);
     btn.disabled = false;
     btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
     return;
   }
-
+  
+  // Si email confirmation está activo, user llega null
+  if (!authData.user) {
+    showMsg(msg, 'success', 'Account created! Check your email to confirm before logging in.');
+    btn.disabled = false;
+    btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
+    return;
+  }
+  
   const { error: profileError } = await db.from('users').insert({
     id: authData.user.id,
     username, full_name: name, email,
@@ -1569,14 +1578,14 @@ async function doRegister(e) {
     notes: colNum ? `Nº colegiado: ${colNum}` : null,
     role: regRole
   });
-
+  
   if (profileError) {
     showMsg(msg, 'error', 'Profile could not be saved: ' + profileError.message);
   } else {
-    showMsg(msg, 'success', 'Account created! Check your email to confirm, then log in.');
+    showMsg(msg, 'success', 'Account created! You can now log in.');
     setTimeout(() => switchAuth('login'), 2000);
   }
-
+  
   btn.disabled = false;
   btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
 }
