@@ -2369,8 +2369,8 @@ async function fetchGradCAM(file) {
   try {
     const res  = await fetch(GRADCAM_URL, { method: 'POST', body: fd });
     const data = await res.json();
-    if (data.gradcam_image) {
-      gradcamSrc = data.gradcam_image;
+    if (data.gradcam-image) {
+      gradcamSrc = data.gradcam-image;
       status.textContent = 'Grad-CAM ready, click to view';
       document.getElementById('btnGradcam').disabled = false;
       await saveGradcamImage(gradcamSrc);
@@ -2412,12 +2412,12 @@ async function saveGradcamImage(gradcamDataUrl) {
   // Subir Grad-CAM
   const gradcamBlob = await (await fetch(gradcamDataUrl)).blob();
   const { error: gcError } = await db.storage
-    .from('gradcam_images')
+    .from('gradcam-images')
     .upload(patientId + '/gradcam_' + timestamp + '.jpg', gradcamBlob, { contentType: 'image/jpeg', upsert: false });
 
   if (!gcError) {
     const { data: gcSigned } = await db.storage
-      .from('gradcam_images')
+      .from('gradcam-images')
       .createSignedUrl(patientId + '/gradcam_' + timestamp + '.jpg', 31536000);
     if (gcSigned) updates.gradcam_url = gcSigned.signedUrl;
   } else {
@@ -2428,12 +2428,12 @@ async function saveGradcamImage(gradcamDataUrl) {
   if (selectedFile) {
     const mriBlob = new Blob([await selectedFile.arrayBuffer()], { type: selectedFile.type });
     const { error: mriError } = await db.storage
-      .from('gradcam_images')
+      .from('gradcam-images')
       .upload(patientId + '/mri_' + timestamp + '.jpg', mriBlob, { contentType: 'image/jpeg', upsert: false });
 
     if (!mriError) {
       const { data: mriSigned } = await db.storage
-        .from('gradcam_images')
+        .from('gradcam-images')
         .createSignedUrl(patientId + '/mri_' + timestamp + '.jpg', 31536000);
       if (mriSigned) updates.mri_url = mriSigned.signedUrl;
     } else {
