@@ -172,7 +172,7 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
     } else {
       const tLabel=info.trend==='improving'?'Improving':info.trend==='declining'?'Declining':'Stable';
       const tCol  =info.trend==='improving'?_NC.stageNone:info.trend==='declining'?_NC.stageMod:_NC.stageVMild;
-      const pw = c3 - 20;
+      const pw = 30;
       rct(M+c1+c2+5,y+2.5,pw,7,tCol,2);
       t(tLabel,M+c1+c2+5+pw/2,y+8,9,'bold','center',_NC.white);
       t('('+info.sessions+' sess.)',M+c1+c2+pw+8,y+8,7,'normal','left',_NC.muted);
