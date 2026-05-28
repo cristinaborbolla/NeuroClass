@@ -8,6 +8,7 @@
 <link rel="manifest" href="/manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/static/js/reportGenerator.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- PWA -->
@@ -1610,6 +1611,7 @@ const resultEmpty  = document.getElementById("resultEmpty");
 const resultContent= document.getElementById("resultContent");
 const errorBox     = document.getElementById("errorBox");
 let selectedFile   = null;
+let pendingReportContext = null;
 uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
 uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
 uploadZone.addEventListener("drop", e => {
@@ -1716,9 +1718,9 @@ async function savePrediction(data) {
   if (!currentUser) return;
   const isDoctor  = currentUser.role === 'doctor';
   const patientId = isDoctor ? (doctorPatient ? doctorPatient.id : null) : currentUser.id;
-  if (!patientId) return;   // doctor hasn't selected a patient → skip silently
+  if (!patientId) return;
   try {
-    await db.from('predictions').insert({
+    const { data: saved, error } = await db.from('predictions').insert({
       patient_id:        patientId,
       doctor_id:         isDoctor ? currentUser.id : null,
       predicted_class:   data.predicted_class,
@@ -1728,8 +1730,23 @@ async function savePrediction(data) {
       prob_mild:         data.probabilities['MildDemented'],
       prob_moderate:     data.probabilities['ModerateDemented'],
       confidence:        data.probabilities[data.predicted_class]
-    });
+    }).select().single();
+    if (error) throw error;
     showToast('✓ Prediction saved');
+    pendingReportContext = {
+      predictionId: saved.id,
+      prediction: {
+        stage:          data.predicted_class,
+        confidence:     data.probabilities[data.predicted_class],
+        allConfidences: data.probabilities,
+      },
+      patient: isDoctor
+        ? { id: doctorPatient.id, name: doctorPatient.full_name, dni: doctorPatient.username, dob: '—' }
+        : { id: currentUser.id,   name: currentUser.name,        dni: currentUser.username,   dob: '—' },
+      doctor: isDoctor
+        ? { id: currentUser.id, name: currentUser.name, dni: currentUser.username }
+        : { id: null, name: 'Self-assessment', dni: '—' },
+    };
   } catch(e) { console.warn('Could not save prediction:', e); }
 }
 // ══════════════════════════════════════════════════════════════
@@ -2290,12 +2307,46 @@ async function fetchGradCAM(file) {
       gradcamSrc = data.gradcam_image;
       status.textContent = '✓ Grad-CAM ready — click 🔥 to view';
       document.getElementById('btnGradcam').disabled = false;
+      if (pendingReportContext) {
+        generateAndSaveReport(pendingReportContext, gradcamSrc);
+        pendingReportContext = null;
+      }
     } else {
       status.textContent = 'Grad-CAM not available';
+      if (pendingReportContext) {
+        generateAndSaveReport(pendingReportContext, null);
+        pendingReportContext = null;
+      }
     }
   } catch(e) {
     status.textContent = 'Grad-CAM unavailable';
     console.warn('Grad-CAM error:', e);
+    if (pendingReportContext) {
+      generateAndSaveReport(pendingReportContext, null);
+      pendingReportContext = null;
+    }
+  }
+}
+
+async function generateAndSaveReport(ctx, gradcamBase64) {
+  try {
+    const report = await generateAndUploadReport({
+      patient:       ctx.patient,
+      doctor:        ctx.doctor,
+      prediction:    ctx.prediction,
+      gradcamBase64: gradcamBase64,
+      gameScores:    [],
+      predictionId:  ctx.predictionId,
+      supabase:      db,
+    });
+    if (report.success) {
+      await db.from('predictions')
+        .update({ report_url: report.reportUrl })
+        .eq('id', ctx.predictionId);
+      showToast('📄 Report generated and saved');
+    }
+  } catch(e) {
+    console.warn('Report generation failed:', e);
   }
 }
 // ══════════════════════════════════════════════════════════════
