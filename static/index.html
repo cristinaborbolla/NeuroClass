@@ -1554,7 +1554,6 @@ async function doRegister(e) {
   }
 
   const { data: authData, error: authError } = await db.auth.signUp({ email, password: pass });
-  const { data: authData, error: authError } = await db.auth.signUp({ email, password: pass });
   if (authError) {
     showMsg(msg, 'error', authError.message);
     btn.disabled = false;
