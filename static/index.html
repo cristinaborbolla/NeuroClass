@@ -1611,7 +1611,6 @@ const resultEmpty  = document.getElementById("resultEmpty");
 const resultContent= document.getElementById("resultContent");
 const errorBox     = document.getElementById("errorBox");
 let selectedFile   = null;
-let pendingReportContext = null;
 uploadZone.addEventListener("dragover",  e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
 uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
 uploadZone.addEventListener("drop", e => {
@@ -1720,7 +1719,7 @@ async function savePrediction(data) {
   const patientId = isDoctor ? (doctorPatient ? doctorPatient.id : null) : currentUser.id;
   if (!patientId) return;
   try {
-    const { data: saved, error } = await db.from('predictions').insert({
+    await db.from('predictions').insert({
       patient_id:        patientId,
       doctor_id:         isDoctor ? currentUser.id : null,
       predicted_class:   data.predicted_class,
@@ -1730,23 +1729,8 @@ async function savePrediction(data) {
       prob_mild:         data.probabilities['MildDemented'],
       prob_moderate:     data.probabilities['ModerateDemented'],
       confidence:        data.probabilities[data.predicted_class]
-    }).select().single();
-    if (error) throw error;
+    });
     showToast('✓ Prediction saved');
-    pendingReportContext = {
-      predictionId: saved.id,
-      prediction: {
-        stage:          data.predicted_class,
-        confidence:     data.probabilities[data.predicted_class],
-        allConfidences: data.probabilities,
-      },
-      patient: isDoctor
-        ? { id: doctorPatient.id, name: doctorPatient.full_name, dni: doctorPatient.username, dob: '—' }
-        : { id: currentUser.id,   name: currentUser.name,        dni: currentUser.username,   dob: '—' },
-      doctor: isDoctor
-        ? { id: currentUser.id, name: currentUser.name, dni: currentUser.username }
-        : { id: null, name: 'Self-assessment', dni: '—' },
-    };
   } catch(e) { console.warn('Could not save prediction:', e); }
 }
 // ══════════════════════════════════════════════════════════════
@@ -2077,6 +2061,7 @@ async function loadPatients() {
   });
 }
 async function selectPatient(p) {
+  selectedDashboardPatient = p;
   document.querySelectorAll('.patient-card').forEach(c => c.classList.remove('selected'));
   const card = document.getElementById('pc-' + p.id);
   if (card) { card.classList.add('selected'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
@@ -2151,10 +2136,11 @@ async function selectPatient(p) {
           </div>
         </td>
         <td style="color:var(--muted)">${formatDateTime(r.created_at)}</td>
-      </tr>`;
+        <td><button onclick="generateReportFromDashboard('${r.id}')" style="background:var(--matcha);color:white;border:none;border-radius:7px;padding:.35rem .8rem;font-size:.75rem;cursor:pointer;">📄 PDF</button></td>
+        </tr>`;
     }).join('');
     predWrap.innerHTML = `<div style="overflow-x:auto;"><table class="pred-tbl">
-      <thead><tr><th>Stage</th><th>Confidence</th><th>Probabilities</th><th>Date</th></tr></thead>
+      <thead><tr><th>Stage</th><th>Confidence</th><th>Probabilities</th><th>Date</th><th>Report</th></tr></thead>
       <tbody>${predRows}</tbody></table></div>`;
   }
   // Load game sessions
@@ -2181,6 +2167,47 @@ async function selectPatient(p) {
     <tbody>${gameRows}</tbody></table></div>`;
 }
 
+async function generateReportFromDashboard(predictionId) {
+  const p = selectedDashboardPatient;
+  if (!p) { showToast('No patient selected'); return; }
+  showToast('⏳ Generating report…');
+  const { data: pred } = await db.from('predictions').select('*').eq('id', predictionId).single();
+  if (!pred) { showToast('Could not load prediction data'); return; }
+  try {
+    await generateAndUploadReport({
+      patient: {
+        id:   p.id,
+        name: p.full_name,
+        dni:  p.username,
+        dob:  p.date_of_birth || '—',
+      },
+      doctor: {
+        id:   currentUser.id,
+        name: currentUser.name,
+        dni:  currentUser.username,
+      },
+      prediction: {
+        stage:          pred.predicted_class,
+        confidence:     pred.confidence,
+        allConfidences: {
+          NonDemented:      pred.prob_non_demented,
+          VeryMildDemented: pred.prob_very_mild,
+          MildDemented:     pred.prob_mild,
+          ModerateDemented: pred.prob_moderate,
+        },
+      },
+      gradcamBase64: null,
+      gameScores:    [],
+      predictionId:  pred.id,
+      supabase:      db,
+    });
+    showToast('📄 Report downloaded');
+  } catch(e) {
+    console.warn('Report error:', e);
+    showToast('Error generating report');
+  }
+}
+  
 function downloadCSV(content, filename) {
   const blob = new Blob(['\uFEFF' + content], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
@@ -2227,8 +2254,9 @@ async function exportGamesCSV(patientId, username) {
 // ══════════════════════════════════════════════════════════════
 // DOCTOR PATIENT SELECTOR (classifier)
 // ══════════════════════════════════════════════════════════════
-let doctorPatient = null;   // patient selected by doctor for current analysis
-let classifierPatients = []; // cached patient list
+let doctorPatient = null;
+let selectedDashboardPatient = null;
+let classifierPatients = [];
 async function loadPatientsForClassifier() {
   const box = document.getElementById('doctorPatientSelector');
   box.classList.add('visible');
@@ -2307,46 +2335,12 @@ async function fetchGradCAM(file) {
       gradcamSrc = data.gradcam_image;
       status.textContent = '✓ Grad-CAM ready — click 🔥 to view';
       document.getElementById('btnGradcam').disabled = false;
-      if (pendingReportContext) {
-        generateAndSaveReport(pendingReportContext, gradcamSrc);
-        pendingReportContext = null;
-      }
     } else {
       status.textContent = 'Grad-CAM not available';
-      if (pendingReportContext) {
-        generateAndSaveReport(pendingReportContext, null);
-        pendingReportContext = null;
-      }
     }
   } catch(e) {
     status.textContent = 'Grad-CAM unavailable';
     console.warn('Grad-CAM error:', e);
-    if (pendingReportContext) {
-      generateAndSaveReport(pendingReportContext, null);
-      pendingReportContext = null;
-    }
-  }
-}
-
-async function generateAndSaveReport(ctx, gradcamBase64) {
-  try {
-    const report = await generateAndUploadReport({
-      patient:       ctx.patient,
-      doctor:        ctx.doctor,
-      prediction:    ctx.prediction,
-      gradcamBase64: gradcamBase64,
-      gameScores:    [],
-      predictionId:  ctx.predictionId,
-      supabase:      db,
-    });
-    if (report.success) {
-      await db.from('predictions')
-        .update({ report_url: report.reportUrl })
-        .eq('id', ctx.predictionId);
-      showToast('📄 Report generated and saved');
-    }
-  } catch(e) {
-    console.warn('Report generation failed:', e);
   }
 }
 // ══════════════════════════════════════════════════════════════
