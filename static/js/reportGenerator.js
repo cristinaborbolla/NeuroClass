@@ -192,6 +192,37 @@ function _notesSection(notes,y,M,CW,rct,t,doc,PH){
   return y;
 }
 
+function _editableNotesField(y, M, CW, doc, sk, t, PH) {
+  if (y + 45 > PH - 22) { doc.addPage(); y = 18; }
+  doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(..._NC.mid);
+  doc.text('ADDITIONAL NOTES (EDITABLE IN PDF READER)', M + 7, y + 6.5);
+  // Visible border box
+  doc.setLineWidth(0.4); doc.setDrawColor(..._NC.border);
+  doc.roundedRect(M, y + 9, CW, 32, 2, 2);
+  // Light background
+  doc.setFillColor(..._NC.light);
+  doc.roundedRect(M, y + 9, CW, 32, 2, 2, 'F');
+  t('Click here to type when viewing in a PDF reader (Adobe, Preview, etc.)', M + 5, y + 20, 7, 'italic', 'left', _NC.muted);
+  // AcroForm editable field
+  try {
+    const tf = new doc.AcroFormTextField();
+    tf.fieldName = 'additionalNotes';
+    tf.x = M;
+    tf.y = y + 9;
+    tf.width = CW;
+    tf.height = 32;
+    tf.multiline = true;
+    tf.fontSize = 9;
+    tf.color = 'black';
+    tf.backgroundColor = '';
+    doc.addField(tf);
+  } catch(e) {
+    console.warn('AcroForm field error:', e);
+  }
+  return y + 46;
+}
+
 // ─── Footer ───────────────────────────────────────────────────
 function _footer(doc,PW,PH,M,CW){
   const pages=doc.getNumberOfPages();
@@ -216,6 +247,17 @@ function _doctorSection(doctor,y,M,t,doc,rct,CW){
   return y+6;
 }
 
+function _patientSection(patient, y, M, t, doc, rct, CW) {
+  y = _sectionHeader('Patient Information', y, M, CW, rct, t);
+  y = _infoRow('Full name',          patient.name         || '—', y, M, t, false, doc);
+  y = _infoRow('ID (DNI)',           patient.dni          || '—', y, M, t, false, doc);
+  y = _infoRow('Date of birth',      patient.dob          || '—', y, M, t, false, doc);
+  y = _infoRow('Phone',              patient.phone        || '—', y, M, t, false, doc);
+  y = _infoRow('Neurologist',        patient.neurologist  || '—', y, M, t, false, doc);
+  y = _infoRow('Last appointment',   patient.lastAppt ? _fmt(patient.lastAppt) : '—', y, M, t, false, doc);
+  y = _infoRow('Total assessments',  String(patient.totalSessions || 0) + ' MRI prediction' + (patient.totalSessions !== 1 ? 's' : ''), y, M, t, true, doc);
+  return y + 6;
+}
 // ═══════════════════════════════════════════════════════════════
 // INDIVIDUAL PREDICTION REPORT
 // ═══════════════════════════════════════════════════════════════
@@ -229,6 +271,7 @@ async function generateAndUploadReport({
 
   let y=_pageHeader(patient,doc,PW,M,CW,rct,hline,t,serif,'Clinical Prediction Report  ·  '+_fmt());
 
+  y = _patientSection(patient, y, M, t, doc, rct, CW);
   y=_doctorSection(doctor,y,M,t,doc,rct,CW);
 
   // Diagnosis
@@ -277,7 +320,7 @@ async function generateAndUploadReport({
   if(y+50>PH-22){doc.addPage();y=18;}
   y=_sectionHeader('Clinical Notes',y,M,CW,rct,t);
   y=_notesSection(notes,y,M,CW,rct,t,doc,PH);
-
+  y = _editableNotesField(y, M, CW, doc, sk, t, PH);
   _footer(doc,PW,PH,M,CW);
 
   const filename='NeuroClass_'+patient.dni+'_'+new Date().toISOString().slice(0,10)+'_'+predictionId.slice(0,8)+'.pdf';
@@ -305,7 +348,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     'Evolution Report  ·  '+sorted.length+' prediction'+(sorted.length!==1?'s':'')+
     '  ·  '+_fmt(sorted[0]?.created_at)+' – '+_fmt(sorted[sorted.length-1]?.created_at)
   );
-
+  y = _patientSection(patient, y, M, t, doc, rct, CW);
   y=_doctorSection(doctor,y,M,t,doc,rct,CW);
 
   // Staging evolution
@@ -397,7 +440,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
   if(y+50>PH-22){doc.addPage();y=18;}
   y=_sectionHeader('Clinical Notes',y,M,CW,rct,t);
   y=_notesSection(notes,y,M,CW,rct,t,doc,PH);
-
+  y = _editableNotesField(y, M, CW, doc, sk, t, PH);
   _footer(doc,PW,PH,M,CW);
 
   const filename='NeuroClass_Evolution_'+patient.dni+'_'+new Date().toISOString().slice(0,10)+'.pdf';
