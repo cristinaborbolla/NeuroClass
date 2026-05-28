@@ -1159,7 +1159,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     <div class="game-modal-emoji">🔒</div>
     <div class="game-modal-title">Image storage consent</div>
     <div class="game-modal-desc">
-      NeuroStage can save your brain scan activation maps (Grad-CAM images) to allow your doctor to compare your results visually over time.<br><br>
+      NeuroClass can save your brain scans to allow your doctor to compare your results visually over time.<br><br>
       Your images are stored securely and are only accessible to your assigned neurologist. You can change this decision at any time from the Classifier section.
     </div>
     <button class="btn-start-game" onclick="saveConsent(true)">Yes, I consent</button>
@@ -2255,28 +2255,21 @@ async function generateReportFromDashboard(predictionId) {
   const p = selectedDashboardPatient;
   if (!p) { showToast('No patient selected'); return; }
   showToast('⏳ Generating report…');
-
-  const [{ data: pred }, { data: sessions }, { data: notes }] = await Promise.all([
+  const [{ data: doctorData }, { data: pred }, { data: sessions }, { data: notes }] = await Promise.all([
+    db.from('users').select('notes').eq('id', currentUser.id).single(),
     db.from('predictions').select('*').eq('id', predictionId).single(),
     db.from('game_sessions').select('*').eq('patient_id', p.id).order('created_at', { ascending: true }),
     db.from('doctor_notes').select('*').eq('patient_id', p.id).order('created_at', { ascending: false }),
   ]);
-
   if (!pred) { showToast('Could not load prediction data'); return; }
-
   try {
     await generateAndUploadReport({
       patient: { id: p.id, name: p.full_name, dni: p.username, dob: p.date_of_birth || '—' },
-      doctor:  { id: currentUser.id, name: currentUser.name, dni: currentUser.username },
+      doctor:  { id: currentUser.id, name: currentUser.name, dni: currentUser.username, colegiado: doctorData?.notes?.replace('Nº colegiado: ', '') || '—' },
       prediction: {
         stage:          pred.predicted_class,
         confidence:     pred.confidence,
-        allConfidences: {
-          NonDemented:      pred.prob_non_demented,
-          VeryMildDemented: pred.prob_very_mild,
-          MildDemented:     pred.prob_mild,
-          ModerateDemented: pred.prob_moderate,
-        },
+        allConfidences: { NonDemented: pred.prob_non_demented, VeryMildDemented: pred.prob_very_mild, MildDemented: pred.prob_mild, ModerateDemented: pred.prob_moderate },
       },
       gradcamBase64: null,
       gameSessions:  sessions || [],
@@ -2285,11 +2278,9 @@ async function generateReportFromDashboard(predictionId) {
       supabase:      db,
     });
     showToast('📄 Report downloaded');
-  } catch(e) {
-    console.warn('Report error:', e);
-    showToast('Error generating report');
-  }
-}  
+  } catch(e) { console.warn('Report error:', e); showToast('Error generating report'); }
+}
+  
 function downloadCSV(content, filename) {
   const blob = new Blob(['\uFEFF' + content], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
@@ -2321,29 +2312,24 @@ async function generateEvolutionReportForPatient(patientId) {
   const p = selectedDashboardPatient;
   if (!p) { showToast('No patient selected'); return; }
   showToast('⏳ Generating evolution report…');
-
-  const [{ data: preds }, { data: sessions }, { data: notes }] = await Promise.all([
+  const [{ data: doctorData }, { data: preds }, { data: sessions }, { data: notes }] = await Promise.all([
+    db.from('users').select('notes').eq('id', currentUser.id).single(),
     db.from('predictions').select('*').eq('patient_id', patientId).order('created_at', { ascending: true }),
     db.from('game_sessions').select('*').eq('patient_id', patientId).order('created_at', { ascending: true }),
     db.from('doctor_notes').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
   ]);
-
   if (!preds || preds.length === 0) { showToast('No predictions found for this patient'); return; }
-
   try {
     await generateEvolutionReport({
       patient:      { id: p.id, name: p.full_name, dni: p.username, dob: p.date_of_birth || '—' },
-      doctor:       { id: currentUser.id, name: currentUser.name, dni: currentUser.username },
+      doctor:       { id: currentUser.id, name: currentUser.name, dni: currentUser.username, colegiado: doctorData?.notes?.replace('Nº colegiado: ', '') || '—' },
       predictions:  preds,
       gameSessions: sessions || [],
       notes:        notes    || [],
       supabase:     db,
     });
     showToast('📈 Evolution report downloaded');
-  } catch(e) {
-    console.warn('Evolution report error:', e);
-    showToast('Error generating evolution report');
-  }
+  } catch(e) { console.warn('Evolution report error:', e); showToast('Error generating evolution report'); }
 }
   
 async function exportGamesCSV(patientId, username) {
