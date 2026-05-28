@@ -2255,21 +2255,19 @@ async function generateReportFromDashboard(predictionId) {
   const p = selectedDashboardPatient;
   if (!p) { showToast('No patient selected'); return; }
   showToast('⏳ Generating report…');
-  const { data: pred } = await db.from('predictions').select('*').eq('id', predictionId).single();
+
+  const [{ data: pred }, { data: sessions }, { data: notes }] = await Promise.all([
+    db.from('predictions').select('*').eq('id', predictionId).single(),
+    db.from('game_sessions').select('*').eq('patient_id', p.id).order('created_at', { ascending: true }),
+    db.from('doctor_notes').select('*').eq('patient_id', p.id).order('created_at', { ascending: false }),
+  ]);
+
   if (!pred) { showToast('Could not load prediction data'); return; }
+
   try {
     await generateAndUploadReport({
-      patient: {
-        id:   p.id,
-        name: p.full_name,
-        dni:  p.username,
-        dob:  p.date_of_birth || '—',
-      },
-      doctor: {
-        id:   currentUser.id,
-        name: currentUser.name,
-        dni:  currentUser.username,
-      },
+      patient: { id: p.id, name: p.full_name, dni: p.username, dob: p.date_of_birth || '—' },
+      doctor:  { id: currentUser.id, name: currentUser.name, dni: currentUser.username },
       prediction: {
         stage:          pred.predicted_class,
         confidence:     pred.confidence,
@@ -2281,7 +2279,8 @@ async function generateReportFromDashboard(predictionId) {
         },
       },
       gradcamBase64: null,
-      gameScores:    [],
+      gameSessions:  sessions || [],
+      notes:         notes    || [],
       predictionId:  pred.id,
       supabase:      db,
     });
@@ -2290,8 +2289,7 @@ async function generateReportFromDashboard(predictionId) {
     console.warn('Report error:', e);
     showToast('Error generating report');
   }
-}
-  
+}  
 function downloadCSV(content, filename) {
   const blob = new Blob(['\uFEFF' + content], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
@@ -2323,16 +2321,23 @@ async function generateEvolutionReportForPatient(patientId) {
   const p = selectedDashboardPatient;
   if (!p) { showToast('No patient selected'); return; }
   showToast('⏳ Generating evolution report…');
-  const { data: preds } = await db.from('predictions').select('*')
-    .eq('patient_id', patientId)
-    .order('created_at', { ascending: true });
+
+  const [{ data: preds }, { data: sessions }, { data: notes }] = await Promise.all([
+    db.from('predictions').select('*').eq('patient_id', patientId).order('created_at', { ascending: true }),
+    db.from('game_sessions').select('*').eq('patient_id', patientId).order('created_at', { ascending: true }),
+    db.from('doctor_notes').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
+  ]);
+
   if (!preds || preds.length === 0) { showToast('No predictions found for this patient'); return; }
+
   try {
     await generateEvolutionReport({
-      patient: { id: p.id, name: p.full_name, dni: p.username, dob: p.date_of_birth || '—' },
-      doctor:  { id: currentUser.id, name: currentUser.name, dni: currentUser.username },
-      predictions: preds,
-      supabase: db,
+      patient:      { id: p.id, name: p.full_name, dni: p.username, dob: p.date_of_birth || '—' },
+      doctor:       { id: currentUser.id, name: currentUser.name, dni: currentUser.username },
+      predictions:  preds,
+      gameSessions: sessions || [],
+      notes:        notes    || [],
+      supabase:     db,
     });
     showToast('📈 Evolution report downloaded');
   } catch(e) {
