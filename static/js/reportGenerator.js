@@ -21,10 +21,10 @@ const _NC = {
   muted:     [122, 144, 128],   // #7A9080
   light:     [246, 250, 245],   // #F6FAF5
   white:     [255, 255, 255],
-  stageNone: [148, 180, 159],
-  stageVMild:[211, 235, 206],
-  stageMild: [250, 202, 215],   // rose
-  stageMod:  [232, 160, 181],   // rose-dk
+  stageNone: [155, 230, 129],
+  stageVMild:[232, 195, 107],
+  stageMild: [232, 157, 107],   // rose
+  stageMod:  [232, 129, 107],   // rose-dk
 };
 
 const _STAGE = {
@@ -198,7 +198,7 @@ function _notesSection(notes,y,M,CW,rct,t,doc,PH){
 function _editableNotesField(y, M, CW, doc, sk, t, PH) {
   if (y + 45 > PH - 22) { doc.addPage(); y = 18; }
   doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
-  doc.setTextColor(..._NC.mid);
+  doc.setTextColor(..._NC.muted);
   doc.text('ADDITIONAL NOTES', M + 7, y + 6.5);
   // Visible border box
   doc.setLineWidth(0.4); doc.setDrawColor(..._NC.border);
@@ -280,11 +280,11 @@ async function generateAndUploadReport({
   // Diagnosis
   y=_sectionHeader('Diagnosis',y,M,CW,rct,t);
   rct(M,y,3,26,stage.color);
-  rct(M+3,y,CW-3,26,_NC.light);
+  rct(M+3,y,CW-3,26,_NC.surface);
   t('PREDICTED STAGE',M+10,y+7,7,'bold','left',_NC.muted);
   serif(stage.label,M+10,y+18,13,'left',_NC.dark);
   t('CONFIDENCE',PW-M-38,y+7,7,'bold','right',_NC.muted);
-  serif((conf*100).toFixed(1)+'%',PW-M,y+18,16,'right',_NC.matchaDk);
+  serif((conf*100).toFixed(1)+'%',PW-M,y+18,16,'right',_NC.muted);
   t('Report ID: '+predictionId.slice(0,8).toUpperCase(),M+10,y+25,6.5,'normal','left',_NC.muted);
   y+=32;
 
@@ -306,8 +306,8 @@ async function generateAndUploadReport({
       const cap='Highlights the brain regions that most influenced the model\'s prediction. Warmer colours indicate higher activation intensity.';
       doc.setFontSize(8);doc.setFont('helvetica','normal');tc(_NC.muted);
       doc.text(doc.splitTextToSize(cap,tw),tx,y+16);
-      t('Stage: '+stage.label,tx,y+42,8,'normal','left',_NC.mid);
-      t('Confidence: '+(conf*100).toFixed(1)+'%',tx,y+51,8,'normal','left',_NC.mid);
+      t('Stage: '+stage.label,tx,y+42,8,'normal','left',_NC.muted);
+      t('Confidence: '+(conf*100).toFixed(1)+'%',tx,y+51,8,'normal','left',_NC.muted);
       y+=iH+8;
     }catch(e){console.warn('Grad-CAM error:',e);y+=2;}
   }
@@ -363,21 +363,21 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const tLabel=li>fi?'Worsening':li<fi?'Improving':'Stable';
     const tCol  =li>fi?_NC.stageMod:li<fi?_NC.stageNone:_NC.stageVMild;
 
-    rct(M,y,CW,34,_NC.light);
+    rct(M,y,CW,34,_NC.surface);
     // First pill
     rct(M+6,y+5,62,12,first.color,3);
-    t(first.label,M+6+31,y+12,8,'bold','center',_NC.white);
+    t(first.label,M+6+31,y+12,8,'bold','center',_NC.surface2);
     t(_fmt(sorted[0].created_at),M+6+31,y+21,7,'normal','center',_NC.muted);
     // Arrow
     t('->',PW/2,y+13,11,'bold','center',_NC.border);
     // Last pill
     rct(PW-M-68,y+5,62,12,last.color,3);
-    t(last.label,PW-M-68+31,y+12,8,'bold','center',_NC.white);
+    t(last.label,PW-M-68+31,y+12,8,'bold','center',_NC.surface2);
     t(_fmt(sorted[sorted.length-1].created_at),PW-M-68+31,y+21,7,'normal','center',_NC.muted);
     // Trend badge below, centered
     const tw=60;
     rct(M+CW/2-tw/2,y+26,tw,9,tCol,3);
-    t(tLabel,M+CW/2,y+32,8.5,'bold','center',_NC.white);
+    t(tLabel,M+CW/2,y+32,8.5,'bold','center',_NC.surface2);
     y+=42;
   }
 
@@ -392,11 +392,11 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const blockH=hasImg?88:56;
     if(y+blockH>PH-22){doc.addPage();y=18;}
 
-    rct(M,y,CW,12,i%2===0?_NC.white:_NC.light);
+    rct(M,y,CW,12,i%2===0?_NC.surface2:_NC.surface);
     fill(meta.color);doc.circle(M+6,y+6,3.5,'F');
     t(_fmt(r.created_at),M+13,y+7.5,8.5,'bold','left',_NC.dark);
     t(meta.label,M+65,y+7.5,8,'normal','left',meta.color);
-    t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,8.5,'bold','right',_NC.matchaDk);
+    t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,8.5,'bold','right',_NC.matcha);
     y+=14;
 
     const allConf={
