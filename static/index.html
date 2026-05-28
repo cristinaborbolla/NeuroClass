@@ -804,6 +804,9 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         </div>
         <div class="gradcam-status" id="gradcamStatus"></div>
         <button class="btn-change" id="changeBtn" onclick="clearImage()">Change image</button>
+        <div id="consentBtnWrap" style="display:none;text-align:right;margin-top:.5rem;">
+          <button onclick="document.getElementById('consentOverlay').style.display='flex'" style="background:none;border:none;font-size:.75rem;color:var(--muted);cursor:pointer;text-decoration:underline;">🔒 Manage image consent</button>
+        </div>
         <button class="btn-analyse" id="analyseBtn" disabled>
           <span class="btn-label">Analyse image</span>
           <div class="spinner"></div>
@@ -1151,6 +1154,18 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 </footer>
 
 <div class="toast" id="toast"></div>
+<div class="game-modal-overlay" id="consentOverlay" style="display:none;">
+  <div class="game-modal">
+    <div class="game-modal-emoji">🔒</div>
+    <div class="game-modal-title">Image storage consent</div>
+    <div class="game-modal-desc">
+      NeuroStage can save your brain scan activation maps (Grad-CAM images) to allow your doctor to compare your results visually over time.<br><br>
+      Your images are stored securely and are only accessible to your assigned neurologist. You can change this decision at any time from the Classifier section.
+    </div>
+    <button class="btn-start-game" onclick="saveConsent(true)">Yes, I consent</button>
+    <button class="btn-games-home" style="margin-top:.6rem;width:100%;" onclick="saveConsent(false)">No, don't store my images</button>
+  </div>
+</div>
 
 <!-- ══ VIRTUAL ASSISTANT BUBBLE ══ -->
 <div class="assistant-bubble" id="assistantBubble">
@@ -1518,6 +1533,7 @@ async function doLogin(e) {
   localStorage.setItem('ns_user', JSON.stringify(currentUser));
   updateHeaderAuth();
   showTab('home');
+  setTimeout(checkImageConsent, 800);
   btn.disabled = false; btn.textContent = 'Log in';
 }
 // ── Logout ──────────────────────────────────────────────────
@@ -1550,9 +1566,11 @@ function updateHeaderAuth() {
     badge.className   = 'role-badge ' + currentUser.role;
   }
   if (loggedIn && currentUser.role === 'patient') {
+    document.getElementById('consentBtnWrap').style.display = 'block';
     setTimeout(loadAssistant, 100);
   } else {
     assistantState = null;
+    document.getElementById('consentBtnWrap').style.display = 'none';
     document.getElementById('assistantBubble')?.classList.remove('visible');
     dismissAssistant();
   }
@@ -1732,6 +1750,26 @@ async function savePrediction(data) {
     });
     showToast('✓ Prediction saved');
   } catch(e) { console.warn('Could not save prediction:', e); }
+}
+
+async function checkImageConsent() {
+  if (!currentUser || currentUser.role !== 'patient') return;
+  const { data } = await db.from('users')
+    .select('image_consent')
+    .eq('id', currentUser.id)
+    .single();
+  if (data && data.image_consent === null) {
+    document.getElementById('consentOverlay').style.display = 'flex';
+  }
+}
+
+async function saveConsent(accepted) {
+  document.getElementById('consentOverlay').style.display = 'none';
+  await db.from('users').update({
+    image_consent:      accepted,
+    image_consent_date: new Date().toISOString()
+  }).eq('id', currentUser.id);
+  showToast(accepted ? '✓ Consent saved' : '✓ Preference saved');
 }
 // ══════════════════════════════════════════════════════════════
 async function saveGameSession(gameName, score, maxScore, durationSec) {
