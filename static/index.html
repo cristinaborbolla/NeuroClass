@@ -1172,7 +1172,7 @@ const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 const API_URL = "https://neuroclass-alzheimer-mri-classifier.hf.space/predict";
 // ── Classes ─────────────────────────────────────────────────
 const CLASSES = {
-  NonDemented:      { color:"#4a8c5c", label:"Non-Demented",      desc:"No significant cognitive impairment detected. Cortical thickness and ventricular volume appear within normal ranges for the age group." },
+  NonDemented:      { color:"#4a8c5c", label:"Non-Demented",      desc:"No significant cognitive decline detected. Cortical thickness and ventricular volume appear within normal ranges for the age group." },
   VeryMildDemented: { color:"#b07d2a", label:"Very Mild Demented", desc:"Very mild cognitive decline. Subtle changes in memory and orientation may be present. Early clinical monitoring is recommended." },
   MildDemented:     { color:"#c45820", label:"Mild Demented",      desc:"Mild cognitive impairment with noticeable memory loss. Enlarged ventricles and reduced hippocampal volume may be observed." },
   ModerateDemented: { color:"#a83232", label:"Moderate Demented",  desc:"Moderate cognitive decline. Significant structural atrophy is likely present. Comprehensive clinical evaluation is strongly advised." }
