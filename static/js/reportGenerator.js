@@ -385,3 +385,169 @@ async function generateAndUploadReport({
 
   return { success: true, reportUrl: signedData.signedUrl, filename };
 }
+async function generateEvolutionReport({ patient, doctor, predictions, supabase }) {
+  if (!window.jspdf) throw new Error('jsPDF no está cargado.');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const PW = 210, PH = 297, M = 18, CW = 210 - 18 * 2;
+  let y = M;
+
+  const fill  = (c) => doc.setFillColor(...c);
+  const tc    = (c) => doc.setTextColor(...c);
+  const stroke= (c) => doc.setDrawColor(...c);
+  const rct   = (x, yy, w, h, c, r = 0) => { fill(c); r > 0 ? doc.roundedRect(x, yy, w, h, r, r, 'F') : doc.rect(x, yy, w, h, 'F'); };
+  const ln    = (x1, y1, x2, y2, lw = 0.25) => { doc.setLineWidth(lw); stroke([210, 225, 212]); doc.line(x1, y1, x2, y2); };
+  const lbl   = (str, x, yy, size = 7, style = 'normal', align = 'left') => { doc.setFontSize(size); doc.setFont('helvetica', style); doc.text(str, x, yy, { align }); };
+
+  const STAGE_META = {
+    NonDemented:      { label: 'Non-Demented',      color: [72, 187, 120],  dot: [72, 187, 120]  },
+    VeryMildDemented: { label: 'Very Mild Demented', color: [246, 173, 85],  dot: [246, 173, 85]  },
+    MildDemented:     { label: 'Mild Demented',      color: [237, 137, 54],  dot: [237, 137, 54]  },
+    ModerateDemented: { label: 'Moderate Demented',  color: [214, 61, 61],   dot: [214, 61, 61]   },
+  };
+  const STAGE_ORDER = ['NonDemented','VeryMildDemented','MildDemented','ModerateDemented'];
+
+  const sorted = [...predictions].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  // ── HEADER ──────────────────────────────────────────────
+  rct(0, 0, PW, 26, [245, 248, 245]);
+  doc.setLineWidth(0.4); stroke([180, 214, 180]); doc.line(0, 26, PW, 26);
+  tc([100, 140, 107]); lbl('NeuroStage', M, 11, 11, 'bold');
+  tc([130, 160, 135]); lbl('Evolution Report', M, 18, 7.5);
+  tc([90, 110, 95]);
+  lbl('Patient: ' + (patient.name || '—'),             PW - M, 10, 7, 'normal', 'right');
+  lbl('DNI: ' + (patient.dni || '—'),                  PW - M, 16, 6.5, 'normal', 'right');
+  lbl('Generated: ' + new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }), PW - M, 22, 6.5, 'normal', 'right');
+
+  y = 34;
+
+  // ── PHYSICIAN ───────────────────────────────────────────
+  tc([130, 155, 135]); lbl('Physician: ' + (doctor.name || '—') + '  ·  ' + (doctor.dni || '—'), M, y, 7);
+  y += 8;
+
+  // ── EVOLUTION SUMMARY ────────────────────────────────────
+  ln(M, y, PW - M, y); y += 5;
+  tc([38, 50, 56]); lbl('Staging evolution', M, y, 9, 'bold'); y += 6;
+
+  if (sorted.length >= 2) {
+    const first = STAGE_META[sorted[0].predicted_class];
+    const last  = STAGE_META[sorted[sorted.length - 1].predicted_class];
+    const fi    = STAGE_ORDER.indexOf(sorted[0].predicted_class);
+    const li    = STAGE_ORDER.indexOf(sorted[sorted.length - 1].predicted_class);
+    const trend = li > fi ? '↑ Worsening' : li < fi ? '↓ Improving' : '→ Stable';
+    const trendColor = li > fi ? [214, 61, 61] : li < fi ? [72, 187, 120] : [180, 140, 60];
+
+    rct(M, y, CW, 16, [248, 251, 248], 3);
+    fill(first.dot); doc.circle(M + 8, y + 8, 3.5, 'F');
+    tc([38, 50, 56]); lbl(first.label, M + 14, y + 6, 7.5, 'bold');
+    tc([150, 170, 155]); lbl(new Date(sorted[0].created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}), M + 14, y + 12, 6.5);
+
+    tc([180, 200, 182]); lbl('→', PW/2, y + 9, 10, 'bold', 'center');
+
+    fill(last.dot); doc.circle(PW - M - 55 + 8, y + 8, 3.5, 'F');
+    tc([38, 50, 56]); lbl(last.label, PW - M - 55 + 14, y + 6, 7.5, 'bold');
+    tc([150, 170, 155]); lbl(new Date(sorted[sorted.length-1].created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}), PW - M - 55 + 14, y + 12, 6.5);
+
+    tc(trendColor); lbl(trend, PW - M, y + 9, 8, 'bold', 'right');
+    y += 22;
+  }
+
+  tc([150, 170, 155]); lbl(sorted.length + ' prediction' + (sorted.length !== 1 ? 's' : '') + ' recorded', M, y, 6.5);
+  y += 8;
+
+  // ── PREDICTIONS ──────────────────────────────────────────
+  for (let i = 0; i < sorted.length; i++) {
+    const r    = sorted[i];
+    const meta = STAGE_META[r.predicted_class] || STAGE_META.NonDemented;
+    const conf = (r.confidence * 100).toFixed(1);
+    const dateStr = new Date(r.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+
+    // Check page space
+    const hasImages = !!(r.mri_url || r.gradcam_url);
+    const blockH    = hasImages ? 80 : 46;
+    if (y + blockH > PH - 22) {
+      doc.addPage();
+      y = M;
+    }
+
+    // Date header
+    ln(M, y, PW - M, y); y += 4;
+    fill(meta.dot); doc.circle(M + 2.5, y + 2.5, 2.5, 'F');
+    tc([38, 50, 56]); lbl(dateStr, M + 8, y + 5, 8, 'bold');
+    tc(meta.color); lbl(meta.label, M + 8, y + 11, 7);
+    tc([90, 110, 95]); lbl(conf + '% confidence', PW - M, y + 8, 7.5, 'bold', 'right');
+    y += 16;
+
+    // Confidence bars
+    const allConf = {
+      NonDemented:      r.prob_non_demented,
+      VeryMildDemented: r.prob_very_mild,
+      MildDemented:     r.prob_mild,
+      ModerateDemented: r.prob_moderate,
+    };
+    const labelCol = 38, barStart = M + labelCol, barTotal = CW - labelCol - 16, barH = 4;
+    STAGE_ORDER.forEach((s, si) => {
+      const val  = Math.min(1, Math.max(0, allConf[s] ?? 0));
+      const barW = barTotal * val;
+      doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+      tc([130, 150, 135]); doc.text(STAGE_META[s].label, M, y + barH - 0.5);
+      fill([225, 235, 226]); doc.roundedRect(barStart, y, barTotal, barH, 1.5, 1.5, 'F');
+      if (barW > 0.5) { fill(STAGE_META[s].dot); doc.roundedRect(barStart, y, barW, barH, 1.5, 1.5, 'F'); }
+      tc([90, 110, 95]); doc.setFont('helvetica', s === r.predicted_class ? 'bold' : 'normal');
+      doc.text((val * 100).toFixed(1) + '%', PW - M, y + barH - 0.5, { align: 'right' });
+      y += 7;
+    });
+
+    // Images
+    if (hasImages) {
+      y += 2;
+      const imgW = 55, imgH = 55;
+      let imgX = M;
+
+      if (r.mri_url) {
+        try {
+          const res  = await fetch(r.mri_url);
+          const blob = await res.blob();
+          const b64  = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          doc.setLineWidth(0.3); stroke([210, 225, 212]); doc.rect(imgX - 0.5, y - 0.5, imgW + 1, imgH + 1);
+          doc.addImage(b64, 'JPEG', imgX, y, imgW, imgH);
+          tc([150, 170, 155]); lbl('MRI', imgX + imgW / 2, y + imgH + 4, 6, 'normal', 'center');
+          imgX += imgW + 6;
+        } catch(e) { console.warn('MRI image load error:', e); }
+      }
+
+      if (r.gradcam_url) {
+        try {
+          const res  = await fetch(r.gradcam_url);
+          const blob = await res.blob();
+          const b64  = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          doc.setLineWidth(0.3); stroke([210, 225, 212]); doc.rect(imgX - 0.5, y - 0.5, imgW + 1, imgH + 1);
+          doc.addImage(b64, 'JPEG', imgX, y, imgW, imgH);
+          tc([150, 170, 155]); lbl('Grad-CAM', imgX + imgW / 2, y + imgH + 4, 6, 'normal', 'center');
+        } catch(e) { console.warn('Grad-CAM image load error:', e); }
+      }
+
+      y += imgH + 10;
+    } else {
+      y += 4;
+    }
+  }
+
+  // ── FOOTER ───────────────────────────────────────────────
+  const FY = PH - 14;
+  doc.setLineWidth(0.25); stroke([210, 225, 212]); doc.line(M, FY - 3, PW - M, FY - 3);
+  tc([170, 190, 172]); lbl('NeuroStage  ·  Universidad de Deusto  ·  Clinical support only — not a medical diagnosis', M, FY + 2, 5.8, 'italic');
+
+  // ── DESCARGAR ────────────────────────────────────────────
+  const filename = 'NeuroStage_Evolution_' + patient.dni + '_' + new Date().toISOString().slice(0, 10) + '.pdf';
+  doc.save(filename);
+}
