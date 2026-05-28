@@ -2118,6 +2118,7 @@ async function selectPatient(p) {
         <div class="export-group">
           <button class="btn-export" onclick="exportPredictionsCSV('${p.id}','${p.username}')">⬇ MRI Data</button>
           <button class="btn-export" onclick="exportGamesCSV('${p.id}','${p.username}')">⬇ Games Data</button>
+          <button class="btn-export" onclick="generateEvolutionReportForPatient('${p.id}')">Evolution Report</button>
         </div>
       </div>
     </div>
@@ -2273,6 +2274,28 @@ async function exportPredictionsCSV(patientId, username) {
   downloadCSV(csv, `neuroclass_MRI_${username}_${new Date().toISOString().slice(0,10)}.csv`);
 }
 
+async function generateEvolutionReportForPatient(patientId) {
+  const p = selectedDashboardPatient;
+  if (!p) { showToast('No patient selected'); return; }
+  showToast('⏳ Generating evolution report…');
+  const { data: preds } = await db.from('predictions').select('*')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: true });
+  if (!preds || preds.length === 0) { showToast('No predictions found for this patient'); return; }
+  try {
+    await generateEvolutionReport({
+      patient: { id: p.id, name: p.full_name, dni: p.username, dob: p.date_of_birth || '—' },
+      doctor:  { id: currentUser.id, name: currentUser.name, dni: currentUser.username },
+      predictions: preds,
+      supabase: db,
+    });
+    showToast('📈 Evolution report downloaded');
+  } catch(e) {
+    console.warn('Evolution report error:', e);
+    showToast('Error generating evolution report');
+  }
+}
+  
 async function exportGamesCSV(patientId, username) {
   const {data} = await db.from('game_sessions').select('*')
     .eq('patient_id', patientId).order('created_at',{ascending:true});
