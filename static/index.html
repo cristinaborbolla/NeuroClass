@@ -697,6 +697,10 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       </div>
       <div class="auth-msg" id="loginMsg"></div>
       <button type="submit" class="btn-auth" id="btnLogin">Log in</button>
+      <p class="auth-divider">
+        <a href="#" onclick="showForgotModal();return false;"
+          style="color:var(--muted);font-size:.78rem;">Forgot your password?</a>
+      </p>
       <p class="auth-divider">New patient? <a href="#" onclick="switchAuth('register');return false;" style="color:var(--matcha-dk);">Register here</a></p>
     </form>
 
@@ -759,7 +763,10 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           <input type="text" id="regStaffCode" placeholder="code">
         </div>
       </div>
-
+      <div class="field">
+        <label>Email <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(used for password recovery)</span></label>
+        <input type="email" id="regEmail" placeholder="email@example.com" required>
+      </div>
       <div class="field">
         <label>Password <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(min. 8 characters)</span></label>
         <input type="password" id="regPassword" placeholder="password" minlength="8" required>
@@ -1167,6 +1174,32 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   </div>
 </div>
 
+<!-- ══ FORGOT PASSWORD MODAL ══════════════════════════════════ -->
+<div class="game-modal-overlay" id="forgotOverlay" style="display:none;">
+  <div class="game-modal" style="text-align:left;max-width:380px;">
+    <div class="game-modal-emoji" style="text-align:center;">🔑</div>
+    <div class="game-modal-title" style="text-align:center;">Reset your password</div>
+    <div class="game-modal-desc" style="text-align:center;margin-bottom:1.2rem;">
+      Enter your Patient ID and we'll send a reset link to your registered email.
+    </div>
+    <div class="field" style="margin-bottom:.85rem;">
+      <label>Patient ID (DNI / NHC)</label>
+      <input type="text" id="forgotUsername" placeholder="e.g. 12345678A"
+        style="padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;
+        font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);
+        background:var(--bg);outline:none;width:100%;">
+    </div>
+    <div class="auth-msg" id="forgotMsg1"></div>
+    <button class="btn-auth" onclick="verifyForgotIdentity()" style="margin-top:.4rem;">
+      Send reset link
+    </button>
+    <button class="btn-games-home" style="margin-top:.6rem;width:100%;"
+      onclick="document.getElementById('forgotOverlay').style.display='none'">
+      Cancel
+    </button>
+  </div>
+</div>
+  
 <!-- ══ VIRTUAL ASSISTANT BUBBLE ══ -->
 <div class="assistant-bubble" id="assistantBubble">
   <div class="assistant-speech" id="assistantSpeech" style="display:none;">
@@ -1369,11 +1402,34 @@ const TREND_MODS = {
 
 // ── Session state ───────────────────────────────────────────
 let currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null');
-// ── Password hash (SHA-256 via Web Crypto API) ──────────────
-async function hashPassword(password) {
-  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
+
+db.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    if (session && !currentUser) {
+      const { data: profile } = await db
+        .from('users')
+        .select('id, full_name, role, username')
+        .eq('id', session.user.id)
+        .single();
+      if (profile) {
+        currentUser = { id: profile.id, name: profile.full_name, role: profile.role, username: profile.username };
+        localStorage.setItem('ns_user', JSON.stringify(currentUser));
+        updateHeaderAuth();
+        setTimeout(checkImageConsent, 800);
+      }
+    }
+  }
+  if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    localStorage.removeItem('ns_user');
+    updateHeaderAuth();
+    showTab('home');
+  }
+  if (event === 'PASSWORD_RECOVERY') {
+    showPasswordRecoveryModal();
+  }
+});
+  
 // ── Auth UI helpers ─────────────────────────────────────────
 function switchAuth(tab) {
   document.getElementById('formLogin').classList.toggle('active', tab === 'login');
@@ -1464,12 +1520,13 @@ async function setRegRole(role) {
 // ── Register ────────────────────────────────────────────────
 async function doRegister(e) {
   e.preventDefault();
-  const btn         = document.getElementById('btnRegister');
-  const msg         = document.getElementById('registerMsg');
-  const name        = document.getElementById('regName').value.trim();
-  const username    = document.getElementById('regUsername').value.trim().toUpperCase();
-  const pass        = document.getElementById('regPassword').value;
-  // Doctor validation
+  const btn      = document.getElementById('btnRegister');
+  const msg      = document.getElementById('registerMsg');
+  const name     = document.getElementById('regName').value.trim();
+  const username = document.getElementById('regUsername').value.trim().toUpperCase();
+  const email    = document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass     = document.getElementById('regPassword').value;
+
   if (regRole === 'doctor') {
     const code = document.getElementById('regStaffCode').value.trim().toUpperCase();
     if (code !== STAFF_CODE) {
@@ -1477,73 +1534,175 @@ async function doRegister(e) {
       return;
     }
   }
+
   const dob         = regRole === 'patient' ? (document.getElementById('regDob').value || null) : null;
   const phone       = regRole === 'patient' ? (document.getElementById('regPhone').value.trim() || null) : null;
   const lastAppt    = regRole === 'patient' ? (document.getElementById('regLastAppt').value || null) : null;
   const neurologist = regRole === 'patient' ? (document.getElementById('regNeurologist').value.trim() || null) : null;
   const colNum      = regRole === 'doctor'  ? (document.getElementById('regColNum').value.trim() || null) : null;
-  btn.disabled = true; btn.textContent = 'Creating account…';
+
+  btn.disabled = true;
+  btn.textContent = 'Creating account…';
   msg.className = 'auth-msg';
-  const { data: existing, error: chkErr } = await db.from('users').select('id').ilike('username', username).maybeSingle();
-  if (chkErr) {
-    showMsg(msg, 'error', 'Could not connect to the database. Check your network.');
-    btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account'; return;
-  }
+
+  const { data: existing } = await db.from('users').select('id').ilike('username', username).maybeSingle();
   if (existing) {
     showMsg(msg, 'error', 'This ID is already registered.');
-    btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account'; return;
+    btn.disabled = false;
+    btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
+    return;
   }
-  const hash = await hashPassword(pass);
-  const { error } = await db.from('users').insert({
-    username, full_name: name, date_of_birth: dob, phone,
-    neurologist, last_appointment: lastAppt,
+
+  const { data: authData, error: authError } = await db.auth.signUp({ email, password: pass });
+  if (authError) {
+    showMsg(msg, 'error', authError.message);
+    btn.disabled = false;
+    btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
+    return;
+  }
+
+  const { error: profileError } = await db.from('users').insert({
+    id: authData.user.id,
+    username, full_name: name, email,
+    date_of_birth: dob, phone, neurologist,
+    last_appointment: lastAppt,
     notes: colNum ? `Nº colegiado: ${colNum}` : null,
-    password_hash: hash, role: regRole
+    role: regRole
   });
-  if (error) {
-    showMsg(msg, 'error', 'Registration failed: ' + error.message);
+
+  if (profileError) {
+    showMsg(msg, 'error', 'Profile could not be saved: ' + profileError.message);
   } else {
-    showMsg(msg, 'success', `Account created! You can now log in.`);
-    setTimeout(() => switchAuth('login'), 1600);
+    showMsg(msg, 'success', 'Account created! Check your email to confirm, then log in.');
+    setTimeout(() => switchAuth('login'), 2000);
   }
-  btn.disabled = false; btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
+
+  btn.disabled = false;
+  btn.textContent = regRole === 'doctor' ? 'Create doctor account' : 'Create patient account';
 }
-// ── Login ────────────────────────────────────────────────────
+
 async function doLogin(e) {
   e.preventDefault();
   const btn      = document.getElementById('btnLogin');
   const msg      = document.getElementById('loginMsg');
   const username = document.getElementById('loginUsername').value.trim().toUpperCase();
   const pass     = document.getElementById('loginPassword').value;
-  btn.disabled = true; btn.textContent = 'Logging in…';
+
+  btn.disabled = true;
+  btn.textContent = 'Logging in…';
   msg.className = 'auth-msg';
-  const hash = await hashPassword(pass);
-  const { data, error } = await db.from('users')
-    .select('id, full_name, role, username, date_of_birth, phone, neurologist, last_appointment')
-    .ilike('username', username).eq('password_hash', hash).maybeSingle();
-  if (error) {
-    showMsg(msg, 'error', 'Database error: ' + error.message);
-    btn.disabled = false; btn.textContent = 'Log in'; return;
-  }
-  if (!data) {
+
+  const { data: profile, error: lookupErr } = await db
+    .from('users').select('email').ilike('username', username).maybeSingle();
+
+  if (lookupErr || !profile?.email) {
     showMsg(msg, 'error', 'Incorrect Patient ID or password.');
-    btn.disabled = false; btn.textContent = 'Log in'; return;
+    btn.disabled = false; btn.textContent = 'Log in';
+    return;
   }
-  currentUser = { id: data.id, name: data.full_name, role: data.role, username: data.username };
-  localStorage.setItem('ns_user', JSON.stringify(currentUser));
-  updateHeaderAuth();
-  showTab('home');
-  setTimeout(checkImageConsent, 800);
+
+  const { error } = await db.auth.signInWithPassword({ email: profile.email, password: pass });
+  if (error) {
+    showMsg(msg, 'error', 'Incorrect Patient ID or password.');
+    btn.disabled = false; btn.textContent = 'Log in';
+    return;
+  }
+  // onAuthStateChange handles the rest
   btn.disabled = false; btn.textContent = 'Log in';
 }
-// ── Logout ──────────────────────────────────────────────────
-function logout() {
-  currentUser = null;
+
+async function logout() {
+  await db.auth.signOut();
   doctorPatient = null;
   classifierPatients = [];
-  localStorage.removeItem('ns_user');
-  updateHeaderAuth();
-  showTab('home');
+}
+
+// ══════════════════════════════════════════════════════════════
+// FORGOT / RESET PASSWORD
+// ══════════════════════════════════════════════════════════════
+function showForgotModal() {
+  document.getElementById('forgotUsername').value = '';
+  document.getElementById('forgotMsg1').className = 'auth-msg';
+  document.getElementById('forgotOverlay').style.display = 'flex';
+}
+
+async function verifyForgotIdentity() {
+  const msg      = document.getElementById('forgotMsg1');
+  const username = document.getElementById('forgotUsername').value.trim().toUpperCase();
+  msg.className  = 'auth-msg';
+
+  if (!username) { showMsg(msg, 'error', 'Please enter your Patient ID.'); return; }
+
+  const { data: profile } = await db
+    .from('users').select('email').ilike('username', username).maybeSingle();
+
+  if (!profile?.email) {
+    showMsg(msg, 'error', 'No account found with that Patient ID.');
+    return;
+  }
+
+  const { error } = await db.auth.resetPasswordForEmail(profile.email, {
+    redirectTo: window.location.origin + '/'
+  });
+
+  if (error) { showMsg(msg, 'error', 'Could not send reset email. Try again.'); return; }
+  showMsg(msg, 'success', '✓ Reset link sent to your registered email address.');
+}
+
+function showPasswordRecoveryModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'game-modal-overlay';
+  overlay.id = 'recoveryOverlay';
+  overlay.innerHTML = `
+    <div class="game-modal" style="text-align:left;max-width:380px;">
+      <div class="game-modal-emoji" style="text-align:center;">🔑</div>
+      <div class="game-modal-title" style="text-align:center;">Set new password</div>
+      <div class="field" style="margin-bottom:.85rem;margin-top:1rem;">
+        <label>New password <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(min. 8 characters)</span></label>
+        <input type="password" id="recoveryNewPass" placeholder="New password" minlength="8"
+          style="padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;
+          font-family:'DM Sans',sans-serif;font-size:.88rem;width:100%;
+          background:var(--bg);outline:none;color:var(--text);">
+      </div>
+      <div class="field" style="margin-bottom:1rem;">
+        <label>Confirm password</label>
+        <input type="password" id="recoveryConfirmPass" placeholder="Confirm password"
+          style="padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;
+          font-family:'DM Sans',sans-serif;font-size:.88rem;width:100%;
+          background:var(--bg);outline:none;color:var(--text);">
+      </div>
+      <div class="auth-msg" id="recoveryMsg"></div>
+      <button class="btn-auth" onclick="doRecoveryReset()" style="margin-top:.4rem;">
+        Save new password
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function doRecoveryReset() {
+  const msg     = document.getElementById('recoveryMsg');
+  const newPass = document.getElementById('recoveryNewPass').value;
+  const confirm = document.getElementById('recoveryConfirmPass').value;
+  msg.className = 'auth-msg';
+
+  if (!newPass || newPass.length < 8) {
+    showMsg(msg, 'error', 'Password must be at least 8 characters.'); return;
+  }
+  if (newPass !== confirm) {
+    showMsg(msg, 'error', 'Passwords do not match.'); return;
+  }
+
+  const { error } = await db.auth.updateUser({ password: newPass });
+  if (error) {
+    showMsg(msg, 'error', 'Could not update password. The link may have expired.'); return;
+  }
+
+  showMsg(msg, 'success', '✓ Password updated!');
+  setTimeout(() => {
+    document.getElementById('recoveryOverlay')?.remove();
+    showToast('✓ Password reset — you are now logged in');
+    showTab('home');
+  }, 1600);
 }
 // ── Update header after login/logout ────────────────────────
 function updateHeaderAuth() {
