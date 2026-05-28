@@ -77,7 +77,7 @@ function formatDateTime(d = new Date()) {
 }
 
 // ─── PDF builder ─────────────────────────────────────────────────────────────
-export async function generateAndUploadReport({
+async function generateAndUploadReport({
   patient,       // { id, name, dni, dob }
   doctor,        // { id, name, dni }
   prediction,    // { stage: string, confidence: 0–1, allConfidences: { NonDemented: 0–1, ... } }
