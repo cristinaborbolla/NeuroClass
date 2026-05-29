@@ -1662,8 +1662,11 @@ async function verifyForgotIdentity() {
     redirectTo: 'https://neuroclass-alzheimer-mri-classifier.hf.space/'
   });
 
-  if (error) { showMsg(msg, 'error', 'Could not send reset email. Try again.'); return; }
-  showMsg(msg, 'success', '✓ Reset link sent to your registered email address.');
+  if (error) { showMsg(msg, 'error', 'Could not send reset email. Please try again.'); return; }
+  showMsg(msg, 'success', 'Reset link sent to your registered email address.');
+  setTimeout(() => {
+    document.getElementById('forgotOverlay').style.display = 'none';
+  }, 2000);
 }
 
 function showPasswordRecoveryModal() {
