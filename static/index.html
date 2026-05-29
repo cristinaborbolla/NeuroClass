@@ -744,7 +744,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
             <input type="date" id="regLastAppt">
           </div>
         </div>
-        <div class="field">
+        <div class="field" style="margin-top:1rem;">
           <label>Neurologist</label>
           <select id="regNeurologist">
             <option value="">— Select your neurologist —</option>
@@ -3318,7 +3318,7 @@ function displayUncertainty(data) {
 // VIRTUAL ASSISTANT
 // ══════════════════════════════════════════════════════════════
 const ASSISTANT_EMOJIS = ['🐻','🐱','🦊','🐶','🐸','🦁','🐼','🐨','🐥','🐯','🐵','🐮'];
-const ASSISTANT_COLORS = ['#7ade84','#e8a0b5','#4a7fc1','#a4dedc','#9b6bc4','#e87c3e','#de7adb','#e8b84b','#a8324d'];
+const ASSISTANT_COLORS = ['#e8a0b5','#4a7fc1','#a4dedc','#9b6bc4','#e87c3e','#de7adb','#e8b84b','#a8324d'];
 
 const ASSISTANT_MSGS = {
   home:            (u,a) => `Go to <strong>Games</strong> to train your brain or to <strong>Classifier</strong> to analyse an MRI scan.`,
