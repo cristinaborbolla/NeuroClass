@@ -1403,8 +1403,17 @@ const TREND_MODS = {
 // ── Session state ───────────────────────────────────────────
 let currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null');
 
+let isRecoveryFlow = false;
 db.auth.onAuthStateChange(async (event, session) => {
+
+  if (event === 'PASSWORD_RECOVERY') {
+    isRecoveryFlow = true;
+    showPasswordRecoveryModal();
+    return;
+  }
+
   if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    if (isRecoveryFlow) return; // ignorar durante recovery
     if (session && !currentUser) {
       const { data: profile } = await db
         .from('users')
@@ -1419,15 +1428,15 @@ db.auth.onAuthStateChange(async (event, session) => {
       }
     }
   }
+
   if (event === 'SIGNED_OUT') {
+    isRecoveryFlow = false;
     currentUser = null;
     localStorage.removeItem('ns_user');
     updateHeaderAuth();
     showTab('home');
   }
-  if (event === 'PASSWORD_RECOVERY') {
-    showPasswordRecoveryModal();
-  }
+
 });
   
 // ── Auth UI helpers ─────────────────────────────────────────
@@ -1650,7 +1659,7 @@ async function verifyForgotIdentity() {
   }
 
   const { error } = await db.auth.resetPasswordForEmail(profile.email, {
-    redirectTo: window.location.origin + '/'
+    redirectTo: 'https://neuroclass-alzheimer-mri-classifier.hf.space/'
   });
 
   if (error) { showMsg(msg, 'error', 'Could not send reset email. Try again.'); return; }
@@ -1658,9 +1667,12 @@ async function verifyForgotIdentity() {
 }
 
 function showPasswordRecoveryModal() {
+  if (document.getElementById('recoveryOverlay')) return;
+  showTab('home');
   const overlay = document.createElement('div');
   overlay.className = 'game-modal-overlay';
   overlay.id = 'recoveryOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(44,62,48,.45);display:flex;align-items:center;justify-content:center;z-index:400;padding:1rem;';
   overlay.innerHTML = `
     <div class="game-modal" style="text-align:left;max-width:380px;">
       <div class="game-modal-emoji" style="text-align:center;">🔑</div>
@@ -1705,10 +1717,11 @@ async function doRecoveryReset() {
     showMsg(msg, 'error', 'Could not update password. The link may have expired.'); return;
   }
 
-  showMsg(msg, 'success', '✓ Password updated!');
+  showMsg(msg, 'success', 'Password updated!');
+  isRecoveryFlow = false;
   setTimeout(() => {
     document.getElementById('recoveryOverlay')?.remove();
-    showToast('✓ Password reset — you are now logged in');
+    showToast('Password reset, you are now logged in');
     showTab('home');
   }, 1600);
 }
@@ -3408,7 +3421,23 @@ function saveAssistant(firstTime) {
   }
 }
 // ── Init ────────────────────────────────────────────────────
-updateHeaderAuth();
+  (function checkRecoveryOnLoad() {
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery')) {
+      const params = new URLSearchParams(hash.replace('#', '?'));
+      if (params.get('type') === 'recovery') {
+        history.replaceState(null, '', window.location.pathname);
+        setTimeout(() => {
+          if (!document.getElementById('recoveryOverlay')) {
+            showPasswordRecoveryModal();
+          }
+        }, 800);
+      }
+    }
+  })();
+
+  updateHeaderAuth();
+  
 </script>
 <script>
   if ('serviceWorker' in navigator) {
