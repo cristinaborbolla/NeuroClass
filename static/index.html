@@ -686,7 +686,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     </div>
 
     <!-- Login form -->
-    <form class="auth-form active" id="formLogin" onsubmit="doLogin(event)">
+    <form class="auth-form active" id="formLogin" onsubmit="return false;">
       <div class="field">
         <label>Patient ID / Username</label>
         <input type="text" id="loginUsername" placeholder="e.g. 12345678A" autocomplete="username" required>
@@ -696,7 +696,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         <input type="password" id="loginPassword" placeholder="password" required>
       </div>
       <div class="auth-msg" id="loginMsg"></div>
-      <button type="submit" class="btn-auth" id="btnLogin">Log in</button>
+      <button type="button" class="btn-auth" id="btnLogin" onclick="doLogin(event)">Log in</button>
       <p class="auth-divider">
         <a href="#" onclick="showForgotModal();return false;"
           style="color:var(--muted);font-size:.78rem;">Forgot your password?</a>
@@ -705,7 +705,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     </form>
 
     <!-- Register form -->
-    <form class="auth-form" id="formRegister" onsubmit="doRegister(event)">
+    <form class="auth-form" id="formRegister" onsubmit="return false;">
 
       <!-- Role selector -->
       <div class="role-selector">
@@ -772,7 +772,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
         <input type="password" id="regPassword" placeholder="password" minlength="8" required>
       </div>
       <div class="auth-msg" id="registerMsg"></div>
-      <button type="submit" class="btn-auth" id="btnRegister">Create patient account</button>
+      <button type="button" class="btn-auth" id="btnRegister" onclick="doRegister(event)">Create patient account</button>
       <p class="auth-divider">Already have an account? <a href="#" onclick="switchAuth('login');return false;" style="color:var(--matcha-dk);">Log in</a></p>
     </form>
   </div>
