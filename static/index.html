@@ -2772,7 +2772,58 @@ async function fetchGradCAM(file) {
   }
 }
 
-async function saveGradcamImage
+async function saveGradcamImage(base64DataUrl) {
+  if (!base64DataUrl) return;
+
+  try {
+    // Obtener el ID de la predicción más reciente del paciente actual
+    const patientId = (currentUser?.role === 'doctor' && doctorPatient)
+      ? doctorPatient.id
+      : currentUser?.id;
+    if (!patientId) return;
+
+    // Convertir base64 a Blob
+    const res      = await fetch(base64DataUrl);
+    const blob     = await res.blob();
+    const filename = `gradcam_${patientId}_${Date.now()}.png`;
+
+    // Subir a Supabase Storage (bucket: 'gradcam-images')
+    const { data: uploadData, error: uploadError } = await db.storage
+      .from('gradcam-images')
+      .upload(filename, blob, { contentType: 'image/png', upsert: false });
+
+    if (uploadError) {
+      console.warn('Grad-CAM upload error:', uploadError.message);
+      return;
+    }
+
+    // Obtener URL pública
+    const { data: urlData } = db.storage
+      .from('gradcam-images')
+      .getPublicUrl(filename);
+    const publicUrl = urlData?.publicUrl;
+    if (!publicUrl) return;
+
+    // Actualizar la predicción más reciente con la URL del Grad-CAM
+    const { data: latestPred } = await db
+      .from('predictions')
+      .select('id')
+      .eq('patient_id', patientId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (latestPred?.id) {
+      await db.from('predictions')
+        .update({ gradcam_url: publicUrl })
+        .eq('id', latestPred.id);
+    }
+
+  } catch (e) {
+    console.warn('saveGradcamImage error:', e);
+  }
+}
+  
 // ══════════════════════════════════════════════════════════════
 // CHARTS (dashboard)
 // ══════════════════════════════════════════════════════════════
