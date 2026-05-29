@@ -93,7 +93,7 @@ function _makePDF(){
 // ─── Page header ─────────────────────────────────────────────
 function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   rct(0,0,PW,3,_NC.matcha);
-  rct(0,3,PW,33,_NC.light);
+  rct(0,3,PW,33,_NC.surface);
   hline(36,_NC.border,0.3);
   rct(M,8,14,14,_NC.matcha,2);
   t('NC',M+2,18,20,'bold','left',_NC.surface2);
@@ -107,10 +107,11 @@ function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
 }
 
 // ─── Section header ───────────────────────────────────────────
-function _sectionHeader(label,y,M,CW,rct,t){
-  rct(M,y,CW,9,_NC.surface);
-  t(label.toUpperCase(),M+7,y+6.5,9,'bold','center',_NC.muted);
-  return y+13;
+function _sectionHeader(label, y, M, CW, rct, t) {
+  y += 5;
+  rct(M, y, CW, 8, _NC.surface);
+  t(label.toUpperCase(), M + 5, y + 5.8, 7.5, 'bold', 'left', _NC.muted);
+  return y + 13;
 }
 
 // ─── Info row ─────────────────────────────────────────────────
