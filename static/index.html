@@ -1723,9 +1723,15 @@ async function doRecoveryReset() {
     showMsg(msg, 'error', 'Passwords do not match.'); return;
   }
 
+  // Verificar que hay sesión activa de recovery
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) {
+    showMsg(msg, 'error', 'Recovery session expired. Please request a new reset link.'); return;
+  }
+
   const { error } = await db.auth.updateUser({ password: newPass });
   if (error) {
-    showMsg(msg, 'error', 'Could not update password. The link may have expired.'); return;
+    showMsg(msg, 'error', 'Could not update password: ' + error.message); return;
   }
 
   showMsg(msg, 'success', 'Password updated!');
@@ -3432,23 +3438,17 @@ function saveAssistant(firstTime) {
   }
 }
 // ── Init ────────────────────────────────────────────────────
-  (function checkRecoveryOnLoad() {
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
-      const params = new URLSearchParams(hash.replace('#', '?'));
-      if (params.get('type') === 'recovery') {
-        history.replaceState(null, '', window.location.pathname);
-        setTimeout(() => {
-          if (!document.getElementById('recoveryOverlay')) {
-            showPasswordRecoveryModal();
-          }
-        }, 800);
-      }
-    }
-  })();
+(function checkRecoveryOnLoad() {
+  const hash = window.location.hash;
+  if (hash.includes('type=recovery')) {
+    setTimeout(() => {
+      history.replaceState(null, '', window.location.pathname);
+    }, 2000);
+  }
+})();
 
-  updateHeaderAuth();
-  
+updateHeaderAuth();
+
 </script>
 <script>
   if ('serviceWorker' in navigator) {
