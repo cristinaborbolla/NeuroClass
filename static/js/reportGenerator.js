@@ -98,9 +98,9 @@ function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   rct(M,8,14,14,_NC.matcha,2);
   t('NC',M+2,18,20,'bold','left',_NC.surface2);
   serif('NeuroClass',M+18,15,16,'left',_NC.matchaDk);
-  t(subtitle,M+18,22,9,'normal','left',_NC.muted);
-  t('Patient',PW-M,10,9,'bold','right',_NC.muted);
-  serif(p.name||'—',PW-M,18,13,'right',_NC.dark);
+  t(subtitle,M+18,22,10,'normal','left',_NC.muted);
+  t('Patient',PW-M,10,10,'bold','right',_NC.muted);
+  serif(p.name||'—',PW-M,18,15,'right',_NC.dark);
   t('DOB: '+(p.dob||'—')+'   ·   ID: '+(p.dni||'—'),PW-M,24,8,'normal','right',_NC.muted);
   t('Generated: '+_fmtDT(),PW-M,30,8,'normal','right',_NC.muted);
   return 42;
@@ -110,7 +110,7 @@ function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
 function _sectionHeader(label, y, M, CW, rct, t) {
   y += 5;
   rct(M, y, CW, 8, _NC.surface);
-  t(label.toUpperCase(), M + 5, y + 5.8, 7.5, 'bold', 'left', _NC.muted);
+  t(label.toUpperCase(), M + 5, y + 5.8, 9, 'bold', 'left', _NC.muted);
   return y + 13;
 }
 
@@ -265,51 +265,100 @@ function _patientSection(patient, y, M, t, doc, rct, CW) {
 // INDIVIDUAL PREDICTION REPORT
 // ═══════════════════════════════════════════════════════════════
 async function generateAndUploadReport({
-  patient,doctor,prediction,gradcamBase64,
-  gameScores,gameSessions,notes,predictionId,supabase
-}){
-  const {doc,PW,PH,M,CW,fill,tc,sk,rct,hline,t,serif}=_makePDF();
-  const stage=_STAGE[prediction.stage]||_STAGE.NonDemented;
-  const conf =_clamp(prediction.confidence);
+  patient, doctor, prediction, gradcamBase64,
+  gameScores, gameSessions, notes, predictionId, supabase
+}) {
+  const {doc,PW,PH,M,CW,fill,tc,sk,rct,hline,t,serif} = _makePDF();
+  const stage = _STAGE[prediction.stage] || _STAGE.NonDemented;
+  const conf  = _clamp(prediction.confidence);
 
-  let y=_pageHeader(patient,doc,PW,M,CW,rct,hline,t,serif,'Clinical Prediction Report  ·  '+_fmt());
+  // Cargar imágenes desde URLs si no vienen como base64
+  let mriBase64     = prediction.mriBase64     || null;
+  let gradcamFinal  = gradcamBase64             || prediction.gradcamBase64 || null;
+
+  if (!mriBase64 && prediction.mri_url) {
+    try {
+      const res  = await fetch(prediction.mri_url);
+      const blob = await res.blob();
+      mriBase64  = await new Promise(r => {
+        const rd = new FileReader();
+        rd.onload = () => r(rd.result);
+        rd.readAsDataURL(blob);
+      });
+    } catch(e) { console.warn('MRI load error:', e); }
+  }
+
+  if (!gradcamFinal && prediction.gradcam_url) {
+    try {
+      const res    = await fetch(prediction.gradcam_url);
+      const blob   = await res.blob();
+      gradcamFinal = await new Promise(r => {
+        const rd = new FileReader();
+        rd.onload = () => r(rd.result);
+        rd.readAsDataURL(blob);
+      });
+    } catch(e) { console.warn('Grad-CAM load error:', e); }
+  }
+
+  let y = _pageHeader(patient, doc, PW, M, CW, rct, hline, t, serif, 'Clinical Prediction Report  ·  ' + _fmt());
 
   y = _patientSection(patient, y, M, t, doc, rct, CW);
-  y=_doctorSection(doctor,y,M,t,doc,rct,CW);
+  y = _doctorSection(doctor, y, M, t, doc, rct, CW);
 
   // Diagnosis
-  y=_sectionHeader('Diagnosis',y,M,CW,rct,t);
-  rct(M,y,3,26,stage.color);
-  rct(M+3,y,CW-3,26,_NC.surface);
-  t('PREDICTED STAGE',M+10,y+7,7,'bold','left',_NC.muted);
-  serif(stage.label,M+10,y+18,13,'left',_NC.dark);
-  t('CONFIDENCE',PW-M-38,y+7,7,'bold','right',_NC.muted);
-  serif((conf*100).toFixed(1)+'%',PW-M,y+18,16,'right',_NC.muted);
-  t('Report ID: '+predictionId.slice(0,8).toUpperCase(),M+10,y+25,6.5,'normal','left',_NC.muted);
-  y+=32;
+  y = _sectionHeader('Diagnosis', y, M, CW, rct, t);
+  rct(M, y, 3, 26, stage.color);
+  rct(M+3, y, CW-3, 26, _NC.surface);
+  t('PREDICTED STAGE', M+10, y+7, 7, 'bold', 'left', _NC.muted);
+  serif(stage.label, M+10, y+18, 13, 'left', _NC.dark);
+  t('CONFIDENCE', PW-M-38, y+7, 7, 'bold', 'right', _NC.muted);
+  serif((conf*100).toFixed(1)+'%', PW-M, y+18, 16, 'right', _NC.muted);
+  t('Report ID: '+predictionId.slice(0,8).toUpperCase(), M+10, y+25, 6.5, 'normal', 'left', _NC.muted);
+  y += 32;
 
   // Probabilities
-  y=_sectionHeader('Classification Probabilities',y,M,CW,rct,t);
-  y=_confBars(prediction.allConfidences||{},prediction.stage,y,M,CW,fill,t,doc);
-  y+=3;
+  y = _sectionHeader('Classification Probabilities', y, M, CW, rct, t);
+  y = _confBars(prediction.allConfidences || {}, prediction.stage, y, M, CW, fill, t, doc);
+  y += 3;
 
-  // Grad-CAM
-  if(gradcamBase64){
-    y=_sectionHeader('Grad-CAM Activation Map',y,M,CW,rct,t);
-    try{
-      const src=gradcamBase64.startsWith('data:')?gradcamBase64:'data:image/jpeg;base64,'+gradcamBase64;
-      const iW=62,iH=62;
-      sk(_NC.border,0.3);doc.roundedRect(M,y,iW,iH,2,2);
-      doc.addImage(src,'JPEG',M,y,iW,iH);
-      const tx=M+iW+8,tw=CW-iW-8;
-      t('Gradient-weighted Class Activation Map',tx,y+8,8.5,'bold','left',_NC.dark);
-      const cap='Highlights the brain regions that most influenced the model\'s prediction. Warmer colours indicate higher activation intensity.';
-      doc.setFontSize(8);doc.setFont('helvetica','normal');tc(_NC.muted);
-      doc.text(doc.splitTextToSize(cap,tw),tx,y+16);
-      t('Stage: '+stage.label,tx,y+42,8,'normal','left',_NC.muted);
-      t('Confidence: '+(conf*100).toFixed(1)+'%',tx,y+51,8,'normal','left',_NC.muted);
-      y+=iH+8;
-    }catch(e){console.warn('Grad-CAM error:',e);y+=2;}
+  // MRI + Grad-CAM side by side
+  if (mriBase64 || gradcamFinal) {
+    y = _sectionHeader('Brain Imaging', y, M, CW, rct, t);
+    try {
+      const iW = 62, iH = 62;
+      let ix = M;
+
+      if (mriBase64) {
+        const src = mriBase64.startsWith('data:') ? mriBase64 : 'data:image/jpeg;base64,' + mriBase64;
+        sk(_NC.border, 0.3);
+        doc.roundedRect(ix, y, iW, iH, 2, 2);
+        doc.addImage(src, 'JPEG', ix, y, iW, iH);
+        t('Original MRI', ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
+        ix += iW + 8;
+      }
+
+      if (gradcamFinal) {
+        const src = gradcamFinal.startsWith('data:') ? gradcamFinal : 'data:image/jpeg;base64,' + gradcamFinal;
+        sk(_NC.border, 0.3);
+        doc.roundedRect(ix, y, iW, iH, 2, 2);
+        doc.addImage(src, 'JPEG', ix, y, iW, iH);
+        t('Grad-CAM', ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
+
+        // Leyenda a la derecha si hay espacio
+        const tx = ix + iW + 8, tw = M + CW - tx;
+        if (tw > 30) {
+          t('Activation map', tx, y + 8, 8.5, 'bold', 'left', _NC.dark);
+          const cap = 'Warmer colours indicate regions with stronger influence on the predicted stage.';
+          doc.setFontSize(8); doc.setFont('helvetica','normal'); tc(_NC.muted);
+          doc.text(doc.splitTextToSize(cap, tw), tx, y + 16);
+          t('Stage: ' + stage.label,           tx, y + 42, 8, 'normal', 'left', _NC.muted);
+          t('Confidence: '+(conf*100).toFixed(1)+'%', tx, y + 50, 8, 'normal', 'left', _NC.muted);
+        }
+        ix += iW + 8;
+      }
+
+      y += iH + 12;
+    } catch(e) { console.warn('Image render error:', e); y += 2; }
   }
 
   // Cognitive summary
