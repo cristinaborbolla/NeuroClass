@@ -19,9 +19,9 @@
   --bg:        #F6FAF5;
   --surface:   #E8F2E3;
   --surface2:  #ffffff;
-  --cream-lt:  #FAF8F2;
+  --cream-lt:  #FAF7ED;
   --cream:     #f8f3e4;
-  --cream-dk:  #ece7d8;
+  --cream-dk:  #f7f0da;
   --border:    #B7D6B0;
   --matcha:    #94B49F;
   --matcha-dk: #6e9178;
@@ -2670,21 +2670,20 @@ function showGradcamPanel() {
       </p>
       <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem;">
         <div style="display:flex;align-items:center;gap:.75rem;">
-          <div style="width:32px;height:14px;border-radius:4px;
+          <div style="width:40px;height:16px;border-radius:4px;
                background:linear-gradient(to right,#0000ff,#00ffff,#00ff00,#ffff00,#ff0000);
                flex-shrink:0;"></div>
-          <span style="font-size:.8rem;color:var(--muted);">Cold → Warm: low → high activation</span>
+          <span style="font-size:.8rem;color:var(--muted);font-weight:700;">Cold(low activation) → Warm (high activation)</span>
         </div>
         <div style="display:flex;align-items:center;gap:.75rem;">
-          <span style="font-size:1rem;">🔴</span>
-          <span style="font-size:.8rem;color:var(--muted);"><strong>Red / orange</strong> — regions with strong influence on the predicted class</span>
+          <span style="font-size:1rem;">🔴 🟠</span>
+          <span style="font-size:.8rem;color:var(--muted);"><strong>Red / orange</strong>:regions with strong influence on the predicted class</span>
         </div>
         <div style="display:flex;align-items:center;gap:.75rem;">
-          <span style="font-size:1rem;">🔵</span>
-          <span style="font-size:.8rem;color:var(--muted);"><strong>Blue / green</strong> — regions with little or no influence</span>
+          <span style="font-size:1rem;">🔵 🟢</span>
+          <span style="font-size:.8rem;color:var(--muted);"><strong>Blue / green</strong>:regions with little or no influence</span>
         </div>
         <div style="display:flex;align-items:center;gap:.75rem;">
-          <span style="font-size:1rem;">🧠</span>
           <span style="font-size:.8rem;color:var(--muted);">Key areas for Alzheimer's staging: <strong>hippocampus, temporal lobe, ventricles</strong></span>
         </div>
       </div>
