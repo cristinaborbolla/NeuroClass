@@ -2772,71 +2772,7 @@ async function fetchGradCAM(file) {
   }
 }
 
-async function saveGradcamImage(gradcamDataUrl) {
-  if (!currentUser) return;
-  const isDoctor  = currentUser.role === 'doctor';
-  const patientId = isDoctor ? (doctorPatient ? doctorPatient.id : null) : currentUser.id;
-  if (!patientId) return;
-
-  // Comprobar consentimiento del paciente
-  const { data: userData } = await db.from('users')
-    .select('image_consent')
-    .eq('id', patientId)
-    .single();
-  if (!userData || userData.image_consent !== true) return;
-
-  // Obtener la predicción más reciente para asociar las imágenes
-  const { data: lastPred } = await db.from('predictions')
-    .select('id')
-    .eq('patient_id', patientId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
-  if (!lastPred) return;
-
-  const timestamp = Date.now();
-  const updates   = {};
-
-  // Subir Grad-CAM
-  const gradcamBlob = await (await fetch(gradcamDataUrl)).blob();
-  const { error: gcError } = await db.storage
-    .from('gradcam-images')
-    .upload(patientId + '/gradcam_' + timestamp + '.jpg', gradcamBlob, { contentType: 'image/jpeg', upsert: false });
-
-  if (!gcError) {
-    const { data: gcSigned } = await db.storage
-      .from('gradcam-images')
-      .createSignedUrl(patientId + '/gradcam_' + timestamp + '.jpg', 31536000);
-    if (gcSigned) updates.gradcam_url = gcSigned.signedUrl;
-  } else {
-    console.warn('Gradcam upload error:', gcError);
-  }
-
-  // Subir MRI original
-  if (selectedFile) {
-    const mriBlob = new Blob([await selectedFile.arrayBuffer()], { type: selectedFile.type });
-    const { error: mriError } = await db.storage
-      .from('gradcam-images')
-      .upload(patientId + '/mri_' + timestamp + '.jpg', mriBlob, { contentType: 'image/jpeg', upsert: false });
-
-    if (!mriError) {
-      const { data: mriSigned } = await db.storage
-        .from('gradcam-images')
-        .createSignedUrl(patientId + '/mri_' + timestamp + '.jpg', 31536000);
-      if (mriSigned) updates.mri_url = mriSigned.signedUrl;
-    } else {
-      console.warn('MRI upload error:', mriError);
-    }
-  }
-
-  // Guardar ambas URLs en la predicción
-  if (Object.keys(updates).length > 0) {
-    await db.from('predictions')
-      .update(updates)
-      .eq('id', lastPred.id);
-  }
-}
-  
+async function saveGradcamImage
 // ══════════════════════════════════════════════════════════════
 // CHARTS (dashboard)
 // ══════════════════════════════════════════════════════════════
@@ -2890,6 +2826,7 @@ function renderPredChart(preds) {
     }
   });
 }
+  
 function renderGamesChart(sessions) {
   destroyChart('chartGames');
   const canvas = document.getElementById('chartGames');
