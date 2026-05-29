@@ -2483,13 +2483,16 @@ async function generateReportFromDashboard(predictionId) {
   const p = selectedDashboardPatient;
   if (!p) { showToast('No patient selected'); return; }
   showToast('⏳ Generating report…');
+
   const [{ data: doctorData }, { data: pred }, { data: sessions }, { data: notes }] = await Promise.all([
     db.from('users').select('notes').eq('id', currentUser.id).single(),
     db.from('predictions').select('*').eq('id', predictionId).single(),
     db.from('game_sessions').select('*').eq('patient_id', p.id).order('created_at', { ascending: true }),
     db.from('doctor_notes').select('*').eq('patient_id', p.id).order('created_at', { ascending: false }),
   ]);
+
   if (!pred) { showToast('Could not load prediction data'); return; }
+
   try {
     await generateAndUploadReport({
       patient: {
@@ -2502,11 +2505,23 @@ async function generateReportFromDashboard(predictionId) {
         lastAppt:      p.last_appointment || null,
         totalSessions: 1,
       },
-      doctor:  { id: currentUser.id, name: currentUser.name, dni: currentUser.username, colegiado: doctorData?.notes?.replace('Nº colegiado: ', '') || '—' },
+      doctor: {
+        id:        currentUser.id,
+        name:      currentUser.name,
+        dni:       currentUser.username,
+        colegiado: doctorData?.notes?.replace('Nº colegiado: ', '') || '—',
+      },
       prediction: {
         stage:          pred.predicted_class,
         confidence:     pred.confidence,
-        allConfidences: { NonDemented: pred.prob_non_demented, VeryMildDemented: pred.prob_very_mild, MildDemented: pred.prob_mild, ModerateDemented: pred.prob_moderate },
+        allConfidences: {
+          NonDemented:      pred.prob_non_demented,
+          VeryMildDemented: pred.prob_very_mild,
+          MildDemented:     pred.prob_mild,
+          ModerateDemented: pred.prob_moderate,
+        },
+        mri_url:     pred.mri_url     || null,
+        gradcam_url: pred.gradcam_url || null,
       },
       gradcamBase64: null,
       gameSessions:  sessions || [],
@@ -2515,7 +2530,10 @@ async function generateReportFromDashboard(predictionId) {
       supabase:      db,
     });
     showToast('📄 Report downloaded');
-  } catch(e) { console.warn('Report error:', e); showToast('Error generating report'); }
+  } catch(e) {
+    console.warn('Report error:', e);
+    showToast('Error generating report');
+  }
 }
   
 function downloadCSV(content, filename) {
