@@ -1956,21 +1956,47 @@ async function savePrediction(data) {
 
 async function checkImageConsent() {
   if (!currentUser || currentUser.role !== 'patient') return;
+  
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) return;
+
   const { data } = await db.from('users')
     .select('image_consent')
-    .eq('id', currentUser.id)
+    .eq('id', session.user.id)  // ← mismo cambio
     .single();
+
   if (data && data.image_consent === null) {
     document.getElementById('consentOverlay').style.display = 'flex';
   }
 }
-
+  
 async function saveConsent(accepted) {
   document.getElementById('consentOverlay').style.display = 'none';
-  await db.from('users').update({
-    image_consent:      accepted,
-    image_consent_date: new Date().toISOString()
-  }).eq('id', currentUser.id);
+
+  // Obtener sesión activa para confirmar que hay auth
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) {
+    showToast('⚠ No active session');
+    return;
+  }
+
+  const { data, error } = await db
+    .from('users')
+    .update({
+      image_consent:      accepted,
+      image_consent_date: new Date().toISOString()
+    })
+    .eq('id', session.user.id)  // ← usar session.user.id, no currentUser.id
+    .select('image_consent')    // ← pedir el dato actualizado de vuelta
+    .single();
+  
+  if (error) {
+    console.error('Consent save error:', error);
+    showToast('⚠ Could not save preference: ' + error.message);
+    return;
+  }
+
+  console.log('Consent saved:', data);
   showToast(accepted ? '✓ Consent saved' : '✓ Preference saved');
 }
 // ══════════════════════════════════════════════════════════════
