@@ -21,10 +21,10 @@ const _NC = {
   muted:     [122, 144, 128],   // #7A9080
   light:     [246, 250, 245],   // #F6FAF5
   white:     [255, 255, 255],
-  stageNone: [155, 230, 129],
+  stageNone: [107, 181, 107],
   stageVMild:[232, 195, 107],
-  stageMild: [232, 157, 107],   // rose
-  stageMod:  [232, 129, 107],   // rose-dk
+  stageMild: [212, 141, 83],  
+  stageMod:  [207, 97, 97],  
 };
 
 const _STAGE = {
@@ -93,7 +93,7 @@ function _makePDF(){
 // ─── Page header ─────────────────────────────────────────────
 function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   rct(0,0,PW,3,_NC.matcha);
-  rct(0,3,PW,33,_NC.surface);
+  rct(0,3,PW,33,_NC.light);
   hline(36,_NC.border,0.3);
   rct(M,8,14,14,_NC.matcha,2);
   t('NC',M+2,18,20,'bold','left',_NC.surface2);
@@ -109,8 +109,7 @@ function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
 // ─── Section header ───────────────────────────────────────────
 function _sectionHeader(label,y,M,CW,rct,t){
   rct(M,y,CW,9,_NC.surface);
-  rct(M,y,3,9,_NC.matcha);
-  t(label.toUpperCase(),M+7,y+6.5,9,'bold','left',_NC.muted);
+  t(label.toUpperCase(),M+7,y+6.5,9,'bold','center',_NC.muted);
   return y+13;
 }
 
@@ -148,14 +147,14 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
     return y+15;
   }
   const c1=74,c2=58,c3=CW-c1-c2;
-  rct(M,y,CW,10,_NC.border);
+  rct(M,y,CW,10,_NC.matcha);
   t('Cognitive Domain',M+5,y+7,10,'bold','left',_NC.surface2);
   t('Exercise',M+c1+5,y+7,10,'bold','left',_NC.surface2);
   t('Trend',M+c1+c2+5,y+7,10,'bold','left',_NC.surface2);
   y+=10;
   _DOMAINS.forEach((d,i)=>{
     const info=domains[d.key];
-    rct(M,y,CW,11,i%2===0?_NC.surface2:_NC.surface); 
+    rct(M,y,CW,11,i%2===0?_NC.surface2:_NC.light); 
     t(d.label,M+5,y+8,9,'bold','left',_NC.dark);
     t(d.game,M+c1+5,y+8,9,'normal','left',_NC.muted);
     if(!info){
@@ -363,21 +362,21 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const tLabel=li>fi?'Worsening':li<fi?'Improving':'Stable';
     const tCol  =li>fi?_NC.stageMod:li<fi?_NC.stageNone:_NC.stageVMild;
 
-    rct(M,y,CW,34,_NC.surface);
+    rct(M,y,CW,34,_NC.light);
     // First pill
-    rct(M+6,y+5,62,12,first.color,3);
+    rct(M+6,y+5,62,9,first.color,3);
     t(first.label,M+6+31,y+12,8,'bold','center',_NC.surface2);
     t(_fmt(sorted[0].created_at),M+6+31,y+21,7,'normal','center',_NC.muted);
     // Arrow
-    t('->',PW/2,y+13,11,'bold','center',_NC.border);
+    t('->',PW/2,y+13,11,'bold','center',_NC.dark);
     // Last pill
-    rct(PW-M-68,y+5,62,12,last.color,3);
+    rct(PW-M-68,y+5,62,9,last.color,3);
     t(last.label,PW-M-68+31,y+12,8,'bold','center',_NC.surface2);
     t(_fmt(sorted[sorted.length-1].created_at),PW-M-68+31,y+21,7,'normal','center',_NC.muted);
     // Trend badge below, centered
     const tw=60;
     rct(M+CW/2-tw/2,y+26,tw,9,tCol,3);
-    t(tLabel,M+CW/2,y+32,8.5,'bold','center',_NC.surface2);
+    t(tLabel,M+CW/2,y+32,8,'bold','center',_NC.surface2);
     y+=42;
   }
 
