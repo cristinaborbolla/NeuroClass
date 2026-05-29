@@ -1405,6 +1405,7 @@ let currentUser = JSON.parse(localStorage.getItem('ns_user') || 'null');
 
 let isRecoveryFlow = false;
 db.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth event:', event, session);
 
   if (event === 'PASSWORD_RECOVERY') {
     isRecoveryFlow = true;
