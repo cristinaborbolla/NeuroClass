@@ -1900,7 +1900,8 @@ analyseBtn.addEventListener("click", async () => {
 function displayResults(data) {
   const cls  = data.predicted_class;
   const meta = CLASSES[cls];
-  const conf = (data.probabilities[cls] * 100).toFixed(1);
+  const confRaw = data.probabilities[cls] * 100;
+  const conf = Math.min(confRaw, 99.9).toFixed(1);
   document.getElementById("diagnosisDot").style.background   = meta.color;
   document.getElementById("diagnosisClass").textContent      = meta.label;
   document.getElementById("diagnosisClass").style.color      = meta.color;
@@ -1910,7 +1911,7 @@ function displayResults(data) {
   const probList = document.getElementById("probList");
   probList.innerHTML = "";
   CLASS_ORDER.forEach(c => {
-    const pct = (data.probabilities[c] * 100).toFixed(1);
+    const pct = Math.min(data.probabilities[c] * 100, 99.9).toFixed(1);
     const m   = CLASSES[c];
     const item = document.createElement("div");
     item.innerHTML = `
@@ -1924,6 +1925,9 @@ function displayResults(data) {
   document.getElementById("descBox").textContent = meta.desc;
   resultEmpty.style.display = "none";
   resultContent.classList.add("visible");
+  resultContent.dataset.hasResult = 'true';
+  const gradPanel = document.getElementById('gradcamPanel');
+  if (gradPanel) gradPanel.style.display = 'none';
   // Save to Supabase
   savePrediction(data);
 }
@@ -2629,10 +2633,76 @@ function showView(view) {
   currentView = view;
   document.getElementById('btnOriginal').classList.toggle('active', view === 'original');
   document.getElementById('btnGradcam').classList.toggle('active',  view === 'gradcam');
+
   if (view === 'gradcam' && gradcamSrc) {
     document.getElementById('previewImg').src = gradcamSrc;
+    showGradcamPanel();
   } else {
     document.getElementById('previewImg').src = originalSrc || '';
+    showPredictionPanel();
+  }
+}
+
+function showGradcamPanel() {
+  document.getElementById('resultEmpty').style.display   = 'none';
+  document.getElementById('resultContent').classList.remove('visible');
+
+  let gradPanel = document.getElementById('gradcamPanel');
+  if (!gradPanel) {
+    gradPanel = document.createElement('div');
+    gradPanel.id = 'gradcamPanel';
+    document.querySelector('#tab-classifier .card:last-child').appendChild(gradPanel);
+  }
+  gradPanel.style.display = 'block';
+  gradPanel.innerHTML = `
+    <div style="padding:1.4rem 1.5rem;">
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem;">
+        <div style="width:28px;height:28px;border-radius:8px;background:var(--surface);
+             display:flex;align-items:center;justify-content:center;font-size:.9rem;">🔥</div>
+        <span style="font-size:.78rem;font-weight:600;text-transform:uppercase;
+             letter-spacing:.08em;color:var(--muted);">Grad-CAM Interpretation</span>
+      </div>
+      <p style="font-size:.85rem;color:var(--text);line-height:1.7;margin-bottom:1.1rem;">
+        Grad-CAM (<em>Gradient-weighted Class Activation Mapping</em>) highlights the brain
+        regions that most influenced the model's prediction. Warmer colours indicate higher
+        activation.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <div style="width:32px;height:14px;border-radius:4px;
+               background:linear-gradient(to right,#0000ff,#00ffff,#00ff00,#ffff00,#ff0000);
+               flex-shrink:0;"></div>
+          <span style="font-size:.8rem;color:var(--muted);">Cold → Warm: low → high activation</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span style="font-size:1rem;">🔴</span>
+          <span style="font-size:.8rem;color:var(--muted);"><strong>Red / orange</strong> — regions with strong influence on the predicted class</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span style="font-size:1rem;">🔵</span>
+          <span style="font-size:.8rem;color:var(--muted);"><strong>Blue / green</strong> — regions with little or no influence</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span style="font-size:1rem;">🧠</span>
+          <span style="font-size:.8rem;color:var(--muted);">Key areas for Alzheimer's staging: <strong>hippocampus, temporal lobe, ventricles</strong></span>
+        </div>
+      </div>
+      <div style="background:var(--cream);border-radius:10px;padding:.9rem 1rem;
+           font-size:.78rem;color:var(--muted);line-height:1.65;border-left:3px solid var(--rose-dk);">
+        ⚠ Grad-CAM is an interpretability tool for research purposes. Activation patterns
+        should always be reviewed by a qualified radiologist or neurologist in conjunction
+        with the full clinical assessment.
+      </div>
+    </div>`;
+}
+
+function showPredictionPanel() {
+  const gradPanel = document.getElementById('gradcamPanel');
+  if (gradPanel) gradPanel.style.display = 'none';
+  // Solo vuelve a mostrar la predicción si ya había resultado
+  if (document.getElementById('resultContent').dataset.hasResult === 'true') {
+    document.getElementById('resultContent').classList.add('visible');
+    document.getElementById('resultEmpty').style.display = 'none';
   }
 }
 async function fetchGradCAM(file) {
