@@ -1216,7 +1216,11 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 // ── Supabase ────────────────────────────────────────────────
 const SUPA_URL = "https://uldzsksgzjriqdtozeyw.supabase.co";
 const SUPA_KEY = "sb_publishable_i4_b83eXKpgRwMqu0WNLuw_CB8TVzdS";
-const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+const db = supabase.createClient(SUPA_URL, SUPA_KEY, {
+  auth: {
+    storageKey: 'neuroclass-auth'
+  }
+});
 // ── API ─────────────────────────────────────────────────────
 const API_URL = "https://neuroclass-alzheimer-mri-classifier.hf.space/predict";
 // ── Classes ─────────────────────────────────────────────────
