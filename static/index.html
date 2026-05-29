@@ -1650,7 +1650,10 @@ async function verifyForgotIdentity() {
 
   if (!username) { showMsg(msg, 'error', 'Please enter your Patient ID.'); return; }
 
-  const { data: profile } = await db
+  // Crear cliente fresco para evitar estado corrupto
+  const freshDb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  const { data: profile } = await freshDb
     .from('users').select('email').ilike('username', username).maybeSingle();
 
   if (!profile?.email) {
@@ -1658,7 +1661,7 @@ async function verifyForgotIdentity() {
     return;
   }
 
-  const { error } = await db.auth.resetPasswordForEmail(profile.email, {
+  const { error } = await freshDb.auth.resetPasswordForEmail(profile.email, {
     redirectTo: 'https://neuroclass-alzheimer-mri-classifier.hf.space/'
   });
 
