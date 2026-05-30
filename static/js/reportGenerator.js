@@ -35,6 +35,24 @@ const _STAGE = {
 };
 const _ORDER = ['NonDemented','VeryMildDemented','MildDemented','ModerateDemented'];
 
+async function _loadImageAsBase64(url) {
+  if (!url) return null;
+  try {
+    // Intentar fetch directo
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch failed ' + res.status);
+    const blob = await res.blob();
+    return await new Promise(resolve => {
+      const rd = new FileReader();
+      rd.onload = () => resolve(rd.result);
+      rd.onerror = () => resolve(null);
+      rd.readAsDataURL(blob);
+    });
+  } catch(e) {
+    console.warn('Image load failed:', url, e.message);
+    return null;
+  }
+}
 const _DOMAINS = [
   { key:'memory',       label:'Visual Memory',        game:'Memory'        },
   { key:'orientation',  label:'Temporal Orientation', game:'Orientation'   },
@@ -448,38 +466,47 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,8.5,'bold','right',_NC.matcha);
     y+=14;
 
-    const allConf={
-      NonDemented:r.prob_non_demented,
-      VeryMildDemented:r.prob_very_mild,
-      MildDemented:r.prob_mild,
-      ModerateDemented:r.prob_moderate,
+    const allConf = {
+      NonDemented:      parseFloat(r.prob_non_demented) || 0,
+      VeryMildDemented: parseFloat(r.prob_very_mild)    || 0,
+      MildDemented:     parseFloat(r.prob_mild)          || 0,
+      ModerateDemented: parseFloat(r.prob_moderate)      || 0,
     };
     y=_confBars(allConf,r.predicted_class,y,M,CW,fill,t,doc);
 
-    if(hasImg){
-      y+=3;
-      const iW=58,iH=58;
-      let ix=M;
-      for(const [urlKey,lbl] of [['mri_url','MRI'],['gradcam_url','Grad-CAM']]){
-        if(!r[urlKey]) continue;
-        try{
-          const res=await fetch(r[urlKey]);
-          const blob=await res.blob();
-          const b64=await new Promise(res2=>{const rd=new FileReader();rd.onload=()=>res2(rd.result);rd.readAsDataURL(blob);});
-          sk(_NC.matchaLt,0.3);doc.roundedRect(ix,y,iW,iH,2,2);
-          doc.addImage(b64,'JPEG',ix,y,iW,iH);
-          t(lbl,ix+iW/2,y+iH+5,7.5,'normal','center',_NC.muted);
-          ix+=iW+8;
-        }catch(e){console.warn(lbl+' error:',e);}
+    if (hasImg) {
+      y += 3;
+      const iW = 58, iH = 58;
+      let ix = M;
+      const imgPairs = [
+        { url: r.mri_url,     label: 'Original MRI' },
+        { url: r.gradcam_url, label: 'Grad-CAM'     },
+      ];
+      for (const { url, label } of imgPairs) {
+        if (!url) continue;
+        const b64 = await _loadImageAsBase64(url);
+        if (!b64) {
+          // Dibujar placeholder si no carga
+          rct(ix, y, iW, iH, _NC.surface);
+          sk(_NC.border, 0.3);
+          doc.roundedRect(ix, y, iW, iH, 2, 2);
+          t('Image unavailable', ix + iW/2, y + iH/2, 7, 'italic', 'center', _NC.muted);
+          t(label, ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
+          ix += iW + 8;
+          continue;
+        }
+        try {
+          sk(_NC.matchaLt, 0.3);
+          doc.roundedRect(ix, y, iW, iH, 2, 2);
+          doc.addImage(b64, 'JPEG', ix, y, iW, iH);
+        } catch(e) {
+          console.warn('addImage error for ' + label + ':', e.message);
+        }
+        t(label, ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
+        ix += iW + 8;
       }
-      y+=iH+12;
+      y += iH + 12;
     }
-
-    if(i<sorted.length-1){
-      sk(_NC.matchaLt,0.2);doc.line(M,y,M+CW,y);
-      y+=6;
-    }
-  }
 
   // Cognitive summary
   if(gameSessions&&gameSessions.length>0){
