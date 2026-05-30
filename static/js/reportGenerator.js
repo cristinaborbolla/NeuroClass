@@ -405,7 +405,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const meta=_STAGE[r.predicted_class]||_STAGE.NonDemented;
     const conf=_clamp(r.confidence);
     const hasImg=!!(r.mri_url||r.gradcam_url||r.mri_path||r.gradcam_path);
-    const blockH=hasImg?88:56;
+    const blockH=hasImg?80:28;
     if(y+blockH>PH-22){doc.addPage();y=18;}
 
     rct(M,y,CW,12,i%2===0?_NC.surface2:_NC.surface);
@@ -414,14 +414,6 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     t(meta.label,M+65,y+7.5,8,'normal','left',meta.color);
     t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,8.5,'bold','right',_NC.matcha);
     y+=14;
-
-    const allConf={
-      NonDemented:      parseFloat(r.prob_non_demented)||0,
-      VeryMildDemented: parseFloat(r.prob_very_mild)   ||0,
-      MildDemented:     parseFloat(r.prob_mild)         ||0,
-      ModerateDemented: parseFloat(r.prob_moderate)     ||0,
-    };
-    y=_confBars(allConf,r.predicted_class,y,M,CW,fill,t,doc);
 
     if(hasImg){
       y+=3;
