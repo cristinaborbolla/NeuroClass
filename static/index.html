@@ -247,7 +247,7 @@ nav{display:flex;gap:.2rem;}
 .prob-pct{color:var(--muted);}
 .prob-bar-bg{height:6px;background:var(--bg);border-radius:99px;overflow:hidden;}
 .prob-bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.desc-box{margin:0 1.5rem 1.5rem;padding:1rem;background:var(--cream-lt);border-radius:10px;font-size:.82rem;color:var(--matcha-dk);line-height:1.65;border-left:3px solid var(--rose-dk);}
+.desc-box{margin:0 1.5rem 1.5rem;padding:1rem;background:var(--cream-lt);border-radius:10px;font-size:.82rem;color:var(--text);line-height:1.65;border-left:3px solid var(--rose-dk);}
 .error-box{background:#fef2f2;border:1px solid #fecaca;color:#a83232;border-radius:10px;padding:1rem;font-size:.85rem;margin:1rem 1.5rem;display:none;}
 .error-box.visible{display:block;}
 
@@ -863,11 +863,15 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           </div>
         </div>
         <div class="gradcam-status" id="uncertaintyStatus" style="padding-bottom:1.2rem;"></div>
-        <div id="whatDoesThisMean" style="display:none;padding:.5rem 1.5rem 1.2rem;font-size:.78rem;color:var(--muted);line-height:1.65;background:var(--cream-lt);border-top:1px solid var(--border);">
-          <strong>What does this mean?</strong> Uncertainty measures how confident the model is in its prediction. 
-          <strong>Low</strong> means the model is sure of the result. <strong>Medium</strong> or <strong>High</strong> 
-          means the image was harder to classify and the result should be interpreted with extra caution by your specialist.
+        <div id="whatDoesThisMean" style="display:none;padding:.8rem 1.5rem 1.2rem;font-size:.78rem;color:var(--muted);line-height:1.8;background:var(--cream-lt);border-top:1px solid var(--border);">
+        <div style="font-weight:600;color:var(--text);margin-bottom:.5rem;font-size:.8rem;">What does this mean?</div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.7rem;">
+          <div><span style="font-weight:700;color:#4a8c5c;">Low</span> — The model is confident in its prediction.</div>
+          <div><span style="font-weight:700;color:#b07d2a;">Medium</span> — The result is less certain. Interpret with caution.</div>
+          <div><span style="font-weight:700;color:#a83232;">High</span> — The image was difficult to classify. The result may not be reliable.</div>
         </div>
+        <div style="font-size:.75rem;font-style:italic;border-top:1px solid var(--border);padding-top:.6rem;">⚠ Always consult your specialist before drawing any clinical conclusions.</div>
+      </div>
               </div>
     </div>
   </div>
