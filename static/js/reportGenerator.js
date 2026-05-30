@@ -428,8 +428,6 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
       y+=3;
       const iW=58,iH=58;
       let ix=M;
-      console.log('prediction paths:', r.mri_path, r.gradcam_path);
-      console.log('prediction urls:', r.mri_url, r.gradcam_url);
       const mriUrl     = r.mri_path     ? (await _getSignedUrl(supabase, r.mri_path))     : (r.mri_url     || null);
       const gradcamUrl = r.gradcam_path ? (await _getSignedUrl(supabase, r.gradcam_path)) : (r.gradcam_url || null);
       
