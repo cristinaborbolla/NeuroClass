@@ -399,7 +399,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     rct(M+6,y+4,52,8,first.color,3);
     t(first.label,M+6+26,y+10,9,'bold','center',_NC.surface2);
     t(_fmt(sorted[0].created_at),M+6+26,y+19,9,'normal','center',_NC.muted);
-    t('→',PW/2,y+13,12,'bold','center',_NC.dark);
+    t('-->',PW/2,y+13,12,'bold','center',_NC.dark);
     rct(PW-M-58,y+4,52,8,last.color,3);
     t(last.label,PW-M-58+26,y+10,9,'bold','center',_NC.surface2);
     t(_fmt(sorted[sorted.length-1].created_at),PW-M-58+26,y+19,9,'normal','center',_NC.muted);
