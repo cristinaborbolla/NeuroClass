@@ -358,7 +358,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 .patients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem;}
 .patient-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem;transition:box-shadow .2s,transform .15s;cursor:pointer;}
 .patient-card:hover{box-shadow:0 4px 16px rgba(44,62,48,.1);transform:translateY(-2px);}
-.patient-card.selected{border-color:var(--matcha);box-shadow:0 0 0 2px var(--matcha-lt);}
+.patient-card.selected{border-color:var(--matcha);box-shadow:0 0 0 1px var(--matcha-lt);}
 .pc-top{display:flex;align-items:center;gap:.85rem;margin-bottom:1rem;}
 .pc-avatar{width:42px;height:42px;border-radius:50%;background:var(--rose-dk);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.9rem;flex-shrink:0;}
 .pc-name{font-weight:600;font-size:.95rem;line-height:1.25;}
@@ -2322,7 +2322,7 @@ async function loadPatients() {
         <div class="pc-field"><span class="pc-label">Neurologist</span><span class="pc-val">${p.neurologist || '—'}</span></div>
         <div class="pc-field"><span class="pc-label">Last appointment</span><span class="pc-val">${formatDate(p.last_appointment)}</span></div>
       </div>
-      <button class="pc-view-btn" onclick="selectPatient(${JSON.stringify(p).replace(/"/g,'&quot;')})">View full record →</button>`;
+      <button class="pc-view-btn" onclick="selectPatient(${JSON.stringify(p).replace(/"/g,'&quot;')})">View full record</button>`;
     grid.appendChild(card);
   });
 }
@@ -2346,7 +2346,7 @@ async function selectPatient(p) {
         <div class="export-group">
           <button class="btn-export" onclick="exportPredictionsCSV('${p.id}','${p.username}')">⬇ MRI Data</button>
           <button class="btn-export" onclick="exportGamesCSV('${p.id}','${p.username}')">⬇ Games Data</button>
-          <button class="btn-export" onclick="generateEvolutionReportForPatient('${p.id}')">Evolution Report</button>
+          <button class="btn-export" onclick="generateEvolutionReportForPatient('${p.id}')">⬇ Evolution Report</button>
         </div>
       </div>
     </div>
