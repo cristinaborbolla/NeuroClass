@@ -1932,15 +1932,14 @@ function displayResults(data) {
   requestAnimationFrame(() => {
     probList.querySelectorAll(".prob-bar-fill").forEach(b => b.style.width = b.dataset.target + "%");
   });
-  const descBox = document.getElementById("descBox");
-  descBox.textContent = meta.desc;
-  descBox.style.display = "block";
   resultEmpty.style.display = "none";
   resultContent.classList.add("visible");
   resultContent.dataset.hasResult = 'true';
+  const descBox = document.getElementById("descBox");
+  descBox.textContent = meta.desc;
+  descBox.style.display = "block";
   const gradPanel = document.getElementById('gradcamPanel');
   if (gradPanel) gradPanel.style.display = 'none';
-  // Save to Supabase
   savePrediction(data);
 }
 // ── Save prediction to Supabase ──────────────────────────────
