@@ -145,7 +145,7 @@ function _confBars(allConf,predicted,y,M,CW,fill,t,doc){
     if(val>0.005){fill(_STAGE[s].color);doc.roundedRect(bx,y,bw*val,5,2,2,'F');}
     doc.setFont('helvetica',sel?'bold':'normal');
     doc.setTextColor(...(sel?_NC.matchaDk:_NC.muted));
-    doc.text((val*100).toFixed(1)+'%',M+CW,y+4.5,{align:'right'});
+    doc.text(Math.min(val*100,99.9).toFixed(1)+'%',M+CW,y+4.5,{align:'right'});
     y+=9;
   });
   return y+3;
@@ -186,7 +186,7 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
 function _notesSection(notes,y,M,CW,rct,t,doc,PH){
   if(!notes||notes.length===0){
     rct(M,y,CW,10,_NC.light,2);
-    t('No clinical notes recorded for this patient.',M+6,y+9.5,9,'italic','left',_NC.muted);
+    t('No clinical notes recorded for this patient.',M+CW/2,y+7,9,'italic','center',_NC.muted);
     return y+18;
   }
   notes.forEach(n=>{
@@ -406,19 +406,19 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const meta=_STAGE[r.predicted_class]||_STAGE.NonDemented;
     const conf=_clamp(r.confidence);
     const hasImg=!!(r.mri_url||r.gradcam_url||r.mri_path||r.gradcam_path);
-    const blockH=hasImg?80:28;
+    const blockH=hasImg?90:28;
     if(y+blockH>PH-22){doc.addPage();y=18;}
 
     rct(M,y,CW,12,i%2===0?_NC.surface2:_NC.surface2);
     fill(meta.color);doc.circle(M+6,y+6,3.5,'F');
-    t(_fmt(r.created_at),M+13,y+7.5,8.5,'bold','left',_NC.dark);
+    t(_fmt(r.created_at),M+13,y+7.5,9,'bold','left',_NC.dark);
     t(meta.label,M+65,y+7.5,9,'normal','left',meta.color);
-    t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,9,'bold','right',_NC.matcha);
+    t(Math.min(conf*100,99.9).toFixed(1)+'% confidence',M+CW,y+7.5,8.5,'bold','right',_NC.matcha);
     y+=14;
 
     if(hasImg){
       y+=3;
-      const iW=58,iH=58;
+      const iW=48,iH=48;
       let ix=M;
       
       const imgPairs = [
