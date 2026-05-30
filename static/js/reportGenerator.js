@@ -128,7 +128,7 @@ function _sectionHeader(label,y,M,CW,rct,t){
 
 function _infoRow(label,value,y,M,t,isLast,doc){
   t(label,M+5,y+7,10,'normal','left',_NC.muted);
-  t(value||'—',M+62,y+7,8.5,'bold','left',_NC.dark);
+  t(value||'—',M+62,y+7,9,'bold','left',_NC.dark);
   if(!isLast){doc.setDrawColor(..._NC.border);doc.setLineWidth(0.15);doc.line(M,y+11,M+174,y+11);}
   return y+11;
 }
@@ -384,20 +384,21 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const fi=first.idx,li=last.idx;
     const tLabel=li>fi?'Worsening':li<fi?'Improving':'Stable';
     const tCol  =li>fi?_NC.stageMod:li<fi?_NC.stageNone:_NC.stageVMild;
-    rct(M,y,CW,34,_NC.light);
-    rct(M+6,y+5,62,9,first.color,3);
-    t(first.label,M+6+31,y+12,8,'bold','center',_NC.surface2);
-    t(_fmt(sorted[0].created_at),M+6+31,y+21,7,'normal','center',_NC.muted);
+    rct(M,y,CW,30,_NC.light);
+    rct(M+6,y+4,52,8,first.color,3);
+    t(first.label,M+6+26,y+10,9,'bold','center',_NC.surface2);
+    t(_fmt(sorted[0].created_at),M+6+26,y+19,9,'normal','center',_NC.muted);
     t('->',PW/2,y+13,11,'bold','center',_NC.dark);
-    rct(PW-M-68,y+5,62,9,last.color,3);
-    t(last.label,PW-M-68+31,y+12,8,'bold','center',_NC.surface2);
-    t(_fmt(sorted[sorted.length-1].created_at),PW-M-68+31,y+21,7,'normal','center',_NC.muted);
-    const tw2=60;
-    rct(M+CW/2-tw2/2,y+26,tw2,9,tCol,3);
-    t(tLabel,M+CW/2,y+32,8,'bold','center',_NC.surface2);
-    y+=42;
+    rct(PW-M-58,y+4,52,8,last.color,3);
+    t(last.label,PW-M-58+26,y+10,9,'bold','center',_NC.surface2);
+    t(_fmt(sorted[sorted.length-1].created_at),PW-M-58+26,y+19,9,'normal','center',_NC.muted);
+    const tw2=48;
+    rct(M+CW/2-tw2/2,y+24,tw2,8,tCol,3);
+    t(tLabel,M+CW/2,y+30,9,'bold','center',_NC.surface2);
+    y+=38;
   }
 
+  if(y+20>PH-22){doc.addPage();y=18;}
   y=_sectionHeader('Prediction History',y,M,CW,rct,t);
 
   for(let i=0;i<sorted.length;i++){
@@ -411,8 +412,8 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     rct(M,y,CW,12,i%2===0?_NC.surface2:_NC.surface2);
     fill(meta.color);doc.circle(M+6,y+6,3.5,'F');
     t(_fmt(r.created_at),M+13,y+7.5,8.5,'bold','left',_NC.dark);
-    t(meta.label,M+65,y+7.5,8,'normal','left',meta.color);
-    t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,8.5,'bold','right',_NC.matcha);
+    t(meta.label,M+65,y+7.5,9,'normal','left',meta.color);
+    t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,9,'bold','right',_NC.matcha);
     y+=14;
 
     if(hasImg){
@@ -449,7 +450,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
       sk(_NC.matchaLt,0.2);doc.line(M,y,M+CW,y);
       y+=6;
     }
-  } // ← cierre del for
+  }
 
   if(gameSessions&&gameSessions.length>0){
     if(y+90>PH-22){doc.addPage();y=18;}
