@@ -111,6 +111,7 @@ async function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   try {
     const logoB64 = await _loadImageAsBase64('static/icons/icon-192-verde.png');
     if (logoB64) {
+      rct(M, 8, 14, 14, _NC.matcha, 3);
       doc.addImage(logoB64, 'PNG', M, 8, 14, 14);
     } else {
       rct(M,8,14,14,_NC.matcha,2);
