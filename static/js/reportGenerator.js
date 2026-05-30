@@ -355,11 +355,10 @@ async function generateAndUploadReport({
 async function _getSignedUrl(supabase, path) {
   if (!path) return null;
   try {
-    const { data, error } = await supabase.storage
+    const { data } = supabase.storage
       .from('gradcam-images')
-      .createSignedUrl(path, 300); // 5 minutos
-    if (error) { console.warn('SignedUrl error:', error.message); return null; }
-    return data?.signedUrl || null;
+      .getPublicUrl(path);
+    return data?.publicUrl || null;
   } catch(e) { return null; }
 }
 
@@ -405,7 +404,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const r   =sorted[i];
     const meta=_STAGE[r.predicted_class]||_STAGE.NonDemented;
     const conf=_clamp(r.confidence);
-    const hasImg=!!(r.mri_url||r.gradcam_url);
+    const hasImg=!!(r.mri_url||r.gradcam_url||r.mri_path||r.gradcam_path);
     const blockH=hasImg?88:56;
     if(y+blockH>PH-22){doc.addPage();y=18;}
 
@@ -430,8 +429,8 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
       let ix=M;
       
       const imgPairs = [
-        { url: await _getSignedUrl(supabase, r.mri_path),     label: 'Original MRI' },
-        { url: await _getSignedUrl(supabase, r.gradcam_path), label: 'Grad-CAM'     },
+        { url: r.mri_path     ? (await _getSignedUrl(supabase, r.mri_path))     : (r.mri_url     || null), label: 'Original MRI' },
+        { url: r.gradcam_path ? (await _getSignedUrl(supabase, r.gradcam_path)) : (r.gradcam_url || null), label: 'Grad-CAM'     },
       ];
       for(const {url,label} of imgPairs){
         if(!url) continue;
