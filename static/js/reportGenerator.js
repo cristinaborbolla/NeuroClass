@@ -417,7 +417,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const meta=_STAGE[r.predicted_class]||_STAGE.NonDemented;
     const conf=_clamp(r.confidence);
     const hasImg=!!(r.mri_url||r.gradcam_url||r.mri_path||r.gradcam_path);
-    const blockH=hasImg?90:28;
+    const blockH=hasImg?72:28;
     if(y+blockH>PH-22){doc.addPage();y=18;}
 
     rct(M,y,CW,12,i%2===0?_NC.surface2:_NC.surface2);
@@ -429,7 +429,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
 
     if(hasImg){
       y+=3;
-      const iW=48,iH=48;
+      const iW=42,iH=42;
       let ix=M;
       
       const imgPairs = [
