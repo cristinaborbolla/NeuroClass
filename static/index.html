@@ -840,7 +840,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           </div>
         </div>
         <div class="prob-list" id="probList"></div>
-        <div class="desc-box" id="descBox"></div>
+        <div class="desc-box" id="descBox" style="display:none;"></div>
         <div class="uncertainty-box" id="uncertaintyBox" style="display:none;">
           <div style="display:flex;align-items:center;justify-content:space-between;
                       padding:.9rem 1.5rem .5rem;border-top:1px solid var(--border);">
@@ -1870,6 +1870,7 @@ function clearImage() {
   document.getElementById("changeBtn").classList.remove("visible");
   document.getElementById("viewToggle").classList.remove("visible");
   document.getElementById("gradcamStatus").textContent = "";
+  document.getElementById("descBox").style.display = "none";
   uploadZone.style.display = "";
   analyseBtn.disabled = true;
   resultContent.classList.remove("visible");
@@ -1931,7 +1932,9 @@ function displayResults(data) {
   requestAnimationFrame(() => {
     probList.querySelectorAll(".prob-bar-fill").forEach(b => b.style.width = b.dataset.target + "%");
   });
-  document.getElementById("descBox").textContent = meta.desc;
+  const descBox = document.getElementById("descBox");
+  descBox.textContent = meta.desc;
+  descBox.style.display = "block";
   resultEmpty.style.display = "none";
   resultContent.classList.add("visible");
   resultContent.dataset.hasResult = 'true';
