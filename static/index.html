@@ -1913,7 +1913,9 @@ analyseBtn.addEventListener("click", async () => {
 function displayResults(data) {
   const cls  = data.predicted_class;
   const meta = CLASSES[cls];
-  pendingDesc = meta.desc;
+  const descBox = document.getElementById("descBox");
+  descBox.textContent = meta.desc;
+  descBox.style.display = "block";
   const confRaw = data.probabilities[cls] * 100;
   const conf = Math.min(confRaw, 99.9).toFixed(1);
   document.getElementById("diagnosisDot").style.background   = meta.color;
@@ -3375,12 +3377,6 @@ function displayUncertainty(data) {
   });
 
   document.getElementById("uncertaintyBox").style.display = "block";
-  if (pendingDesc) {
-    const descBox = document.getElementById("descBox");
-    descBox.textContent = pendingDesc;
-    descBox.style.display = "block";
-    pendingDesc = null;
-  }
   document.getElementById("whatDoesThisMean").style.display = "block";
 }
 
