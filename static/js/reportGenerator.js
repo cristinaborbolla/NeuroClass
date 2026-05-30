@@ -104,12 +104,22 @@ function _makePDF(){
   return {doc,PW,PH,M,CW,fill,tc,sk,rct,hline,t,serif};
 }
 
-function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
+async function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   rct(0,0,PW,3,_NC.matcha);
   rct(0,3,PW,33,_NC.surface);
   hline(36,_NC.border,0.3);
-  rct(M,8,14,14,_NC.matcha,2);
-  t('NC',M+2,18,20,'bold','left',_NC.surface2);
+  try {
+    const logoB64 = await _loadImageAsBase64('/static/icons/icon-192-verde.png');
+    if (logoB64) {
+      doc.addImage(logoB64, 'PNG', M, 8, 14, 14);
+    } else {
+      rct(M,8,14,14,_NC.matcha,2);
+      t('NC',M+2,18,20,'bold','left',_NC.surface2);
+    }
+  } catch(e) {
+    rct(M,8,14,14,_NC.matcha,2);
+    t('NC',M+2,18,20,'bold','left',_NC.surface2);
+  }
   serif('NeuroClass',M+18,15,16,'left',_NC.matchaDk);
   t(subtitle,M+18,22,10,'normal','left',_NC.muted);
   t('Patient',PW-M,10,10,'bold','right',_NC.muted);
@@ -279,7 +289,7 @@ async function generateAndUploadReport({
     if (url) gradcamFinal = await _loadImageAsBase64(url);
   }
 
-  let y=_pageHeader(patient,doc,PW,M,CW,rct,hline,t,serif,'Clinical Prediction Report  ·  '+_fmt());
+  let y=await _pageHeader(patient,doc,PW,M,CW,rct,hline,t,serif,'Clinical Prediction Report  ·  '+_fmt());
   y=_patientSection(patient,y,M,t,doc,rct,CW);
   y=_doctorSection(doctor,y,M,t,doc,rct,CW);
 
@@ -369,7 +379,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
   const {doc,PW,PH,M,CW,fill,tc,sk,rct,hline,t,serif}=_makePDF();
   const sorted=[...predictions].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 
-  let y=_pageHeader(
+  let y=await _pageHeader(
     patient,doc,PW,M,CW,rct,hline,t,serif,
     'Evolution Report  ·  '+sorted.length+' prediction'+(sorted.length!==1?'s':'')+
     '  ·  '+_fmt(sorted[0]?.created_at)+' – '+_fmt(sorted[sorted.length-1]?.created_at)
