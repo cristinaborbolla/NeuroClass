@@ -35,3 +35,4 @@ saved_model/**/* filter=lfs diff=lfs merge=lfs -text
 *tfevents* filter=lfs diff=lfs merge=lfs -text
 final_model.keras filter=lfs diff=lfs merge=lfs -text
 static/icons/icon-192_verde.png filter=lfs diff=lfs merge=lfs -text
+static/icons/icon-192-verde.png filter=lfs diff=lfs merge=lfs -text
