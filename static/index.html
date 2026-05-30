@@ -2806,15 +2806,12 @@ async function saveGradcamImage(gradcamDataUrl) {
     const gcBlob = await (await fetch(gradcamDataUrl)).blob();
     const gcPath = patientId + '/gradcam_' + ts + '.jpg';
     const { error: gcErr } = await db.storage
-      .from(BUCKET)
+      .from('gradcam-images')
       .upload(gcPath, gcBlob, { contentType: 'image/jpeg', upsert: false });
     if (gcErr) {
       console.warn('Gradcam upload error:', gcErr.message);
     } else {
-      const { data: gcUrl } = db.storage
-        .from(BUCKET)
-        .getPublicUrl(gcPath);
-      if (gcUrl?.publicUrl) updates.gradcam_url = gcUrl.publicUrl;
+      updates.gradcam_path = gcPath;
       console.log('✓ Grad-CAM uploaded');
     }
   } catch(e) { console.warn('Gradcam error:', e); }
@@ -2826,15 +2823,12 @@ async function saveGradcamImage(gradcamDataUrl) {
       const mriBlob = new Blob([await selectedFile.arrayBuffer()], { type: selectedFile.type });
       const mriPath = patientId + '/mri_' + ts + '.' + ext;
       const { error: mriErr } = await db.storage
-        .from(BUCKET)
+        .from('gradcam-images')
         .upload(mriPath, mriBlob, { contentType: selectedFile.type, upsert: false });
       if (mriErr) {
         console.warn('MRI upload error:', mriErr.message);
       } else {
-        const { data: mriUrl } = db.storage
-          .from(BUCKET)
-          .getPublicUrl(mriPath);
-        if (mriUrl?.publicUrl) updates.mri_url = mriUrl.publicUrl;
+        updates.mri_path = mriPath;
         console.log('✓ MRI original uploaded');
       }
     } catch(e) { console.warn('MRI error:', e); }
