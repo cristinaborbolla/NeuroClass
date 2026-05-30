@@ -185,7 +185,7 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
 
 function _notesSection(notes,y,M,CW,rct,t,doc,PH){
   if(!notes||notes.length===0){
-    rct(M,y,CW,10,_NC.surface,2);
+    rct(M,y,CW,10,_NC.light,2);
     t('No clinical notes recorded for this patient.',M+6,y+9.5,9,'italic','left',_NC.muted);
     return y+18;
   }
@@ -195,8 +195,8 @@ function _notesSection(notes,y,M,CW,rct,t,doc,PH){
     if(y+bh>PH-22){doc.addPage();y=18;}
     rct(M,y,3,bh,_NC.matcha);
     rct(M+3,y,CW-3,bh,_NC.cream,0,2);
-    t(_fmtDT(n.created_at),M+8,y+7,7,'normal','left',_NC.muted);
-    doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(..._NC.dark);
+    t(_fmtDT(n.created_at),M+8,y+7,9,'normal','left',_NC.muted);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(..._NC.dark);
     doc.text(lines,M+8,y+13);
     y+=bh+5;
   });
@@ -393,8 +393,8 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     t(last.label,PW-M-58+26,y+10,9,'bold','center',_NC.surface2);
     t(_fmt(sorted[sorted.length-1].created_at),PW-M-58+26,y+19,9,'normal','center',_NC.muted);
     const tw2=48;
-    rct(M+CW/2-tw2/2,y+24,tw2,8,tCol,3);
-    t(tLabel,M+CW/2,y+30,9,'bold','center',_NC.surface2);
+    rct(M+CW/2-tw2/2,y+18,tw2,8,tCol,3);
+    t(tLabel,M+CW/2,y+24,9,'bold','center',_NC.surface2);
     y+=38;
   }
 
