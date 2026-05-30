@@ -122,9 +122,9 @@ async function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
     t('NC',M+2,18,20,'bold','left',_NC.surface2);
   }
   serif('NeuroClass',M+18,15,16,'left',_NC.matchaDk);
-  t(subtitle,M+18,22,10,'normal','left',_NC.muted);
-  t('Patient',PW-M,10,10,'bold','right',_NC.muted);
-  serif(p.name||'—',PW-M,18,15,'right',_NC.dark);
+  t(subtitle,M+18,22,8,'normal','left',_NC.muted);
+  t('Patient',PW-M,10,9,'bold','right',_NC.muted);
+  serif(p.name||'—',PW-M,18,14,'right',_NC.dark);
   t('DOB: '+(p.dob||'—')+'   ·   ID: '+(p.dni||'—'),PW-M,24,8,'normal','right',_NC.muted);
   t('Generated: '+_fmtDT(),PW-M,30,8,'normal','right',_NC.muted);
   return 42;
@@ -399,7 +399,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     rct(M+6,y+4,52,8,first.color,3);
     t(first.label,M+6+26,y+10,9,'bold','center',_NC.surface2);
     t(_fmt(sorted[0].created_at),M+6+26,y+19,9,'normal','center',_NC.muted);
-    t('-->',PW/2,y+13,11,'bold','center',_NC.dark);
+    t('→',PW/2,y+13,12,'bold','center',_NC.dark);
     rct(PW-M-58,y+4,52,8,last.color,3);
     t(last.label,PW-M-58+26,y+10,9,'bold','center',_NC.surface2);
     t(_fmt(sorted[sorted.length-1].created_at),PW-M-58+26,y+19,9,'normal','center',_NC.muted);
