@@ -408,7 +408,7 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const blockH=hasImg?80:28;
     if(y+blockH>PH-22){doc.addPage();y=18;}
 
-    rct(M,y,CW,12,i%2===0?_NC.surface2:_NC.surface);
+    rct(M,y,CW,12,i%2===0?_NC.surface2);
     fill(meta.color);doc.circle(M+6,y+6,3.5,'F');
     t(_fmt(r.created_at),M+13,y+7.5,8.5,'bold','left',_NC.dark);
     t(meta.label,M+65,y+7.5,8,'normal','left',meta.color);
