@@ -862,7 +862,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           </div>
         </div>
         <div class="gradcam-status" id="uncertaintyStatus" style="padding-bottom:1.2rem;"></div>
-        <div style="padding:.5rem 1.5rem 1.2rem;font-size:.78rem;color:var(--muted);line-height:1.65;background:var(--cream-lt);border-top:1px solid var(--border);">
+        <div id="whatDoesThisMean" style="display:none;padding:.5rem 1.5rem 1.2rem;font-size:.78rem;color:var(--muted);line-height:1.65;background:var(--cream-lt);border-top:1px solid var(--border);">
           <strong>What does this mean?</strong> Uncertainty measures how confident the model is in its prediction. 
           <strong>Low</strong> means the model is sure of the result. <strong>Medium</strong> or <strong>High</strong> 
           means the image was harder to classify and the result should be interpreted with extra caution by your specialist.
@@ -1872,6 +1872,7 @@ function clearImage() {
   document.getElementById("viewToggle").classList.remove("visible");
   document.getElementById("gradcamStatus").textContent = "";
   document.getElementById("descBox").style.display = "none";
+  document.getElementById("whatDoesThisMean").style.display = "none";
   uploadZone.style.display = "";
   analyseBtn.disabled = true;
   resultContent.classList.remove("visible");
@@ -1908,6 +1909,7 @@ analyseBtn.addEventListener("click", async () => {
     analyseBtn.classList.remove("loading"); analyseBtn.disabled = false;
   }
 });
+  
 function displayResults(data) {
   const cls  = data.predicted_class;
   const meta = CLASSES[cls];
@@ -3379,6 +3381,7 @@ function displayUncertainty(data) {
     descBox.style.display = "block";
     pendingDesc = null;
   }
+  document.getElementById("whatDoesThisMean").style.display = "block";
 }
 
 // ══════════════════════════════════════════════════════════════
