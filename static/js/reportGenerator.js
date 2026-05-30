@@ -486,7 +486,6 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
         if (!url) continue;
         const b64 = await _loadImageAsBase64(url);
         if (!b64) {
-          // Dibujar placeholder si no carga
           rct(ix, y, iW, iH, _NC.surface);
           sk(_NC.border, 0.3);
           doc.roundedRect(ix, y, iW, iH, 2, 2);
@@ -507,6 +506,12 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
       }
       y += iH + 12;
     }
+
+    if(i < sorted.length - 1){
+      sk(_NC.matchaLt,0.2);doc.line(M,y,M+CW,y);
+      y+=6;
+    }
+  } // ← cierre del for
 
   // Cognitive summary
   if(gameSessions&&gameSessions.length>0){
