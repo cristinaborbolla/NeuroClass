@@ -430,9 +430,12 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
       let ix=M;
       console.log('prediction paths:', r.mri_path, r.gradcam_path);
       console.log('prediction urls:', r.mri_url, r.gradcam_url);
+      const mriUrl     = r.mri_path     ? (await _getSignedUrl(supabase, r.mri_path))     : (r.mri_url     || null);
+      const gradcamUrl = r.gradcam_path ? (await _getSignedUrl(supabase, r.gradcam_path)) : (r.gradcam_url || null);
+      
       const imgPairs = [
-        { url: await _getSignedUrl(supabase, r.mri_path),     label: 'Original MRI' },
-        { url: await _getSignedUrl(supabase, r.gradcam_path), label: 'Grad-CAM'     },
+        { url: mriUrl,     label: 'Original MRI' },
+        { url: gradcamUrl, label: 'Grad-CAM'     },
       ];
       for(const {url,label} of imgPairs){
         if(!url) continue;
