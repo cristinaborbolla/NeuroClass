@@ -2811,10 +2811,10 @@ async function saveGradcamImage(gradcamDataUrl) {
     if (gcErr) {
       console.warn('Gradcam upload error:', gcErr.message);
     } else {
-      const { data: gcSigned } = await db.storage
+      const { data: gcUrl } = db.storage
         .from(BUCKET)
-        .createSignedUrl(gcPath, 60 * 60 * 24 * 365); // 1 año
-      if (gcSigned?.signedUrl) updates.gradcam_url = gcSigned.signedUrl;
+        .getPublicUrl(gcPath);
+      if (gcUrl?.publicUrl) updates.gradcam_url = gcUrl.publicUrl;
       console.log('✓ Grad-CAM uploaded');
     }
   } catch(e) { console.warn('Gradcam error:', e); }
@@ -2831,10 +2831,10 @@ async function saveGradcamImage(gradcamDataUrl) {
       if (mriErr) {
         console.warn('MRI upload error:', mriErr.message);
       } else {
-        const { data: mriSigned } = await db.storage
+        const { data: mriUrl } = db.storage
           .from(BUCKET)
-          .createSignedUrl(mriPath, 60 * 60 * 24 * 365); // 1 año
-        if (mriSigned?.signedUrl) updates.mri_url = mriSigned.signedUrl;
+          .getPublicUrl(mriPath);
+        if (mriUrl?.publicUrl) updates.mri_url = mriUrl.publicUrl;
         console.log('✓ MRI original uploaded');
       }
     } catch(e) { console.warn('MRI error:', e); }
