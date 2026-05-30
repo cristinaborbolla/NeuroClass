@@ -4,47 +4,45 @@
  * Requires jsPDF loaded via CDN before this script.
  */
 
-// ─── Palette (soft) ──────────────────────────────────────────
 const _NC = {
-  bg:        [246, 250, 245],   // #F6FAF5
-  surface:   [232, 242, 227],   // #E8F2E3
-  surface2:  [255, 255, 255],   // #FFFFFF
-  creamLt:   [250, 248, 242],   // #FAF8F2
-  cream:     [248, 243, 228],   // #F8F3E4
-  creamDk:   [243, 237, 218],   // #F3EDDA
-  border:    [183, 214, 176],   // #B7D6B0
-  matcha:    [148, 180, 159],   // #94B49F
-  matchaDk:  [110, 145, 120],   // #6E9178
-  matchaLt:  [183, 214, 176],   // #B7D6B0
-  matchaSlt: [211, 235, 206],   // #D3EBCE
-  dark:      [44,  62,  48],    // #2C3E30
-  muted:     [122, 144, 128],   // #7A9080
-  light:     [246, 250, 245],   // #F6FAF5
+  bg:        [246, 250, 245],
+  surface:   [232, 242, 227],
+  surface2:  [255, 255, 255],
+  creamLt:   [250, 248, 242],
+  cream:     [248, 243, 228],
+  creamDk:   [243, 237, 218],
+  border:    [183, 214, 176],
+  matcha:    [148, 180, 159],
+  matchaDk:  [110, 145, 120],
+  matchaLt:  [183, 214, 176],
+  matchaSlt: [211, 235, 206],
+  dark:      [44,  62,  48],
+  muted:     [122, 144, 128],
+  light:     [246, 250, 245],
   white:     [255, 255, 255],
   stageNone: [107, 181, 107],
   stageVMild:[232, 195, 107],
-  stageMild: [212, 141, 83],  
-  stageMod:  [207, 97, 97],  
+  stageMild: [212, 141, 83],
+  stageMod:  [207, 97, 97],
 };
 
 const _STAGE = {
-  NonDemented:      { label:'Non-Demented',       short:'ND',  color:_NC.stageNone,  idx:0 },
-  VeryMildDemented: { label:'Very Mild Demented',  short:'VMD', color:_NC.stageVMild, idx:1 },
-  MildDemented:     { label:'Mild Demented',        short:'MD',  color:_NC.stageMild,  idx:2 },
-  ModerateDemented: { label:'Moderate Demented',    short:'MOD', color:_NC.stageMod,   idx:3 },
+  NonDemented:      { label:'Non-Demented',      short:'ND',  color:_NC.stageNone,  idx:0 },
+  VeryMildDemented: { label:'Very Mild Demented', short:'VMD', color:_NC.stageVMild, idx:1 },
+  MildDemented:     { label:'Mild Demented',       short:'MD',  color:_NC.stageMild,  idx:2 },
+  ModerateDemented: { label:'Moderate Demented',   short:'MOD', color:_NC.stageMod,   idx:3 },
 };
 const _ORDER = ['NonDemented','VeryMildDemented','MildDemented','ModerateDemented'];
 
 async function _loadImageAsBase64(url) {
   if (!url) return null;
   try {
-    // Intentar fetch directo
     const res = await fetch(url, { mode: 'cors' });
     if (!res.ok) throw new Error('fetch failed ' + res.status);
     const blob = await res.blob();
     return await new Promise(resolve => {
       const rd = new FileReader();
-      rd.onload = () => resolve(rd.result);
+      rd.onload  = () => resolve(rd.result);
       rd.onerror = () => resolve(null);
       rd.readAsDataURL(blob);
     });
@@ -53,20 +51,20 @@ async function _loadImageAsBase64(url) {
     return null;
   }
 }
+
 const _DOMAINS = [
-  { key:'memory',       label:'Visual Memory',        game:'Memory'        },
-  { key:'orientation',  label:'Temporal Orientation', game:'Orientation'   },
-  { key:'sequence',     label:'Working Memory',       game:'Sequence'      },
-  { key:'whatsmissing', label:'Visual Attention',     game:"What's Missing"},
-  { key:'pattern',      label:'Visuospatial Memory',  game:'Pattern'       },
-  { key:'arithmetic',   label:'Numerical Reasoning',  game:'Arithmetic'    },
+  { key:'memory',       label:'Visual Memory',        game:'Memory'         },
+  { key:'orientation',  label:'Temporal Orientation', game:'Orientation'    },
+  { key:'sequence',     label:'Working Memory',       game:'Sequence'       },
+  { key:'whatsmissing', label:'Visual Attention',     game:"What's Missing" },
+  { key:'pattern',      label:'Visuospatial Memory',  game:'Pattern'        },
+  { key:'arithmetic',   label:'Numerical Reasoning',  game:'Arithmetic'     },
 ];
 
 function _fmt(d)   { return new Date(d||Date.now()).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
 function _fmtDT(d) { return new Date(d||Date.now()).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function _clamp(v) { return Math.min(1,Math.max(0,v||0)); }
 
-// ─── Domain trends ────────────────────────────────────────────
 function _computeDomains(sessions) {
   if (!sessions || sessions.length===0) return null;
   const result={};
@@ -87,13 +85,11 @@ function _computeDomains(sessions) {
   return result;
 }
 
-// ─── PDF factory ─────────────────────────────────────────────
 function _makePDF(){
   if(!window.jspdf) throw new Error('jsPDF not loaded.');
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const PW=210,PH=297,M=18,CW=174;
-
   const fill  =(c)=>doc.setFillColor(...c);
   const tc    =(c)=>doc.setTextColor(...c);
   const sk    =(c,lw=0.3)=>{doc.setDrawColor(...c);doc.setLineWidth(lw);};
@@ -108,7 +104,6 @@ function _makePDF(){
   return {doc,PW,PH,M,CW,fill,tc,sk,rct,hline,t,serif};
 }
 
-// ─── Page header ─────────────────────────────────────────────
 function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   rct(0,0,PW,3,_NC.matcha);
   rct(0,3,PW,33,_NC.surface);
@@ -124,15 +119,13 @@ function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   return 42;
 }
 
-// ─── Section header ───────────────────────────────────────────
-function _sectionHeader(label, y, M, CW, rct, t) {
-  y += 5;
-  rct(M, y, CW, 8, _NC.surface);
-  t(label.toUpperCase(), M + 5, y + 5.8, 9, 'bold', 'left', _NC.muted);
-  return y + 13;
+function _sectionHeader(label,y,M,CW,rct,t){
+  y+=5;
+  rct(M,y,CW,8,_NC.surface);
+  t(label.toUpperCase(),M+5,y+5.8,9,'bold','left',_NC.muted);
+  return y+13;
 }
 
-// ─── Info row ─────────────────────────────────────────────────
 function _infoRow(label,value,y,M,t,isLast,doc){
   t(label,M+5,y+7,10,'normal','left',_NC.muted);
   t(value||'—',M+62,y+7,8.5,'bold','left',_NC.dark);
@@ -140,7 +133,6 @@ function _infoRow(label,value,y,M,t,isLast,doc){
   return y+11;
 }
 
-// ─── Confidence bars ──────────────────────────────────────────
 function _confBars(allConf,predicted,y,M,CW,fill,t,doc){
   const lw=50,bx=M+lw,bw=CW-lw-20;
   _ORDER.forEach(s=>{
@@ -159,13 +151,12 @@ function _confBars(allConf,predicted,y,M,CW,fill,t,doc){
   return y+3;
 }
 
-// ─── Domain trends table ──────────────────────────────────────
 function _domainTable(domains,y,M,CW,rct,t,fill,doc){
   if(!domains){
     t('No cognitive exercise data available.',M,y+7,8,'italic','left',_NC.muted);
     return y+15;
   }
-  const c1=74,c2=58,c3=CW-c1-c2;
+  const c1=74,c2=58;
   rct(M,y,CW,10,_NC.matcha);
   t('Cognitive Domain',M+5,y+7,10,'bold','left',_NC.surface2);
   t('Exercise',M+c1+5,y+7,10,'bold','left',_NC.surface2);
@@ -173,7 +164,7 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
   y+=10;
   _DOMAINS.forEach((d,i)=>{
     const info=domains[d.key];
-    rct(M,y,CW,11,i%2===0?_NC.surface2:_NC.light); 
+    rct(M,y,CW,11,i%2===0?_NC.surface2:_NC.light);
     t(d.label,M+5,y+8,9,'bold','left',_NC.dark);
     t(d.game,M+c1+5,y+8,9,'normal','left',_NC.muted);
     if(!info){
@@ -181,7 +172,7 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
     } else {
       const tLabel=info.trend==='improving'?'Improving':info.trend==='declining'?'Declining':'Stable';
       const tCol  =info.trend==='improving'?_NC.stageNone:info.trend==='declining'?_NC.stageMod:_NC.stageVMild;
-      const pw = 30;
+      const pw=30;
       rct(M+c1+c2+5,y+2.5,pw,7,tCol,2);
       t(tLabel,M+c1+c2+5+pw/2,y+8,9,'bold','center',_NC.white);
       t('('+info.sessions+' sess.)',M+c1+c2+pw+8,y+8,7,'normal','left',_NC.muted);
@@ -192,7 +183,6 @@ function _domainTable(domains,y,M,CW,rct,t,fill,doc){
   return y+5;
 }
 
-// ─── Clinical notes ───────────────────────────────────────────
 function _notesSection(notes,y,M,CW,rct,t,doc,PH){
   if(!notes||notes.length===0){
     rct(M,y,CW,10,_NC.surface,2);
@@ -213,38 +203,25 @@ function _notesSection(notes,y,M,CW,rct,t,doc,PH){
   return y;
 }
 
-function _editableNotesField(y, M, CW, doc, sk, t, PH) {
-  if (y + 45 > PH - 22) { doc.addPage(); y = 18; }
-  doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+function _editableNotesField(y,M,CW,doc,sk,t,PH){
+  if(y+45>PH-22){doc.addPage();y=18;}
+  doc.setFontSize(7.5);doc.setFont('helvetica','bold');
   doc.setTextColor(..._NC.muted);
-  doc.text('ADDITIONAL NOTES', M + 7, y + 6.5);
-  // Visible border box
-  doc.setLineWidth(0.4); doc.setDrawColor(..._NC.border);
-  doc.roundedRect(M, y + 9, CW, 32, 2, 2);
-  // Light background
+  doc.text('ADDITIONAL NOTES',M+7,y+6.5);
+  doc.setLineWidth(0.4);doc.setDrawColor(..._NC.border);
+  doc.roundedRect(M,y+9,CW,32,2,2);
   doc.setFillColor(..._NC.surface);
-  doc.roundedRect(M, y + 9, CW, 32, 2, 2, 'F');
-  t('Click here to type when viewing in a PDF reader (Adobe, Preview, etc.)', M + 5, y + 20, 9, 'italic', 'left', _NC.muted);
-  // AcroForm editable field
+  doc.roundedRect(M,y+9,CW,32,2,2,'F');
+  t('Click here to type when viewing in a PDF reader (Adobe, Preview, etc.)',M+5,y+20,9,'italic','left',_NC.muted);
   try {
-    const tf = new doc.AcroFormTextField();
-    tf.fieldName = 'additionalNotes';
-    tf.x = M;
-    tf.y = y + 9;
-    tf.width = CW;
-    tf.height = 32;
-    tf.multiline = true;
-    tf.fontSize = 9;
-    tf.color = 'black';
-    tf.backgroundColor = '';
+    const tf=new doc.AcroFormTextField();
+    tf.fieldName='additionalNotes';tf.x=M;tf.y=y+9;
+    tf.width=CW;tf.height=32;tf.multiline=true;tf.fontSize=9;
     doc.addField(tf);
-  } catch(e) {
-    console.warn('AcroForm field error:', e);
-  }
-  return y + 46;
+  } catch(e){ console.warn('AcroForm field error:',e); }
+  return y+46;
 }
 
-// ─── Footer ───────────────────────────────────────────────────
 function _footer(doc,PW,PH,M,CW){
   const pages=doc.getNumberOfPages();
   for(let p=1;p<=pages;p++){
@@ -257,28 +234,28 @@ function _footer(doc,PW,PH,M,CW){
   }
 }
 
-// ─── Doctor info section ──────────────────────────────────────
 function _doctorSection(doctor,y,M,t,doc,rct,CW){
   y=_sectionHeader('Physician Information',y,M,CW,rct,t);
-  y=_infoRow('Full name',      doctor.name||'—',          y,M,t,false,doc);
-  y=_infoRow('DNI',            doctor.dni||'—',            y,M,t,false,doc);
-  y=_infoRow('N. Colegiado',   doctor.colegiado||'—',      y,M,t,false,doc);
-  y=_infoRow('Specialty',      'Neurology',                y,M,t,false,doc);
-  y=_infoRow('Institution',    'Universidad de Deusto',    y,M,t,true, doc);
+  y=_infoRow('Full name',    doctor.name||'—',       y,M,t,false,doc);
+  y=_infoRow('DNI',          doctor.dni||'—',         y,M,t,false,doc);
+  y=_infoRow('N. Colegiado', doctor.colegiado||'—',   y,M,t,false,doc);
+  y=_infoRow('Specialty',    'Neurology',              y,M,t,false,doc);
+  y=_infoRow('Institution',  'Universidad de Deusto',  y,M,t,true, doc);
   return y+6;
 }
 
-function _patientSection(patient, y, M, t, doc, rct, CW) {
-  y = _sectionHeader('Patient Information', y, M, CW, rct, t);
-  y = _infoRow('Full name',          patient.name         || '—', y, M, t, false, doc);
-  y = _infoRow('ID (DNI)',           patient.dni          || '—', y, M, t, false, doc);
-  y = _infoRow('Date of birth',      patient.dob          || '—', y, M, t, false, doc);
-  y = _infoRow('Phone',              patient.phone        || '—', y, M, t, false, doc);
-  y = _infoRow('Neurologist',        patient.neurologist  || '—', y, M, t, false, doc);
-  y = _infoRow('Last appointment',   patient.lastAppt ? _fmt(patient.lastAppt) : '—', y, M, t, false, doc);
-  y = _infoRow('Total assessments',  String(patient.totalSessions || 0) + ' MRI prediction' + (patient.totalSessions !== 1 ? 's' : ''), y, M, t, true, doc);
-  return y + 6;
+function _patientSection(patient,y,M,t,doc,rct,CW){
+  y=_sectionHeader('Patient Information',y,M,CW,rct,t);
+  y=_infoRow('Full name',        patient.name        ||'—', y,M,t,false,doc);
+  y=_infoRow('ID (DNI)',         patient.dni         ||'—', y,M,t,false,doc);
+  y=_infoRow('Date of birth',    patient.dob         ||'—', y,M,t,false,doc);
+  y=_infoRow('Phone',            patient.phone       ||'—', y,M,t,false,doc);
+  y=_infoRow('Neurologist',      patient.neurologist ||'—', y,M,t,false,doc);
+  y=_infoRow('Last appointment', patient.lastAppt ? _fmt(patient.lastAppt) : '—', y,M,t,false,doc);
+  y=_infoRow('Total assessments',String(patient.totalSessions||0)+' MRI prediction'+(patient.totalSessions!==1?'s':''), y,M,t,true,doc);
+  return y+6;
 }
+
 // ═══════════════════════════════════════════════════════════════
 // INDIVIDUAL PREDICTION REPORT
 // ═══════════════════════════════════════════════════════════════
@@ -286,111 +263,79 @@ async function generateAndUploadReport({
   patient, doctor, prediction, gradcamBase64,
   gameScores, gameSessions, notes, predictionId, supabase
 }) {
-  const {doc,PW,PH,M,CW,fill,tc,sk,rct,hline,t,serif} = _makePDF();
-  const stage = _STAGE[prediction.stage] || _STAGE.NonDemented;
-  const conf  = _clamp(prediction.confidence);
+  const {doc,PW,PH,M,CW,fill,tc,sk,rct,hline,t,serif}=_makePDF();
+  const stage=_STAGE[prediction.stage]||_STAGE.NonDemented;
+  const conf =_clamp(prediction.confidence);
 
-  // Cargar imágenes desde URLs si no vienen como base64
-  let mriBase64     = prediction.mriBase64     || null;
-  let gradcamFinal  = gradcamBase64             || prediction.gradcamBase64 || null;
+  let mriBase64    = prediction.mriBase64    || null;
+  let gradcamFinal = gradcamBase64            || prediction.gradcamBase64 || null;
 
   if (!mriBase64 && prediction.mri_url) {
-    try {
-      const res  = await fetch(prediction.mri_url);
-      const blob = await res.blob();
-      mriBase64  = await new Promise(r => {
-        const rd = new FileReader();
-        rd.onload = () => r(rd.result);
-        rd.readAsDataURL(blob);
-      });
-    } catch(e) { console.warn('MRI load error:', e); }
+    mriBase64 = await _loadImageAsBase64(prediction.mri_url);
   }
-
   if (!gradcamFinal && prediction.gradcam_url) {
-    try {
-      const res    = await fetch(prediction.gradcam_url);
-      const blob   = await res.blob();
-      gradcamFinal = await new Promise(r => {
-        const rd = new FileReader();
-        rd.onload = () => r(rd.result);
-        rd.readAsDataURL(blob);
-      });
-    } catch(e) { console.warn('Grad-CAM load error:', e); }
+    gradcamFinal = await _loadImageAsBase64(prediction.gradcam_url);
   }
 
-  let y = _pageHeader(patient, doc, PW, M, CW, rct, hline, t, serif, 'Clinical Prediction Report  ·  ' + _fmt());
+  let y=_pageHeader(patient,doc,PW,M,CW,rct,hline,t,serif,'Clinical Prediction Report  ·  '+_fmt());
+  y=_patientSection(patient,y,M,t,doc,rct,CW);
+  y=_doctorSection(doctor,y,M,t,doc,rct,CW);
 
-  y = _patientSection(patient, y, M, t, doc, rct, CW);
-  y = _doctorSection(doctor, y, M, t, doc, rct, CW);
+  y=_sectionHeader('Diagnosis',y,M,CW,rct,t);
+  rct(M,y,3,26,stage.color);
+  rct(M+3,y,CW-3,26,_NC.surface);
+  t('PREDICTED STAGE',M+10,y+7,7,'bold','left',_NC.muted);
+  serif(stage.label,M+10,y+18,13,'left',_NC.dark);
+  t('CONFIDENCE',PW-M-38,y+7,7,'bold','right',_NC.muted);
+  serif((conf*100).toFixed(1)+'%',PW-M,y+18,16,'right',_NC.muted);
+  t('Report ID: '+predictionId.slice(0,8).toUpperCase(),M+10,y+25,6.5,'normal','left',_NC.muted);
+  y+=32;
 
-  // Diagnosis
-  y = _sectionHeader('Diagnosis', y, M, CW, rct, t);
-  rct(M, y, 3, 26, stage.color);
-  rct(M+3, y, CW-3, 26, _NC.surface);
-  t('PREDICTED STAGE', M+10, y+7, 7, 'bold', 'left', _NC.muted);
-  serif(stage.label, M+10, y+18, 13, 'left', _NC.dark);
-  t('CONFIDENCE', PW-M-38, y+7, 7, 'bold', 'right', _NC.muted);
-  serif((conf*100).toFixed(1)+'%', PW-M, y+18, 16, 'right', _NC.muted);
-  t('Report ID: '+predictionId.slice(0,8).toUpperCase(), M+10, y+25, 6.5, 'normal', 'left', _NC.muted);
-  y += 32;
+  y=_sectionHeader('Classification Probabilities',y,M,CW,rct,t);
+  y=_confBars(prediction.allConfidences||{},prediction.stage,y,M,CW,fill,t,doc);
+  y+=3;
 
-  // Probabilities
-  y = _sectionHeader('Classification Probabilities', y, M, CW, rct, t);
-  y = _confBars(prediction.allConfidences || {}, prediction.stage, y, M, CW, fill, t, doc);
-  y += 3;
-
-  // MRI + Grad-CAM side by side
   if (mriBase64 || gradcamFinal) {
-    y = _sectionHeader('Brain Imaging', y, M, CW, rct, t);
+    y=_sectionHeader('Brain Imaging',y,M,CW,rct,t);
     try {
-      const iW = 62, iH = 62;
-      let ix = M;
-
+      const iW=62,iH=62;
+      let ix=M;
       if (mriBase64) {
-        const src = mriBase64.startsWith('data:') ? mriBase64 : 'data:image/jpeg;base64,' + mriBase64;
-        sk(_NC.border, 0.3);
-        doc.roundedRect(ix, y, iW, iH, 2, 2);
-        doc.addImage(src, 'JPEG', ix, y, iW, iH);
-        t('Original MRI', ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
-        ix += iW + 8;
+        const src=mriBase64.startsWith('data:')?mriBase64:'data:image/jpeg;base64,'+mriBase64;
+        sk(_NC.border,0.3);doc.roundedRect(ix,y,iW,iH,2,2);
+        doc.addImage(src,'JPEG',ix,y,iW,iH);
+        t('Original MRI',ix+iW/2,y+iH+5,7.5,'normal','center',_NC.muted);
+        ix+=iW+8;
       }
-
       if (gradcamFinal) {
-        const src = gradcamFinal.startsWith('data:') ? gradcamFinal : 'data:image/jpeg;base64,' + gradcamFinal;
-        sk(_NC.border, 0.3);
-        doc.roundedRect(ix, y, iW, iH, 2, 2);
-        doc.addImage(src, 'JPEG', ix, y, iW, iH);
-        t('Grad-CAM', ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
-
-        // Leyenda a la derecha si hay espacio
-        const tx = ix + iW + 8, tw = M + CW - tx;
-        if (tw > 30) {
-          t('Activation map', tx, y + 8, 8.5, 'bold', 'left', _NC.dark);
-          const cap = 'Warmer colours indicate regions with stronger influence on the predicted stage.';
-          doc.setFontSize(8); doc.setFont('helvetica','normal'); tc(_NC.muted);
-          doc.text(doc.splitTextToSize(cap, tw), tx, y + 16);
-          t('Stage: ' + stage.label,           tx, y + 42, 8, 'normal', 'left', _NC.muted);
-          t('Confidence: '+(conf*100).toFixed(1)+'%', tx, y + 50, 8, 'normal', 'left', _NC.muted);
+        const src=gradcamFinal.startsWith('data:')?gradcamFinal:'data:image/jpeg;base64,'+gradcamFinal;
+        sk(_NC.border,0.3);doc.roundedRect(ix,y,iW,iH,2,2);
+        doc.addImage(src,'JPEG',ix,y,iW,iH);
+        t('Grad-CAM',ix+iW/2,y+iH+5,7.5,'normal','center',_NC.muted);
+        const tx=ix+iW+8,tw=M+CW-tx;
+        if(tw>30){
+          t('Activation map',tx,y+8,8.5,'bold','left',_NC.dark);
+          const cap='Warmer colours indicate regions with stronger influence on the predicted stage.';
+          doc.setFontSize(8);doc.setFont('helvetica','normal');tc(_NC.muted);
+          doc.text(doc.splitTextToSize(cap,tw),tx,y+16);
+          t('Stage: '+stage.label,tx,y+42,8,'normal','left',_NC.muted);
+          t('Confidence: '+(conf*100).toFixed(1)+'%',tx,y+50,8,'normal','left',_NC.muted);
         }
-        ix += iW + 8;
       }
-
-      y += iH + 12;
-    } catch(e) { console.warn('Image render error:', e); y += 2; }
+      y+=iH+12;
+    } catch(e){ console.warn('Image render error:',e); y+=2; }
   }
 
-  // Cognitive summary
   if(gameSessions&&gameSessions.length>0){
     if(y+90>PH-22){doc.addPage();y=18;}
     y=_sectionHeader('Cognitive Assessment Summary',y,M,CW,rct,t);
     y=_domainTable(_computeDomains(gameSessions),y,M,CW,rct,t,fill,doc);
   }
 
-  // Notes
   if(y+50>PH-22){doc.addPage();y=18;}
   y=_sectionHeader('Clinical Notes',y,M,CW,rct,t);
   y=_notesSection(notes,y,M,CW,rct,t,doc,PH);
-  y = _editableNotesField(y, M, CW, doc, sk, t, PH);
+  y=_editableNotesField(y,M,CW,doc,sk,t,PH);
   _footer(doc,PW,PH,M,CW);
 
   const filename='NeuroClass_'+patient.dni+'_'+new Date().toISOString().slice(0,10)+'_'+predictionId.slice(0,8)+'.pdf';
@@ -405,7 +350,6 @@ async function generateAndUploadReport({
   return {success:true,reportUrl:signed.signedUrl,filename};
 }
 
-
 // ═══════════════════════════════════════════════════════════════
 // EVOLUTION REPORT
 // ═══════════════════════════════════════════════════════════════
@@ -418,10 +362,9 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     'Evolution Report  ·  '+sorted.length+' prediction'+(sorted.length!==1?'s':'')+
     '  ·  '+_fmt(sorted[0]?.created_at)+' – '+_fmt(sorted[sorted.length-1]?.created_at)
   );
-  y = _patientSection(patient, y, M, t, doc, rct, CW);
+  y=_patientSection(patient,y,M,t,doc,rct,CW);
   y=_doctorSection(doctor,y,M,t,doc,rct,CW);
 
-  // Staging evolution
   if(sorted.length>=2){
     y=_sectionHeader('Staging Evolution',y,M,CW,rct,t);
     const first=_STAGE[sorted[0].predicted_class]||_STAGE.NonDemented;
@@ -429,26 +372,20 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     const fi=first.idx,li=last.idx;
     const tLabel=li>fi?'Worsening':li<fi?'Improving':'Stable';
     const tCol  =li>fi?_NC.stageMod:li<fi?_NC.stageNone:_NC.stageVMild;
-
     rct(M,y,CW,34,_NC.light);
-    // First pill
     rct(M+6,y+5,62,9,first.color,3);
     t(first.label,M+6+31,y+12,8,'bold','center',_NC.surface2);
     t(_fmt(sorted[0].created_at),M+6+31,y+21,7,'normal','center',_NC.muted);
-    // Arrow
     t('->',PW/2,y+13,11,'bold','center',_NC.dark);
-    // Last pill
     rct(PW-M-68,y+5,62,9,last.color,3);
     t(last.label,PW-M-68+31,y+12,8,'bold','center',_NC.surface2);
     t(_fmt(sorted[sorted.length-1].created_at),PW-M-68+31,y+21,7,'normal','center',_NC.muted);
-    // Trend badge below, centered
-    const tw=60;
-    rct(M+CW/2-tw/2,y+26,tw,9,tCol,3);
+    const tw2=60;
+    rct(M+CW/2-tw2/2,y+26,tw2,9,tCol,3);
     t(tLabel,M+CW/2,y+32,8,'bold','center',_NC.surface2);
     y+=42;
   }
 
-  // Prediction history
   y=_sectionHeader('Prediction History',y,M,CW,rct,t);
 
   for(let i=0;i<sorted.length;i++){
@@ -466,65 +403,59 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
     t((conf*100).toFixed(1)+'% confidence',M+CW,y+7.5,8.5,'bold','right',_NC.matcha);
     y+=14;
 
-    const allConf = {
-      NonDemented:      parseFloat(r.prob_non_demented) || 0,
-      VeryMildDemented: parseFloat(r.prob_very_mild)    || 0,
-      MildDemented:     parseFloat(r.prob_mild)          || 0,
-      ModerateDemented: parseFloat(r.prob_moderate)      || 0,
+    const allConf={
+      NonDemented:      parseFloat(r.prob_non_demented)||0,
+      VeryMildDemented: parseFloat(r.prob_very_mild)   ||0,
+      MildDemented:     parseFloat(r.prob_mild)         ||0,
+      ModerateDemented: parseFloat(r.prob_moderate)     ||0,
     };
     y=_confBars(allConf,r.predicted_class,y,M,CW,fill,t,doc);
 
-    if (hasImg) {
-      y += 3;
-      const iW = 58, iH = 58;
-      let ix = M;
-      const imgPairs = [
-        { url: r.mri_url,     label: 'Original MRI' },
-        { url: r.gradcam_url, label: 'Grad-CAM'     },
+    if(hasImg){
+      y+=3;
+      const iW=58,iH=58;
+      let ix=M;
+      const imgPairs=[
+        {url:r.mri_url,    label:'Original MRI'},
+        {url:r.gradcam_url,label:'Grad-CAM'},
       ];
-      for (const { url, label } of imgPairs) {
-        if (!url) continue;
-        const b64 = await _loadImageAsBase64(url);
-        if (!b64) {
-          rct(ix, y, iW, iH, _NC.surface);
-          sk(_NC.border, 0.3);
-          doc.roundedRect(ix, y, iW, iH, 2, 2);
-          t('Image unavailable', ix + iW/2, y + iH/2, 7, 'italic', 'center', _NC.muted);
-          t(label, ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
-          ix += iW + 8;
+      for(const {url,label} of imgPairs){
+        if(!url) continue;
+        const b64=await _loadImageAsBase64(url);
+        if(!b64){
+          rct(ix,y,iW,iH,_NC.surface);
+          sk(_NC.border,0.3);doc.roundedRect(ix,y,iW,iH,2,2);
+          t('Image unavailable',ix+iW/2,y+iH/2,7,'italic','center',_NC.muted);
+          t(label,ix+iW/2,y+iH+5,7.5,'normal','center',_NC.muted);
+          ix+=iW+8;
           continue;
         }
-        try {
-          sk(_NC.matchaLt, 0.3);
-          doc.roundedRect(ix, y, iW, iH, 2, 2);
-          doc.addImage(b64, 'JPEG', ix, y, iW, iH);
-        } catch(e) {
-          console.warn('addImage error for ' + label + ':', e.message);
-        }
-        t(label, ix + iW/2, y + iH + 5, 7.5, 'normal', 'center', _NC.muted);
-        ix += iW + 8;
+        try{
+          sk(_NC.matchaLt,0.3);doc.roundedRect(ix,y,iW,iH,2,2);
+          doc.addImage(b64,'JPEG',ix,y,iW,iH);
+        }catch(e){ console.warn('addImage error for '+label+':',e.message); }
+        t(label,ix+iW/2,y+iH+5,7.5,'normal','center',_NC.muted);
+        ix+=iW+8;
       }
-      y += iH + 12;
+      y+=iH+12;
     }
 
-    if(i < sorted.length - 1){
+    if(i<sorted.length-1){
       sk(_NC.matchaLt,0.2);doc.line(M,y,M+CW,y);
       y+=6;
     }
   } // ← cierre del for
 
-  // Cognitive summary
   if(gameSessions&&gameSessions.length>0){
     if(y+90>PH-22){doc.addPage();y=18;}
     y=_sectionHeader('Cognitive Assessment Summary',y,M,CW,rct,t);
     y=_domainTable(_computeDomains(gameSessions),y,M,CW,rct,t,fill,doc);
   }
 
-  // Notes
   if(y+50>PH-22){doc.addPage();y=18;}
   y=_sectionHeader('Clinical Notes',y,M,CW,rct,t);
   y=_notesSection(notes,y,M,CW,rct,t,doc,PH);
-  y = _editableNotesField(y, M, CW, doc, sk, t, PH);
+  y=_editableNotesField(y,M,CW,doc,sk,t,PH);
   _footer(doc,PW,PH,M,CW);
 
   const filename='NeuroClass_Evolution_'+patient.dni+'_'+new Date().toISOString().slice(0,10)+'.pdf';
