@@ -863,6 +863,11 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           </div>
         </div>
         <div class="gradcam-status" id="uncertaintyStatus" style="padding-bottom:1.2rem;"></div>
+        <div style="padding:.5rem 1.5rem 1.2rem;font-size:.78rem;color:var(--muted);line-height:1.65;background:var(--cream-lt);border-top:1px solid var(--border);">
+          <strong>What does this mean?</strong> Uncertainty measures how confident the model is in its prediction. 
+          <strong>Low</strong> means the model is sure of the result. <strong>Medium</strong> or <strong>High</strong> 
+          means the image was harder to classify and the result should be interpreted with extra caution by your specialist.
+        </div>
               </div>
     </div>
   </div>
@@ -1794,6 +1799,9 @@ function showTab(id) {
     document.getElementById('patientSelectCLF').value = '';
     document.getElementById("uncertaintyBox").style.display = "none";
     document.getElementById("uncertaintyStatus").textContent = "";
+    gradcamSrc = null;
+    originalSrc = null;
+    document.getElementById('gradcamPanel')?.remove();
   }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -2344,9 +2352,9 @@ async function selectPatient(p) {
           <div class="detail-sub">${p.username} · Registered ${formatDate(p.created_at)}</div>
         </div>
         <div class="export-group">
-          <button class="btn-export" onclick="exportPredictionsCSV('${p.id}','${p.username}')">⬇ MRI Data</button>
-          <button class="btn-export" onclick="exportGamesCSV('${p.id}','${p.username}')">⬇ Games Data</button>
-          <button class="btn-export" onclick="generateEvolutionReportForPatient('${p.id}')">⬇ Evolution Report</button>
+          <button class="btn-export" onclick="exportPredictionsCSV('${p.id}','${p.username}')">⬇ MRI Data (csv)</button>
+          <button class="btn-export" onclick="exportGamesCSV('${p.id}','${p.username}')">⬇ Games Data (csv)</button>
+          <button class="btn-export" onclick="generateEvolutionReportForPatient('${p.id}')">⬇ Evolution Report (PDF)</button>
         </div>
       </div>
     </div>
@@ -3390,7 +3398,6 @@ const GAME_MSGS = {
 
 let assistantState = null;
 let assistantTimer = null;
-const assistantVisited = new Set();
 
 function loadAssistant() {
   if (!currentUser || currentUser.role !== 'patient') return;
@@ -3407,9 +3414,8 @@ function loadAssistant() {
     const u = currentUser.name.split(' ')[0];
     const a = assistantState.name;
     setTimeout(() => showAssistantMsg(
-      `Hi <strong>${u}</strong>! I'm <strong>${a}</strong><br>` +
-      `I'm here to help you navigate every section of NeuroClass. ` +
-      `Just tap me whenever you need guidance!`
+      `Hi <strong>${u}</strong>! I'm <strong>${a}</strong> — I'm here to help you navigate NeuroClass. ` +
+      `Tap me anytime you need guidance on what each section does!`
     ), 800);
   }
 }
@@ -3448,13 +3454,7 @@ function toggleAssistant() {
 }
 
 function triggerAssistantTab(tabId) {
-  if (!assistantState || !currentUser || currentUser.role !== 'patient') return;
-  if (tabId === 'home' && !assistantVisited.has('home')) {
-    assistantVisited.add('home');
-    const u = currentUser.name.split(' ')[0];
-    const a = assistantState.name;
-    showAssistantMsg(ASSISTANT_MSGS.home(u, a));
-  }
+  
 }
 
 function showGameAssistant(gameId) {
