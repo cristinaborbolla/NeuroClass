@@ -109,7 +109,7 @@ async function _pageHeader(p,doc,PW,M,CW,rct,hline,t,serif,subtitle){
   rct(0,3,PW,33,_NC.surface);
   hline(36,_NC.border,0.3);
   try {
-    const logoB64 = await _loadImageAsBase64('./icons/icon-192-verde.png');
+    const logoB64 = await _loadImageAsBase64('static/icons/icon-192-verde.png');
     if (logoB64) {
       doc.addImage(logoB64, 'PNG', M, 8, 14, 14);
     } else {
