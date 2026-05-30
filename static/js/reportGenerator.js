@@ -270,11 +270,13 @@ async function generateAndUploadReport({
   let mriBase64    = prediction.mriBase64    || null;
   let gradcamFinal = gradcamBase64            || prediction.gradcamBase64 || null;
 
-  if (!mriBase64 && prediction.mri_url) {
-    mriBase64 = await _loadImageAsBase64(prediction.mri_url);
+  if (!mriBase64 && prediction.mri_path) {
+    const url = await _getSignedUrl(supabase, prediction.mri_path);
+    if (url) mriBase64 = await _loadImageAsBase64(url);
   }
-  if (!gradcamFinal && prediction.gradcam_url) {
-    gradcamFinal = await _loadImageAsBase64(prediction.gradcam_url);
+  if (!gradcamFinal && prediction.gradcam_path) {
+    const url = await _getSignedUrl(supabase, prediction.gradcam_path);
+    if (url) gradcamFinal = await _loadImageAsBase64(url);
   }
 
   let y=_pageHeader(patient,doc,PW,M,CW,rct,hline,t,serif,'Clinical Prediction Report  ·  '+_fmt());
@@ -350,6 +352,17 @@ async function generateAndUploadReport({
   return {success:true,reportUrl:signed.signedUrl,filename};
 }
 
+async function _getSignedUrl(supabase, path) {
+  if (!path) return null;
+  try {
+    const { data, error } = await supabase.storage
+      .from('gradcam-images')
+      .createSignedUrl(path, 300); // 5 minutos
+    if (error) { console.warn('SignedUrl error:', error.message); return null; }
+    return data?.signedUrl || null;
+  } catch(e) { return null; }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // EVOLUTION REPORT
 // ═══════════════════════════════════════════════════════════════
@@ -415,9 +428,9 @@ async function generateEvolutionReport({patient,doctor,predictions,gameSessions,
       y+=3;
       const iW=58,iH=58;
       let ix=M;
-      const imgPairs=[
-        {url:r.mri_url,    label:'Original MRI'},
-        {url:r.gradcam_url,label:'Grad-CAM'},
+      const imgPairs = [
+        { url: await _getSignedUrl(supabase, r.mri_path),     label: 'Original MRI' },
+        { url: await _getSignedUrl(supabase, r.gradcam_path), label: 'Grad-CAM'     },
       ];
       for(const {url,label} of imgPairs){
         if(!url) continue;
