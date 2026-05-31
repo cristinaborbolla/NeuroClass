@@ -3140,7 +3140,7 @@ function showGradcamPanel() {
   if (!gradPanel) {
     gradPanel = document.createElement('div');
     gradPanel.id = 'gradcamPanel';
-    document.querySelector('#tab-classifier .card:last-child').appendChild(gradPanel);
+    document.querySelector('#tab-classifier .card:nth-child(2)').appendChild(gradPanel);
   }
   gradPanel.style.display = 'block';
   gradPanel.innerHTML = `
