@@ -579,6 +579,218 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   0%,100% { transform: scale(1); box-shadow: 0 4px 16px rgba(44,62,48,.2); }
   50%      { transform: scale(1.15); box-shadow: 0 6px 24px rgba(44,62,48,.35); }
 }
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD — MOBILE RESPONSIVE  (pegar al final del <style>)
+   ══════════════════════════════════════════════════════════ */
+@media(max-width: 680px) {
+
+  /* ── Wrap y header ─────────────────────────────────────── */
+  .dash-wrap { padding: 1.2rem 1rem; }
+  .dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+    margin-bottom: 1.5rem;
+  }
+  .dash-header h2 { font-size: 1.6rem; }
+
+  /* ── Grid de pacientes ─────────────────────────────────── */
+  .patients-grid { grid-template-columns: 1fr; }
+  .patient-card { padding: 1rem; }
+  .pc-top { margin-bottom: .75rem; }
+  .pc-fields { gap: .25rem; }
+  .pc-field { font-size: .78rem; flex-wrap: wrap; }
+  .pc-label { min-width: 80px; }
+
+  /* ── Detail top ────────────────────────────────────────── */
+  .detail-top {
+    flex-direction: column;
+    padding: 1rem;
+    gap: .75rem;
+  }
+  .detail-top-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: .6rem;
+  }
+  .detail-name { font-size: 1.25rem; }
+  .detail-sub  { font-size: .72rem; }
+
+  /* Botones exportación: 2 cols, el 3º fila entera */
+  .export-group {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .45rem;
+    margin-left: 0;
+  }
+  .export-group .btn-export:last-child { grid-column: 1 / -1; }
+  .btn-export {
+    font-size: .75rem;
+    padding: .45rem .7rem;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Detail body ───────────────────────────────────────── */
+  .detail-body { padding: 1rem; }
+
+  /* Campos del paciente: 1 columna */
+  .detail-fields {
+    grid-template-columns: 1fr;
+    gap: .45rem;
+    margin-bottom: 1.2rem;
+  }
+  .detail-field { padding: .55rem .85rem; }
+  .detail-field-lbl { font-size: .66rem; }
+  .detail-field-val { font-size: .85rem; }
+
+  /* ── Charts ────────────────────────────────────────────── */
+  .charts-row {
+    grid-template-columns: 1fr;
+    gap: .75rem;
+    margin-bottom: 1.2rem;
+  }
+  .chart-box { padding: .85rem 1rem; }
+  #chartPreds,
+  #chartGames { max-height: 180px !important; }
+
+  /* ── Section titles ────────────────────────────────────── */
+  .section-title { font-size: .68rem; }
+
+  /* ══ TABLA PREDICCIONES → CARDS ════════════════════════ */
+  #predHistoryWrap table,
+  #predHistoryWrap thead { display: none; }
+
+  #predHistoryWrap tbody {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+  }
+
+  #predHistoryWrap tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: .85rem 1rem;
+    gap: .3rem .6rem;
+  }
+
+  /* Stage — fila 1, ancho completo */
+  #predHistoryWrap tbody tr td:nth-child(1) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    font-size: .88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+
+  /* Confianza — fila 2, col izq */
+  #predHistoryWrap tbody tr td:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: .8rem;
+    color: var(--muted);
+  }
+  #predHistoryWrap tbody tr td:nth-child(2)::before {
+    content: "Confidence: ";
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Botón PDF — filas 2-4, col dcha */
+  #predHistoryWrap tbody tr td:nth-child(5) {
+    grid-column: 2;
+    grid-row: 2 / 5;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  /* Fecha — fila 3, col izq */
+  #predHistoryWrap tbody tr td:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: .74rem;
+    color: var(--muted);
+  }
+
+  /* Mini barras — fila 4, ancho completo */
+  #predHistoryWrap tbody tr td:nth-child(3) {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+  .mini-bars { min-width: unset; width: 100%; }
+  .mini-bar-row { font-size: .72rem; }
+  .mini-bar-row span:first-child { min-width: 54px; }
+
+  /* ══ TABLA JUEGOS → CARDS ══════════════════════════════ */
+  #gameHistoryWrap table,
+  #gameHistoryWrap thead { display: none; }
+
+  #gameHistoryWrap tbody {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  #gameHistoryWrap tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    gap: .2rem .5rem;
+    align-items: center;
+  }
+
+  /* Nombre del juego */
+  #gameHistoryWrap tbody tr td:nth-child(1) {
+    grid-column: 1; grid-row: 1;
+    font-size: .88rem; font-weight: 600;
+  }
+
+  /* Score pill — col dcha, 2 filas */
+  #gameHistoryWrap tbody tr td:nth-child(2) {
+    grid-column: 2; grid-row: 1 / 3;
+    display: flex; align-items: center; justify-content: flex-end;
+  }
+
+  /* Porcentaje + fecha inline — fila 2 */
+  #gameHistoryWrap tbody tr td:nth-child(3) {
+    grid-column: 1; grid-row: 2;
+    font-size: .76rem; color: var(--muted);
+  }
+  #gameHistoryWrap tbody tr td:nth-child(3)::before {
+    content: "Result: ";
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Duración — ocultar (se muestra en score) */
+  #gameHistoryWrap tbody tr td:nth-child(4) { display: none; }
+
+  /* Fecha sesión — ocultar para no saturar */
+  #gameHistoryWrap tbody tr td:nth-child(5) { display: none; }
+
+  /* ── Notas ─────────────────────────────────────────────── */
+  #noteInput { font-size: .88rem; }
+  #notesWrap button {
+    width: 100%;
+    margin-top: .5rem;
+  }
+}
 </style>
 </head>
 <body>
