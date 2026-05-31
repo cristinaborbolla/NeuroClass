@@ -37,10 +37,6 @@ model = tf.keras.models.load_model(MODEL_PATH)
 print(f"[INFO] Model loaded. Input shape: {model.input_shape}")
 
 # Rebuild a float32 copy of the model specifically for Grad-CAM.
-# The model was saved with mixed_float16; even after set_global_policy,
-# each layer retains its saved dtype policy. Replacing it in the JSON config
-# forces all operations to float32 so gradients do not underflow to zero.
-# Weights are float32 on disk regardless, so predictions are identical.
 print("[INFO] Rebuilding float32 model for Grad-CAM...")
 _model_json = model.to_json()
 _model_json = _model_json.replace('"mixed_float16"', '"float32"')
@@ -65,17 +61,30 @@ def preprocess_image(image_bytes):
     """
     Receives raw image bytes and returns a (1, IMG_H, IMG_W, 1) float32 array
     normalised to [0, 1], with CLAHE contrast enhancement.
-    PIL.resize((width, height)) → array shape (height, width) = (IMG_H, IMG_W) ✓
     """
     img_pil     = Image.open(io.BytesIO(image_bytes)).convert("L")
     img_np      = np.array(img_pil, dtype=np.uint8)
     clahe       = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     img_clahe   = clahe.apply(img_np)
     img_resized = Image.fromarray(img_clahe).resize((IMG_W, IMG_H), Image.LANCZOS)
-    # PIL.resize((190, 200)) → array (200, 190) ✓
     img_norm    = np.array(img_resized, dtype=np.float32) / 255.0
     img_ready   = img_norm[np.newaxis, :, :, np.newaxis]   # (1, 200, 190, 1)
     return img_ready
+
+
+def array_to_b64(img_np_uint8, upscale=2):
+    """
+    Converts a uint8 grayscale or BGR numpy array to a base64 JPEG string.
+    Upscales by factor for better display quality.
+    """
+    if upscale > 1:
+        h, w = img_np_uint8.shape[:2]
+        img_np_uint8 = cv2.resize(
+            img_np_uint8, (w * upscale, h * upscale),
+            interpolation=cv2.INTER_NEAREST
+        )
+    _, buffer = cv2.imencode('.jpg', img_np_uint8, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    return base64.b64encode(buffer).decode('utf-8')
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -104,7 +113,7 @@ def predict():
     image_bytes = file.read()
 
     try:
-        img_ready = preprocess_image(image_bytes)   # (1, 200, 190, 1)
+        img_ready = preprocess_image(image_bytes)
     except Exception as e:
         return jsonify({"error": f"Image processing error: {str(e)}"}), 400
 
@@ -123,6 +132,7 @@ def predict():
         "probabilities":    probabilities
     })
 
+
 @app.route("/manifest.json")
 def manifest():
     return send_from_directory(".", "manifest.json", mimetype="application/manifest+json")
@@ -130,7 +140,117 @@ def manifest():
 @app.route("/sw.js")
 def service_worker():
     return send_from_directory(".", "sw.js", mimetype="application/javascript")
-    
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PREPROCESSING PIPELINE ENDPOINT
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route("/preprocess", methods=["POST"])
+def preprocess_pipeline():
+    """
+    Returns the 4 intermediate images produced during preprocessing,
+    as base64 JPEGs, along with technical parameters.
+
+    Steps:
+      1. Grayscale conversion
+      2. CLAHE enhancement  (clipLimit=2.0, tileGridSize=8×8)
+      3. Resize to 190×200 px (LANCZOS)
+      4. Normalisation [0, 1]  (visualised as uint8)
+    """
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "Empty file."}), 400
+
+    image_bytes = file.read()
+
+    try:
+        # ── Step 1: Grayscale ────────────────────────────────────────────────
+        img_pil      = Image.open(io.BytesIO(image_bytes)).convert("L")
+        img_gray     = np.array(img_pil, dtype=np.uint8)
+        orig_h, orig_w = img_gray.shape
+        b64_gray     = array_to_b64(img_gray, upscale=1)
+
+        # ── Step 2: CLAHE ────────────────────────────────────────────────────
+        clahe        = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        img_clahe    = clahe.apply(img_gray)
+        b64_clahe    = array_to_b64(img_clahe, upscale=1)
+
+        # ── Step 3: Resize ───────────────────────────────────────────────────
+        img_resized  = Image.fromarray(img_clahe).resize((IMG_W, IMG_H), Image.LANCZOS)
+        img_res_np   = np.array(img_resized, dtype=np.uint8)
+        b64_resized  = array_to_b64(img_res_np, upscale=2)
+
+        # ── Step 4: Normalisation [0,1] — visualised ─────────────────────────
+        img_norm_vis = np.uint8(img_res_np.astype(np.float32) / 255.0 * 255.0)
+        b64_norm     = array_to_b64(img_norm_vis, upscale=2)
+
+        # ── Histogram stats for CLAHE comparison ─────────────────────────────
+        mean_before = round(float(np.mean(img_gray)),  2)
+        std_before  = round(float(np.std(img_gray)),   2)
+        mean_after  = round(float(np.mean(img_clahe)), 2)
+        std_after   = round(float(np.std(img_clahe)),  2)
+
+    except Exception as e:
+        return jsonify({"error": f"Preprocessing error: {str(e)}"}), 400
+
+    return jsonify({
+        "steps": [
+            {
+                "id":    "grayscale",
+                "label": "1 · Grayscale",
+                "desc":  "RGB → single-channel luminance. Removes colour information irrelevant to MRI tissue contrast.",
+                "image": f"data:image/jpeg;base64,{b64_gray}",
+                "params": {
+                    "Original size": f"{orig_w} × {orig_h} px",
+                    "Channels":      "1 (grayscale)",
+                    "Dtype":         "uint8  [0 – 255]"
+                }
+            },
+            {
+                "id":    "clahe",
+                "label": "2 · CLAHE",
+                "desc":  "Contrast Limited Adaptive Histogram Equalisation enhances local contrast without over-amplifying noise.",
+                "image": f"data:image/jpeg;base64,{b64_clahe}",
+                "params": {
+                    "clipLimit":    "2.0",
+                    "tileGridSize": "8 × 8",
+                    "Mean before":  f"{mean_before}",
+                    "Mean after":   f"{mean_after}",
+                    "Std before":   f"{std_before}",
+                    "Std after":    f"{std_after}"
+                }
+            },
+            {
+                "id":    "resize",
+                "label": "3 · Resize",
+                "desc":  "Resampled to the model's fixed input resolution using LANCZOS interpolation to preserve edge detail.",
+                "image": f"data:image/jpeg;base64,{b64_resized}",
+                "params": {
+                    "Target size":     f"{IMG_W} × {IMG_H} px",
+                    "Interpolation":   "LANCZOS",
+                    "Aspect ratio":    "not preserved (fixed crop)"
+                }
+            },
+            {
+                "id":    "normalised",
+                "label": "4 · Normalisation",
+                "desc":  "Pixel values scaled from [0, 255] to [0, 1]. The array is then reshaped to (1, 200, 190, 1) before CNN inference.",
+                "image": f"data:image/jpeg;base64,{b64_norm}",
+                "params": {
+                    "Range":         "[0.0 – 1.0]",
+                    "Dtype":         "float32",
+                    "Final shape":   f"(1, {IMG_H}, {IMG_W}, 1)",
+                    "Total pixels":  f"{IMG_H * IMG_W:,}"
+                }
+            }
+        ]
+    })
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # GRAD-CAM HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -153,7 +273,7 @@ def make_gradcam_heatmap(img_array, last_conv_layer_name, pred_index):
         outputs = [model_f32.get_layer(last_conv_layer_name).output, model_f32.output]
     )
 
-    img_tensor = tf.cast(img_array, tf.float32)   # (1, 200, 190, 1)
+    img_tensor = tf.cast(img_array, tf.float32)
 
     with tf.GradientTape() as tape:
         tape.watch(img_tensor)
@@ -171,7 +291,7 @@ def make_gradcam_heatmap(img_array, last_conv_layer_name, pred_index):
     max_val      = tf.math.reduce_max(heatmap)
     if max_val > 0:
         heatmap = heatmap / max_val
-    return heatmap.numpy()   # (h_conv, w_conv)
+    return heatmap.numpy()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -187,38 +307,28 @@ def gradcam():
     img_bytes = file.read()
 
     try:
-        img_array = preprocess_image(img_bytes)   # (1, 200, 190, 1)
+        img_array = preprocess_image(img_bytes)
     except Exception as e:
         return jsonify({'error': f'Image processing error: {str(e)}'}), 400
 
-    # Prediction using original model
     preds      = model.predict(img_array, verbose=0)
     pred_index = int(np.argmax(preds[0]))
 
-    # Grad-CAM using float32 model
     last_conv = get_last_conv_layer(model_f32)
     if last_conv is None:
         return jsonify({'error': 'No Conv2D layer found in model'}), 500
 
     heatmap = make_gradcam_heatmap(img_array, last_conv, pred_index)
-    # heatmap shape: (h_conv, w_conv)
-
     heatmap = np.float32(heatmap)
 
-    # Resize heatmap to model input size: cv2.resize takes (width, height)
-    # (IMG_W, IMG_H) = (190, 200) → result array shape (200, 190) ✓
-    heatmap_resized = cv2.resize(heatmap, (IMG_W, IMG_H))   # array (200, 190)
-    heatmap_uint8   = np.uint8(255 * heatmap_resized)       # (200, 190)
-    heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)  # (200, 190, 3)
+    heatmap_resized = cv2.resize(heatmap, (IMG_W, IMG_H))
+    heatmap_uint8   = np.uint8(255 * heatmap_resized)
+    heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
 
-    # Original image for overlay: img_array[0, :, :, 0] → shape (200, 190) ✓
-    img_display = np.uint8(img_array[0, :, :, 0] * 255)         # (200, 190)
-    img_bgr     = cv2.cvtColor(img_display, cv2.COLOR_GRAY2BGR)  # (200, 190, 3)
+    img_display = np.uint8(img_array[0, :, :, 0] * 255)
+    img_bgr     = cv2.cvtColor(img_display, cv2.COLOR_GRAY2BGR)
 
-    overlay = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)  # (200, 190, 3)
-
-    # Upscale for display: cv2.resize takes (width, height)
-    # Double the size: (IMG_W*2, IMG_H*2) = (380, 400) → array (400, 380, 3)
+    overlay     = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)
     overlay_big = cv2.resize(overlay, (IMG_W * 2, IMG_H * 2), interpolation=cv2.INTER_CUBIC)
 
     _, buffer = cv2.imencode('.jpg', overlay_big, [cv2.IMWRITE_JPEG_QUALITY, 92])
@@ -230,7 +340,10 @@ def gradcam():
     })
 
 
-# ── Endpoint ─────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# MC DROPOUT ENDPOINT
+# ─────────────────────────────────────────────────────────────────────────────
+
 @app.route("/mcdropout", methods=["POST"])
 def mcdropout():
     if "file" not in request.files:
@@ -263,6 +376,8 @@ def mcdropout():
         "mean_uncertainty":  round(mean_unc, 4),
         "uncertainty_level": level
     })
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # START SERVER
 # ─────────────────────────────────────────────────────────────────────────────
