@@ -795,7 +795,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
    ══════════════════════════════════════════════════════════ */
 
 .pipeline-panel {
-  margin-top: 1.5rem;
+  margin-top: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface2);
@@ -956,12 +956,12 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   margin: 1.5rem auto 2.5rem;
   max-width: 960px;
   width: calc(100% - 3rem);
-  background: var(--rose-lt);
+  background: var(--surface2);
   border-color: var(--rose-dk);
 }
 
 .pipeline-header {
-  background: var(--rose);
+  background: var(--rose-lt);
   border-bottom-color: var(--rose-dk);
 }
 
@@ -970,7 +970,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 }
 
 .pipeline-header-icon {
-  background: var(--matcha-lt);
+  background: var(--matcha-slt);
 }
 
 .pipeline-chevron {
@@ -983,7 +983,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
 
 .pipeline-step {
   background: white;
-  border-color: var(--rose-dk);
+  border-color: var(--border);
 }
 </style>
 </head>
@@ -1280,8 +1280,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       </div>
               </div>
     </div>
-  </div>
-  <div class="pipeline-panel" id="pipelinePanel">
+  <div class="pipeline-panel" id="pipelinePanel" style="grid-column: 1 / -1; margin-top: 0;">
   <div class="pipeline-header" onclick="togglePipeline()">
     <div class="pipeline-header-left">
       <div class="pipeline-header-icon">⚙️</div>
@@ -1299,6 +1298,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     <div id="pipelineStepsWrap" style="display:none;"></div>
   </div>
 </div>
+  </div>
 </div>
 
 <!-- ══ GAMES ══════════════════════════════════════════════════ -->
