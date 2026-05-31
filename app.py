@@ -243,7 +243,7 @@ def preprocess_pipeline():
                 "params": {
                     "Range":         "[0.0 – 1.0]",
                     "Dtype":         "float32",
-                    "Final shape":   f"(1, {IMG_H}, {IMG_W}, 1)",
+                    "Final shape":   f"(1,{IMG_H},{IMG_W},1)",
                     "Total pixels":  f"{IMG_H * IMG_W:,}"
                 }
             }
