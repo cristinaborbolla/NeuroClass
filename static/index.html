@@ -621,22 +621,19 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   /* Botones exportación: 2 cols, el 3º fila entera */
   .export-group {
     width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: .45rem;
     margin-left: 0;
   }
   .export-group .btn-export:last-child { grid-column: 1 / -1; }
   .btn-export {
-    font-size: .75rem;
-    padding: .45rem .7rem;
+    font-size: .78rem;
+    padding: .5rem .85rem;
+    width: 100%;
     justify-content: center;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
-
+  
   /* ── Detail body ───────────────────────────────────────── */
   .detail-body { padding: 1rem; }
 
