@@ -788,6 +788,168 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     margin-top: .5rem;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   PREPROCESSING PIPELINE PANEL
+   ══════════════════════════════════════════════════════════ */
+
+.pipeline-panel {
+  margin-top: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  overflow: hidden;
+  display: none;
+}
+.pipeline-panel.visible { display: block; }
+
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .9rem 1.2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.pipeline-header-left {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+}
+.pipeline-header-icon {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: var(--matcha-slt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem;
+}
+.pipeline-header h3 {
+  font-size: .78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+.pipeline-chevron {
+  font-size: .75rem;
+  color: var(--muted);
+  transition: transform .2s;
+}
+.pipeline-panel.open .pipeline-chevron { transform: rotate(180deg); }
+
+.pipeline-body { display: none; padding: 1.2rem 1.2rem 1.4rem; }
+.pipeline-panel.open .pipeline-body { display: block; }
+
+/* Loading state */
+.pipeline-loading {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--muted);
+  font-size: .85rem;
+}
+.pipeline-loading-dots span {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--matcha);
+  margin: 0 2px;
+  animation: pldot .9s infinite ease-in-out;
+}
+.pipeline-loading-dots span:nth-child(2) { animation-delay: .15s; }
+.pipeline-loading-dots span:nth-child(3) { animation-delay: .30s; }
+@keyframes pldot {
+  0%, 80%, 100% { transform: scale(.6); opacity: .4; }
+  40%           { transform: scale(1);  opacity: 1;  }
+}
+
+/* Steps grid */
+.pipeline-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+}
+@media(max-width: 760px) {
+  .pipeline-steps { grid-template-columns: repeat(2, 1fr); }
+}
+@media(max-width: 420px) {
+  .pipeline-steps { grid-template-columns: 1fr; }
+}
+
+.pipeline-step {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.pipeline-step:hover { box-shadow: 0 2px 12px rgba(44,62,48,.1); }
+
+.pipeline-step-img {
+  width: 100%;
+  aspect-ratio: 190/200;
+  object-fit: cover;
+  display: block;
+  background: #111;
+  image-rendering: pixelated;
+}
+
+.pipeline-step-info { padding: .6rem .75rem .75rem; }
+
+.pipeline-step-label {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--matcha-dk);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: .25rem;
+}
+.pipeline-step-desc {
+  font-size: .75rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: .55rem;
+}
+.pipeline-step-params {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+}
+.pipeline-param {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .4rem;
+  font-size: .7rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: .18rem;
+}
+.pipeline-param:last-child { border-bottom: none; padding-bottom: 0; }
+.pipeline-param-key   { color: var(--muted); flex-shrink: 0; }
+.pipeline-param-value { color: var(--text); font-weight: 600; font-family: monospace; text-align: right; }
+
+/* Arrow between steps (desktop only) */
+.pipeline-arrow {
+  display: none;
+}
+@media(min-width: 761px) {
+  .pipeline-steps-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: .35rem;
+  }
+  .pipeline-steps-wrap .pipeline-step { flex: 1; min-width: 0; }
+  .pipeline-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 3rem;
+    color: var(--matcha-lt);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+}
 </style>
 </head>
 <body>
@@ -1084,6 +1246,24 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
               </div>
     </div>
   </div>
+  <div class="pipeline-panel" id="pipelinePanel">
+  <div class="pipeline-header" onclick="togglePipeline()">
+    <div class="pipeline-header-left">
+      <div class="pipeline-header-icon">⚙️</div>
+      <h3>Preprocessing Pipeline</h3>
+    </div>
+    <span class="pipeline-chevron">▼</span>
+  </div>
+  <div class="pipeline-body">
+    <div class="pipeline-loading" id="pipelineLoading">
+      <div class="pipeline-loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <div style="margin-top:.6rem;">Generating preprocessing steps…</div>
+    </div>
+    <div id="pipelineStepsWrap" style="display:none;"></div>
+  </div>
+</div>
 </div>
 
 <!-- ══ GAMES ══════════════════════════════════════════════════ -->
@@ -2092,6 +2272,7 @@ function clearImage() {
   resultEmpty.style.display = "flex";
   errorBox.classList.remove("visible");
   fileInput.value = "";
+  document.getElementById('pipelinePanel')?.classList.remove('visible','open');
 }
 analyseBtn.addEventListener("click", async () => {
   if (!selectedFile) return;
@@ -2113,6 +2294,7 @@ analyseBtn.addEventListener("click", async () => {
     document.getElementById("viewToggle").classList.add("visible");
     fetchGradCAM(selectedFile);
     fetchMCDropout(selectedFile);
+    fetchPreprocessingPipeline(selectedFile);
   } catch(err) {
     errorBox.textContent = "Error: " + err.message;
     errorBox.classList.add("visible");
@@ -3778,6 +3960,84 @@ function saveAssistant(firstTime) {
     ), 500);
   }
 }
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// PREPROCESSING PIPELINE
+// ══════════════════════════════════════════════════════════════
+const PREPROCESS_URL = "https://neuroclass-alzheimer-mri-classifier.hf.space/preprocess";
+ 
+function togglePipeline() {
+  document.getElementById('pipelinePanel').classList.toggle('open');
+}
+ 
+async function fetchPreprocessingPipeline(file) {
+  const panel = document.getElementById('pipelinePanel');
+  const loading = document.getElementById('pipelineLoading');
+  const wrap = document.getElementById('pipelineStepsWrap');
+ 
+  // Mostrar panel colapsado mientras carga
+  panel.classList.add('visible');
+  panel.classList.remove('open');
+  loading.style.display = 'block';
+  wrap.style.display = 'none';
+  wrap.innerHTML = '';
+ 
+  const fd = new FormData();
+  fd.append('file', file);
+ 
+  try {
+    const res  = await fetch(PREPROCESS_URL, { method: 'POST', body: fd });
+    const data = await res.json();
+ 
+    if (!data.steps || data.steps.length === 0) {
+      loading.style.display = 'none';
+      wrap.innerHTML = '<p style="font-size:.83rem;color:var(--muted);padding:.5rem 0;">Preprocessing data not available.</p>';
+      wrap.style.display = 'block';
+      return;
+    }
+ 
+    loading.style.display = 'none';
+ 
+    // Construir las 4 steps con flechas entre ellas (desktop)
+    const stepsHTML = data.steps.map((step, i) => {
+      const paramsHTML = Object.entries(step.params).map(([k, v]) => `
+        <div class="pipeline-param">
+          <span class="pipeline-param-key">${k}</span>
+          <span class="pipeline-param-value">${v}</span>
+        </div>`).join('');
+ 
+      const arrow = (i < data.steps.length - 1)
+        ? `<div class="pipeline-arrow">→</div>`
+        : '';
+ 
+      return `
+        <div class="pipeline-step">
+          <img class="pipeline-step-img" src="${step.image}" alt="${step.label}" loading="lazy">
+          <div class="pipeline-step-info">
+            <div class="pipeline-step-label">${step.label}</div>
+            <div class="pipeline-step-desc">${step.desc}</div>
+            <div class="pipeline-step-params">${paramsHTML}</div>
+          </div>
+        </div>
+        ${arrow}`;
+    }).join('');
+ 
+    wrap.innerHTML = `<div class="pipeline-steps-wrap">${stepsHTML}</div>`;
+    wrap.style.display = 'block';
+ 
+    // Auto-abrir el panel cuando los datos están listos
+    panel.classList.add('open');
+ 
+  } catch(e) {
+    console.warn('Preprocessing pipeline error:', e);
+    loading.style.display = 'none';
+    wrap.innerHTML = '<p style="font-size:.83rem;color:var(--muted);padding:.5rem 0;">Could not load preprocessing steps.</p>';
+    wrap.style.display = 'block';
+  }
+}
+</script>
+  
 // ── Init ────────────────────────────────────────────────────
 (function checkRecoveryOnLoad() {
   const hash = window.location.hash;
