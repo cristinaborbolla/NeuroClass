@@ -2467,11 +2467,29 @@ async function saveConsent(accepted) {
 async function saveGameSession(gameName, score, maxScore, durationSec) {
   if (!currentUser) return;
   try {
-    await db.from('game_sessions').insert({
-      patient_id: currentUser.id, game_name: gameName,
-      score, max_score: maxScore, duration_sec: durationSec, completed: true
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) {
+      console.warn('saveGameSession: no active Supabase session');
+      showToast('⚠ Session expired, result not saved');
+      return;
+    }
+    const { error } = await db.from('game_sessions').insert({
+      patient_id:   currentUser.id,
+      game_name:    gameName,
+      score,
+      max_score:    maxScore,
+      duration_sec: durationSec,
+      completed:    true
     });
-  } catch(e) { console.warn('Could not save game session:', e); }
+    if (error) {
+      console.warn('saveGameSession error:', error.message);
+      showToast('⚠ Could not save result: ' + error.message);
+    } else {
+      showToast('✓ Result saved');
+    }
+  } catch(e) {
+    console.warn('saveGameSession exception:', e);
+  }
 }
 let gameTimers = [];
 function clearGameTimers() {
@@ -3883,7 +3901,9 @@ function displayUncertainty(data) {
   });
 
   document.getElementById("uncertaintyBox").style.display = "block";
-  document.getElementById("whatDoesThisMean").style.display = "block";
+  if (!currentUser || currentUser.role !== 'doctor') {
+    document.getElementById("whatDoesThisMean").style.display = "block";
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -4081,6 +4101,8 @@ function togglePipeline() {
 }
  
 async function fetchPreprocessingPipeline(file) {
+  if (!currentUser || currentUser.role !== 'doctor') return;
+
   const panel = document.getElementById('pipelinePanel');
   const loading = document.getElementById('pipelineLoading');
   const wrap = document.getElementById('pipelineStepsWrap');
