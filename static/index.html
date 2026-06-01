@@ -1291,7 +1291,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           </div>
         </div>
         <div class="gradcam-status" id="uncertaintyStatus" style="padding-bottom:1.2rem;"></div>
-        <div id="whatDoesThisMean" style="display:none;margin:0 1.5rem 1.5rem;padding:1rem;font-size:.78rem;color:var(--text);line-height:1.8;background:var(--cream-lt);border-radius:10px;border-left:3px solid var(--rose-dk);">        <div style="font-weight:600;color:var(--text);margin-bottom:.5rem;font-size:.8rem;">What does this mean?</div>
+        <div id="whatDoesThisMean" style="display:none;margin:0 1.5rem 1.5rem;padding:1rem;font-size:.78rem;color:var(--text);line-height:1.8;background:var(--cream-lt);border-radius:10px;border-left:3px solid var(--rose-dk);"><div style="font-weight:600;color:var(--text);margin-bottom:.5rem;font-size:.8rem;">What does this mean?</div>
         <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.7rem;">
           <div><span style="font-weight:700;color:#4a8c5c;">Low</span>:the model is confident in its prediction.</div>
           <div><span style="font-weight:700;color:#b07d2a;">Medium</span>:the result is less certain. Interpret with caution.</div>
@@ -3748,7 +3748,7 @@ async function loadRecommendations() {
         const weakLabels = gameAnalysis.weakGames.map(g => g.charAt(0).toUpperCase()+g.slice(1)).join(', ');
         summaryText += `Your overall exercise score is <strong>${pct}%</strong>. Areas needing more practice: <strong>${weakLabels}</strong>. `;
       } else if (gameAnalysis.overallAvg >= 75) {
-        summaryText += `Your overall exercise score is <strong>${pct}%</strong> — excellent cognitive engagement. `;
+        summaryText += `Your overall exercise score is <strong>${pct}%</strong>. Great job! You showed excellent focus and attention during the exercise. `;
       } else {
         summaryText += `Your overall exercise score is <strong>${pct}%</strong>. `;
       }
@@ -3814,12 +3814,12 @@ async function loadRecommendations() {
 // GAME PERFORMANCE ANALYSIS
 // ══════════════════════════════════════════════════════════════
 const GAME_DOMAIN_RECS = {
-  memory:       "Your visual memory scores are below average — practice describing scenes from memory, reviewing and recreating drawings, or using photo albums to stimulate visual recall.",
-  orientation:  "Your temporal orientation scores need attention — build a morning habit of reviewing the day, date and season without checking your phone first.",
-  sequence:     "Your sequential memory scores suggest working memory could be strengthened — practice recalling short sequences (phone numbers, shopping lists) without writing them down.",
-  whatsmissing: "Your visual attention scores are below average — try spot-the-difference activities, describing a scene in detail after briefly viewing it, or mindful observation exercises.",
-  pattern:      "Your pattern recognition scores suggest visuospatial exercises could help — jigsaw puzzles, shape-matching activities, or finding repeating patterns in everyday objects.",
-  arithmetic:   "Your mental arithmetic scores suggest regular numerical practice — calculate change when shopping, add up bills mentally, or use number-based games daily."
+  memory:       "Keep working on your visual memory! Activities such as recalling details from images, recreating drawings, or reviewing photo albums can help improve your ability to remember visual information over time.",
+  orientation:  "Keep working on your sense of time and dates! A helpful exercise is to begin each morning by recalling the day, date, and season before looking at your phone. Regular practice can help improve your temporal orientation.",
+  sequence:     "Keep working on your working memory! Try recalling short sequences, such as phone numbers or shopping lists, without writing them down. Regular practice can help strengthen your memory skills.",
+  whatsmissing: "Keep working on your visual attention! Activities such as spot-the-difference games, describing a scene after briefly viewing it, or practicing mindful observation can help you improve your ability to notice visual details.",
+  pattern:      "Keep working on your pattern recognition skills! Jigsaw puzzles, shape-matching activities, and noticing repeating patterns in everyday objects are great ways to strengthen your visuospatial abilities.",
+  arithmetic:   "Keep practicing your mental arithmetic! Calculating change when shopping, adding up bills mentally, and using number-based games daily are great ways to strengthen your numerical skills."
 };
 
 function analyzeGamePerformance(sessions) {
@@ -3920,9 +3920,9 @@ const ASSISTANT_MSGS = {
 };
 
 const GAME_MSGS = {
-  memory:       { emoji:'🃏', title:'Memory',           tip:'Find all matching pairs of cards. Click two cards to flip them — if they match, they stay open. Find all 8 pairs to win!' },
+  memory:       { emoji:'🃏', title:'Memory',           tip:'Find all matching pairs of cards by flipping two at a time. If the cards match, they will stay face up. Continue until you find all 8 pairs to win the game.' },
   orientation:  { emoji:'🗓️', title:'Orientation',      tip:'Answer 6 questions about today\'s date, month, year and season. There\'s no time limit, so take your time!' },
-  sequence:     { emoji:'🔢', title:'Sequence',          tip:'Watch the colour buttons light up in a sequence, then repeat it in the same order. The sequence gets longer each round!' },
+  sequence:     { emoji:'🧩', title:'Sequence',          tip:'Watch the colour buttons light up in a sequence, then repeat it in the same order. The sequence gets longer each round!' },
   whatsmissing: { emoji:'👁️', title:"What's Missing?",   tip:'Look carefully at the grid of objects, then one will disappear. Choose which one is missing from the options below.' },
   pattern:      { emoji:'🎨', title:'Pattern',           tip:'A colour sequence is shown with one gap. Choose the colour that logically comes next in the pattern.' },
   arithmetic:   { emoji:'➕', title:'Arithmetic',        tip:'Solve simple additions and subtractions. Choose the correct answer from the four options. Difficulty increases gradually.' }
@@ -3946,7 +3946,7 @@ function loadAssistant() {
     const u = currentUser.name.split(' ')[0];
     const a = assistantState.name;
     setTimeout(() => showAssistantMsg(
-      `Hi <strong>${u}</strong>! I'm <strong>${a}</strong> — I'm here to help you navigate NeuroClass. ` +
+      `Hi <strong>${u}</strong>! I'm <strong>${a}</strong> and I'm here to help you navigate NeuroClass. ` +
       `Tap me anytime you need guidance on what each section does!`
     ), 800);
   }
