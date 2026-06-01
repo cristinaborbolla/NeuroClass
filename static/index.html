@@ -2044,7 +2044,7 @@ async function doRegister(e) {
     username, full_name: name, email,
     date_of_birth: dob, phone, neurologist,
     last_appointment: lastAppt,
-    notes: colNum ? `Nº colegiado: ${colNum}` : null,
+    notes: colNum ? `Membership number: ${colNum}` : null,
     role: regRole
   });
   
@@ -2061,32 +2061,39 @@ async function doRegister(e) {
 
 async function doLogin(e) {
   e.preventDefault();
-  const btn      = document.getElementById('btnLogin');
-  const msg      = document.getElementById('loginMsg');
+  const btn = document.getElementById('btnLogin');
+  const msg = document.getElementById('loginMsg');
   const username = document.getElementById('loginUsername').value.trim().toUpperCase();
-  const pass     = document.getElementById('loginPassword').value;
+  const pass = document.getElementById('loginPassword').value;
 
   btn.disabled = true;
   btn.textContent = 'Logging in…';
   msg.className = 'auth-msg';
 
-  const { data: profile, error: lookupErr } = await db
-    .from('users').select('email').ilike('username', username).maybeSingle();
+  try {
+    const { data: profile, error: lookupErr } = await db
+      .from('users').select('email').ilike('username', username).maybeSingle();
 
-  if (lookupErr || !profile?.email) {
-    showMsg(msg, 'error', 'Incorrect Patient ID or password.');
-    btn.disabled = false; btn.textContent = 'Log in';
-    return;
-  }
+    if (lookupErr || !profile?.email) {
+      showMsg(msg, 'error', 'Incorrect Patient ID or password.');
+      return;
+    }
 
-  const { error } = await db.auth.signInWithPassword({ email: profile.email, password: pass });
-  if (error) {
-    showMsg(msg, 'error', 'Incorrect Patient ID or password.');
-    btn.disabled = false; btn.textContent = 'Log in';
-    return;
+    const { error } = await db.auth.signInWithPassword({ 
+      email: profile.email, password: pass 
+    });
+    
+    if (error) {
+      showMsg(msg, 'error', 'Incorrect Patient ID or password.');
+      return;
+    }
+  } catch(err) {
+    console.error('Login error:', err);
+    showMsg(msg, 'error', 'Connection error. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Log in';
   }
-  // onAuthStateChange handles the rest
-  btn.disabled = false; btn.textContent = 'Log in';
 }
 
 async function logout() {
