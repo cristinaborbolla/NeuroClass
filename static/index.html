@@ -2882,6 +2882,7 @@ async function selectPatient(p) {
       </div>
     </div>`;
   detail.scrollIntoView({ behavior:'smooth', block:'start' });
+  const isMobile = window.innerWidth <= 680;
   // Load predictions
   const { data: preds } = await db
     .from('predictions').select('*')
@@ -2897,7 +2898,6 @@ async function selectPatient(p) {
       MildDemented:     { color:'#c45820', label:'Mild' },
       ModerateDemented: { color:'#a83232', label:'Moderate' }
     };
-    const isMobile = window.innerWidth <= 680;
     if (isMobile) {
       predWrap.innerHTML = preds.map(r => {
         const m = clsMeta[r.predicted_class] || { color:'#999', label: r.predicted_class };
