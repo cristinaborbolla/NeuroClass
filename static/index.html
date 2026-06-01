@@ -2879,26 +2879,49 @@ async function selectPatient(p) {
       MildDemented:     { color:'#c45820', label:'Mild' },
       ModerateDemented: { color:'#a83232', label:'Moderate' }
     };
-    predWrap.innerHTML = preds.map(r => {
-      const m = clsMeta[r.predicted_class] || { color:'#999', label: r.predicted_class };
-      const conf = (r.confidence*100).toFixed(1);
-      return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;margin-bottom:.6rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-          <span style="font-size:.88rem;font-weight:600;display:flex;align-items:center;gap:.4rem;">
-            <span style="width:9px;height:9px;border-radius:50%;background:${m.color};display:inline-block;"></span>${m.label}
-          </span>
-          <button onclick="generateReportFromDashboard('${r.id}')" style="background:var(--matcha);color:white;border:none;border-radius:7px;padding:.35rem .8rem;font-size:.75rem;cursor:pointer;flex-shrink:0;">📄 PDF</button>
-        </div>
-        <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem;"><span style="font-weight:600;color:var(--text);">Confidence: </span>${conf}%</div>
-        <div style="font-size:.74rem;color:var(--muted);margin-bottom:.6rem;">${formatDateTime(r.created_at)}</div>
-        <div class="mini-bars">
-          <div class="mini-bar-row"><span style="min-width:56px">Non-Dem.</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_non_demented*100).toFixed(0)}%;background:#4a8c5c"></div></div><span>${(r.prob_non_demented*100).toFixed(1)}%</span></div>
-          <div class="mini-bar-row"><span style="min-width:56px">V. Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_very_mild*100).toFixed(0)}%;background:#b07d2a"></div></div><span>${(r.prob_very_mild*100).toFixed(1)}%</span></div>
-          <div class="mini-bar-row"><span style="min-width:56px">Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_mild*100).toFixed(0)}%;background:#c45820"></div></div><span>${(r.prob_mild*100).toFixed(1)}%</span></div>
-          <div class="mini-bar-row"><span style="min-width:56px">Moderate</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_moderate*100).toFixed(0)}%;background:#a83232"></div></div><span>${(r.prob_moderate*100).toFixed(1)}%</span></div>
-        </div>
-      </div>`;
-    }).join('');
+    const isMobile = window.innerWidth <= 680;
+    if (isMobile) {
+      predWrap.innerHTML = preds.map(r => {
+        const m = clsMeta[r.predicted_class] || { color:'#999', label: r.predicted_class };
+        const conf = (r.confidence*100).toFixed(1);
+        return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;margin-bottom:.6rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+            <span style="font-size:.88rem;font-weight:600;display:flex;align-items:center;gap:.4rem;">
+              <span style="width:9px;height:9px;border-radius:50%;background:${m.color};display:inline-block;"></span>${m.label}
+            </span>
+            <button onclick="generateReportFromDashboard('${r.id}')" style="background:var(--matcha);color:white;border:none;border-radius:7px;padding:.35rem .8rem;font-size:.75rem;cursor:pointer;flex-shrink:0;">📄 PDF</button>
+          </div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem;"><span style="font-weight:600;color:var(--text);">Confidence: </span>${conf}%</div>
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:.6rem;">${formatDateTime(r.created_at)}</div>
+          <div class="mini-bars">
+            <div class="mini-bar-row"><span style="min-width:56px">Non-Dem.</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_non_demented*100).toFixed(0)}%;background:#4a8c5c"></div></div><span>${(r.prob_non_demented*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">V. Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_very_mild*100).toFixed(0)}%;background:#b07d2a"></div></div><span>${(r.prob_very_mild*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_mild*100).toFixed(0)}%;background:#c45820"></div></div><span>${(r.prob_mild*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">Moderate</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_moderate*100).toFixed(0)}%;background:#a83232"></div></div><span>${(r.prob_moderate*100).toFixed(1)}%</span></div>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      const predRows = preds.map(r => {
+        const m = clsMeta[r.predicted_class] || { color:'#999', label: r.predicted_class };
+        const conf = (r.confidence*100).toFixed(1);
+        return `<tr>
+          <td><span class="stage-dot" style="background:${m.color}"></span>${m.label}</td>
+          <td><strong>${conf}%</strong></td>
+          <td><div class="mini-bars">
+            <div class="mini-bar-row"><span style="min-width:56px">Non-Dem.</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_non_demented*100).toFixed(0)}%;background:#4a8c5c"></div></div><span>${(r.prob_non_demented*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">V. Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_very_mild*100).toFixed(0)}%;background:#b07d2a"></div></div><span>${(r.prob_very_mild*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">Mild</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_mild*100).toFixed(0)}%;background:#c45820"></div></div><span>${(r.prob_mild*100).toFixed(1)}%</span></div>
+            <div class="mini-bar-row"><span style="min-width:56px">Moderate</span><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(r.prob_moderate*100).toFixed(0)}%;background:#a83232"></div></div><span>${(r.prob_moderate*100).toFixed(1)}%</span></div>
+          </div></td>
+          <td style="color:var(--muted)">${formatDateTime(r.created_at)}</td>
+          <td><button onclick="generateReportFromDashboard('${r.id}')" style="background:var(--matcha);color:white;border:none;border-radius:7px;padding:.35rem .8rem;font-size:.75rem;cursor:pointer;">📄 PDF</button></td>
+        </tr>`;
+      }).join('');
+      predWrap.innerHTML = `<div style="overflow-x:auto;"><table class="pred-tbl">
+        <thead><tr><th>Stage</th><th>Confidence</th><th>Probabilities</th><th>Date</th><th>Report</th></tr></thead>
+        <tbody>${predRows}</tbody></table></div>`;
+    }
   }
   // Load game sessions
   const { data: sessions } = await db
@@ -2907,27 +2930,39 @@ async function selectPatient(p) {
   const gameWrap = document.getElementById('gameHistoryWrap');
   if (!sessions || sessions.length === 0) {
     gameWrap.innerHTML = '<div class="dash-empty"><span>🎮</span>No game sessions recorded yet.</div>';
+    loadNotes(p.id);
     return;
   }
   renderGamesChart(sessions);
-  const gameEmoji = { memory:'🃏', orientation:'🗓️', sequence:'🔢', whatsmissing:'👁️', pattern:'🎨', arithmetic:'➕' };
-  gameWrap.innerHTML = sessions.map(s => {
-    const pill = s.game_name === 'sequence'
-      ? `<span class="score-pill ${s.score < 5 ? 'score-lo' : s.score <= 8 ? 'score-md' : 'score-hi'}">${s.score} rounds</span>`
-      : scorePill(s.score, s.max_score);
-    const result = s.game_name === 'sequence'
-      ? (s.score < 5 ? '💪' : s.score <= 8 ? '👍' : '🎉')
-      : Math.round((s.score/s.max_score)*100)+'%';
-    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
-      <div style="min-width:0;">
-        <div style="font-size:.88rem;font-weight:600;margin-bottom:.2rem;">${gameEmoji[s.game_name]||'🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</div>
-        <div style="font-size:.76rem;color:var(--muted);"><span style="font-weight:600;color:var(--text);">Result: </span>${result} · ${formatDateTime(s.created_at)}</div>
-      </div>
-      <div style="flex-shrink:0;">${pill}</div>
-    </div>`;
-  }).join('');
-  loadNotes(p.id);
-}
+  if (isMobile) {
+    gameWrap.innerHTML = sessions.map(s => {
+      const pill = s.game_name === 'sequence'
+        ? `<span class="score-pill ${s.score < 5 ? 'score-lo' : s.score <= 8 ? 'score-md' : 'score-hi'}">${s.score} rounds</span>`
+        : scorePill(s.score, s.max_score);
+      const result = s.game_name === 'sequence'
+        ? (s.score < 5 ? '💪' : s.score <= 8 ? '👍' : '🎉')
+        : Math.round((s.score/s.max_score)*100)+'%';
+      return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+        <div style="min-width:0;">
+          <div style="font-size:.88rem;font-weight:600;margin-bottom:.2rem;">${gameEmoji[s.game_name]||'🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</div>
+          <div style="font-size:.76rem;color:var(--muted);"><span style="font-weight:600;color:var(--text);">Result: </span>${result} · ${formatDateTime(s.created_at)}</div>
+        </div>
+        <div style="flex-shrink:0;">${pill}</div>
+      </div>`;
+    }).join('');
+  } else {
+    const gameRows = sessions.map(s => `
+      <tr>
+        <td>${gameEmoji[s.game_name]||'🎮'} ${s.game_name.charAt(0).toUpperCase()+s.game_name.slice(1)}</td>
+        <td>${s.game_name === 'sequence' ? `<span class="score-pill ${s.score < 5 ? 'score-lo' : s.score <= 8 ? 'score-md' : 'score-hi'}">${s.score} rounds</span>` : scorePill(s.score, s.max_score)}</td>
+        <td>${s.game_name === 'sequence' ? (s.score < 5 ? '💪' : s.score <= 8 ? '👍' : '🎉') : Math.round((s.score/s.max_score)*100)+'%'}</td>
+        <td>${formatDuration(s.duration_sec)}</td>
+        <td style="color:var(--muted)">${formatDateTime(s.created_at)}</td>
+      </tr>`).join('');
+    gameWrap.innerHTML = `<div style="overflow-x:auto;"><table class="games-tbl">
+      <thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead>
+      <tbody>${gameRows}</tbody></table></div>`;
+  }
 
 async function saveNote(patientId) {
   const input = document.getElementById('noteInput');
