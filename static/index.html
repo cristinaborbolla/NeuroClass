@@ -2823,6 +2823,16 @@ async function loadPatients() {
     grid.appendChild(card);
   });
 }
+
+const gameEmoji = {
+  memory:       '🃏',
+  orientation:  '🗓️',
+  sequence:     '🧩',
+  whatsmissing: '👁️',
+  pattern:      '🎨',
+  arithmetic:   '➕'
+};
+  
 async function selectPatient(p) {
   selectedDashboardPatient = p;
   document.querySelectorAll('.patient-card').forEach(c => c.classList.remove('selected'));
