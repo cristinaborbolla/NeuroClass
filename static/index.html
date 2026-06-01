@@ -1346,7 +1346,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
           <button class="game-start-btn" onclick="showGameModal('orientation')">Play</button>
         </div>
         <div class="game-card">
-          <div class="game-emoji">🔢</div>
+          <div class="game-emoji">🧩</div>
           <div class="game-title">Sequence</div>
           <div class="game-desc">Repeat the colour sequence shown on screen. Tests short-term memory and attention.</div>
           <button class="game-start-btn" onclick="showGameModal('sequence')">Play</button>
@@ -1403,7 +1403,7 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     <div class="game-view" id="viewSequence">
       <div class="game-topbar">
         <button class="btn-back" onclick="backToLobby()">← Back</button>
-        <h3>🔢 Sequence</h3>
+        <h3>🧩 Sequence</h3>
         <span class="game-stat" id="seqRoundStat">Round 1</span>
       </div>
       <div class="seq-wrap">
@@ -2499,7 +2499,7 @@ function clearGameTimers() {
 const GAME_INFO = {
   memory:       { emoji:'🃏', title:'Memory',         desc:'Find all matching pairs of cards before time runs out.', tip:'💡 Tip: focus on position, not just the image.' },
   orientation:  { emoji:'🗓️', title:'Orientation',    desc:'Answer 6 questions about today\'s date, month, year and season.', tip:'💡 Tip: take your time, there is no time limit.' },
-  sequence:     { emoji:'🔢', title:'Sequence',        desc:'Watch the colour sequence light up, then repeat it in the same order.', tip:'💡 Tip: say the colours out loud as they appear.' },
+  sequence:     { emoji:'🧩', title:'Sequence',        desc:'Watch the colour sequence light up, then repeat it in the same order.', tip:'💡 Tip: say the colours out loud as they appear.' },
   whatsmissing: { emoji:'👁️', title:'What\'s Missing?', desc:'Memorise the grid of objects, then identify which one disappeared.', tip:'💡 Tip: scan the grid row by row.' },
   pattern:      { emoji:'🎨', title:'Pattern',         desc:'A colour sequence is shown with one element missing. Select the colour that comes next.', tip:'💡 Tip: look for the repeating rhythm in the colours.' },
   arithmetic:   { emoji:'➕', title:'Arithmetic',      desc:'Solve simple additions and subtractions. Difficulty increases gradually.', tip:'💡 Tip: don\'t rush, accuracy matters more than speed.' }
