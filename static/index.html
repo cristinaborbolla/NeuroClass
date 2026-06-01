@@ -3063,7 +3063,7 @@ async function generateReportFromDashboard(predictionId) {
         id:        currentUser.id,
         name:      currentUser.name,
         dni:       currentUser.username,
-        colegiado: doctorData?.notes?.replace('Nº colegiado: ', '') || '—',
+        member: doctorData?.notes?.replace('membership number: ', '') || '—',
       },
       prediction: {
         stage:          pred.predicted_class,
@@ -3140,7 +3140,7 @@ async function generateEvolutionReportForPatient(patientId) {
         lastAppt:      p.last_appointment || null,
         totalSessions: preds.length || 1,
       },
-      doctor:       { id: currentUser.id, name: currentUser.name, dni: currentUser.username, colegiado: doctorData?.notes?.replace('Nº colegiado: ', '') || '—' },
+      doctor:       { id: currentUser.id, name: currentUser.name, dni: currentUser.username, member: doctorData?.notes?.replace('membership number: ', '') || '—' },
       predictions:  preds,
       gameSessions: sessions || [],
       notes:        notes    || [],
