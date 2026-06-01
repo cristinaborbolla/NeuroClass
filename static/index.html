@@ -2963,6 +2963,8 @@ async function selectPatient(p) {
       <thead><tr><th>Game</th><th>Score</th><th>Result</th><th>Duration</th><th>Date</th></tr></thead>
       <tbody>${gameRows}</tbody></table></div>`;
   }
+  loadNotes(p.id);
+}
 
 async function saveNote(patientId) {
   const input = document.getElementById('noteInput');
