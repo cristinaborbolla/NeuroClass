@@ -86,7 +86,22 @@ def array_to_b64(img_np_uint8, upscale=2):
     _, buffer = cv2.imencode('.jpg', img_np_uint8, [cv2.IMWRITE_JPEG_QUALITY, 90])
     return base64.b64encode(buffer).decode('utf-8')
 
-
+def pad_to_square_for_display(img_np):
+    """
+    Añade padding negro para hacer la imagen cuadrada
+    antes de resize, preservando el aspect ratio.
+    Solo para visualización, no para inferencia.
+    """
+    h, w = img_np.shape[:2]
+    max_dim = max(h, w)
+    pad_top    = (max_dim - h) // 2
+    pad_bottom = max_dim - h - pad_top
+    pad_left   = (max_dim - w) // 2
+    pad_right  = max_dim - w - pad_left
+    return cv2.copyMakeBorder(
+        img_np, pad_top, pad_bottom, pad_left, pad_right,
+        cv2.BORDER_CONSTANT, value=0
+    )
 # ─────────────────────────────────────────────────────────────────────────────
 # ROUTES
 # ─────────────────────────────────────────────────────────────────────────────
@@ -179,10 +194,11 @@ def preprocess_pipeline():
         img_clahe    = clahe.apply(img_gray)
         b64_clahe    = array_to_b64(img_clahe, upscale=1)
 
-        # ── Step 3: Resize ───────────────────────────────────────────────────
-        img_resized  = Image.fromarray(img_clahe).resize((IMG_W, IMG_H), Image.LANCZOS)
-        img_res_np   = np.array(img_resized, dtype=np.uint8)
-        b64_resized  = array_to_b64(img_res_np, upscale=2)
+        # ── Step 3: Resize con padding ───────────────────────────────
+        img_clahe_padded = pad_to_square_for_display(img_clahe)
+        img_resized      = Image.fromarray(img_clahe_padded).resize((IMG_W, IMG_H), Image.LANCZOS)
+        img_res_np       = np.array(img_resized, dtype=np.uint8)
+        b64_resized      = array_to_b64(img_res_np, upscale=2)
 
         # ── Step 4: Normalisation [0,1] — visualised ─────────────────────────
         img_norm_vis = np.uint8(img_res_np.astype(np.float32) / 255.0 * 255.0)
@@ -232,7 +248,7 @@ def preprocess_pipeline():
                 "params": {
                     "Target size":     f"{IMG_W} × {IMG_H} px",
                     "Interpolation":   "LANCZOS",
-                    "Aspect ratio":    "not preserved (fixed crop)"
+                    "Aspect ratio":  "preserved (padding)"   
                 }
             },
             {
@@ -325,13 +341,18 @@ def gradcam():
     heatmap_uint8   = np.uint8(255 * heatmap_resized)
     heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
 
-    img_display = np.uint8(img_array[0, :, :, 0] * 255)
-    img_bgr     = cv2.cvtColor(img_display, cv2.COLOR_GRAY2BGR)
+    img_raw     = np.uint8(img_array[0, :, :, 0] * 255)
+    img_padded  = pad_to_square_for_display(img_raw)
+    img_display = cv2.resize(img_padded, (IMG_W * 2, IMG_H * 2), interpolation=cv2.INTER_CUBIC)
 
-    overlay     = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)
-    overlay_big = cv2.resize(overlay, (IMG_W * 2, IMG_H * 2), interpolation=cv2.INTER_CUBIC)
+    heatmap_display = cv2.resize(heatmap, (IMG_W * 2, IMG_H * 2))
+    heatmap_uint8_d = np.uint8(255 * heatmap_display)
+    heatmap_colored = cv2.applyColorMap(heatmap_uint8_d, cv2.COLORMAP_JET)
 
-    _, buffer = cv2.imencode('.jpg', overlay_big, [cv2.IMWRITE_JPEG_QUALITY, 92])
+    img_bgr = cv2.cvtColor(img_display, cv2.COLOR_GRAY2BGR)
+    overlay = cv2.addWeighted(img_bgr, 0.55, heatmap_colored, 0.45, 0)
+
+    _, buffer = cv2.imencode('.jpg', overlay, [cv2.IMWRITE_JPEG_QUALITY, 92])
     img_b64   = base64.b64encode(buffer).decode('utf-8')
 
     return jsonify({
