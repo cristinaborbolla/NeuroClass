@@ -1007,6 +1007,35 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   background: (--rose-slt);
   border-color: var(--rose);
 }
+
+/* ══ PROFILE ════════════════════════════════════════════════ */
+.profile-wrap{max-width:620px;margin:0 auto;padding:2.5rem 1.5rem;}
+.profile-header{margin-bottom:1.8rem;}
+.profile-header h2{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;margin-bottom:.35rem;}
+.profile-header p{color:var(--muted);font-size:.88rem;}
+.profile-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.2rem;}
+.profile-card-header{background:var(--surface);padding:1rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;}
+.profile-card-header h3{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.profile-card-icon{width:26px;height:26px;border-radius:7px;background:var(--matcha-slt);display:flex;align-items:center;justify-content:center;font-size:.85rem;}
+.profile-card-body{padding:1.4rem;display:flex;flex-direction:column;gap:1rem;}
+.profile-field{display:flex;flex-direction:column;gap:.35rem;}
+.profile-field label{font-size:.8rem;font-weight:500;color:var(--text);}
+.profile-field input,.profile-field select{padding:.65rem .9rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;}
+.profile-field input:focus,.profile-field select:focus{border-color:var(--matcha);}
+.profile-field input[readonly]{background:var(--surface);color:var(--muted);cursor:not-allowed;}
+.profile-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.btn-save-profile{padding:.8rem 2rem;background:var(--matcha);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn-save-profile:hover{opacity:.88;}
+.btn-save-profile:disabled{opacity:.45;cursor:not-allowed;}
+.profile-msg{font-size:.8rem;padding:.6rem .8rem;border-radius:8px;display:none;margin-top:.25rem;}
+.profile-msg.success{display:block;background:#f0faf4;color:#2e7d4f;border:1px solid #b7d6b0;}
+.profile-msg.error{display:block;background:#fef2f2;color:#a83232;border:1px solid #fecaca;}
+.profile-avatar-area{display:flex;align-items:center;gap:1.2rem;padding:1.4rem;background:var(--surface);border-bottom:1px solid var(--border);}
+.profile-big-avatar{width:64px;height:64px;border-radius:50%;background:var(--rose-dk);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:1.5rem;flex-shrink:0;}
+.profile-avatar-info{flex:1;}
+.profile-avatar-name{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:500;}
+.profile-avatar-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem;font-family:monospace;}
+@media(max-width:600px){.profile-grid-2{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -1020,9 +1049,10 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
     <nav id="mainNav">
       <button class="nav-btn active"  onclick="showTab('home')">Home</button>
       <button class="nav-btn"         onclick="showTab('alzheimer')">About Alzheimer</button>
-      <button class="nav-btn" id="navClassifier" onclick="showTab('classifier')" style="display:none;">Classifier</button>
-      <button class="nav-btn" id="navGames"      onclick="showTab('games')"      style="display:none;">Games</button>
+      <button class="nav-btn"         id="navClassifier" onclick="showTab('classifier')" style="display:none;">Classifier</button>
+      <button class="nav-btn"         id="navGames"      onclick="showTab('games')"      style="display:none;">Games</button>
       <button class="nav-btn"         id="navRecommendations" onclick="guardedTab('recommendations')" style="display:none;">Recommendations</button>
+      <button class="nav-btn"         id="navProfile" onclick="guardedTab('profile')" style="display:none;">My Profile</button>
       <button class="nav-btn"         id="navDashboard"  onclick="guardedTab('dashboard')" style="display:none;">Dashboard</button>
     </nav>
     <button class="nav-btn"         id="navLogin"      onclick="showTab('login')">Log in</button>
@@ -1148,6 +1178,16 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
       <div class="field">
         <label>Full name</label>
         <input type="text" id="regName" placeholder="María García López" required>
+      </div>
+      <div class="field">
+        <label>Sex</label>
+        <select id="regSex" required>
+          <option value="">— Select —</option>
+          <option value="Female">Female</option>
+          <option value="Male">Male</option>
+          <option value="Other">Other</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
         <div class="field">
@@ -1609,6 +1649,108 @@ footer{text-align:center;padding:1.4rem;font-size:.75rem;color:var(--muted);bord
   </div>
 </div>
 
+<!-- ══ PROFILE (patient only) ══════════════════════════════ -->
+<div id="tab-profile" class="section">
+  <div class="profile-wrap">
+    <div class="profile-header">
+      <h2>My Profile</h2>
+      <p>Review and update your personal information at any time.</p>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-avatar-area">
+        <div class="profile-big-avatar" id="profileAvatar">?</div>
+        <div class="profile-avatar-info">
+          <div class="profile-avatar-name" id="profileAvatarName">—</div>
+          <div class="profile-avatar-sub" id="profileAvatarSub">—</div>
+        </div>
+      </div>
+      <div class="profile-card-header">
+        <div class="profile-card-icon">🪪</div>
+        <h3>Identity (cannot be changed)</h3>
+      </div>
+      <div class="profile-card-body">
+        <div class="profile-grid-2">
+          <div class="profile-field">
+            <label>Patient ID (DNI / NHC)</label>
+            <input type="text" id="profileUsername" readonly>
+          </div>
+          <div class="profile-field">
+            <label>Date of birth</label>
+            <input type="date" id="profileDob" readonly>
+          </div>
+        </div>
+        <div class="profile-field">
+          <label>Email</label>
+          <input type="email" id="profileEmail" readonly>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-header">
+        <div class="profile-card-icon">✏️</div>
+        <h3>Personal details</h3>
+      </div>
+      <div class="profile-card-body">
+        <div class="profile-field">
+          <label>Full name</label>
+          <input type="text" id="profileName" placeholder="María García López">
+        </div>
+        <div class="profile-grid-2">
+          <div class="profile-field">
+            <label>Sex</label>
+            <select id="profileSex">
+              <option value="">— Select —</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+          </div>
+          <div class="profile-field">
+            <label>Phone</label>
+            <input type="tel" id="profilePhone" placeholder="+34 600 000 000">
+          </div>
+        </div>
+        <div class="profile-grid-2">
+          <div class="profile-field">
+            <label>Neurologist</label>
+            <select id="profileNeurologist">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="profile-field">
+            <label>Last appointment</label>
+            <input type="date" id="profileLastAppt">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-header">
+        <div class="profile-card-icon">🔑</div>
+        <h3>Change password</h3>
+      </div>
+      <div class="profile-card-body">
+        <div class="profile-field">
+          <label>New password <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(leave blank to keep current)</span></label>
+          <input type="password" id="profileNewPass" placeholder="New password (min. 8 characters)" minlength="8">
+        </div>
+        <div class="profile-field">
+          <label>Confirm new password</label>
+          <input type="password" id="profileConfirmPass" placeholder="Confirm new password">
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-msg" id="profileMsg"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:.5rem;">
+      <button class="btn-save-profile" id="btnSaveProfile" onclick="saveProfile()">Save changes</button>
+    </div>
+  </div>
+</div>
 <footer>
   NeuroClass · TFG Biomedical Engineering · Universidad de Deusto · 2026 ·
   Supervisión: Prof. Begoña García-Zapirain &amp; Dr. Marcin Derlatka
@@ -2006,6 +2148,7 @@ async function doRegister(e) {
   }
 
   const dob         = regRole === 'patient' ? (document.getElementById('regDob').value || null) : null;
+  const sex         = regRole === 'patient' ? (document.getElementById('regSex').value || null) : null;
   const phone       = regRole === 'patient' ? (document.getElementById('regPhone').value.trim() || null) : null;
   const lastAppt    = regRole === 'patient' ? (document.getElementById('regLastAppt').value || null) : null;
   const neurologist = regRole === 'patient' ? (document.getElementById('regNeurologist').value.trim() || null) : null;
@@ -2042,7 +2185,7 @@ async function doRegister(e) {
   const { error: profileError } = await db.from('users').insert({
     id: authData.user.id,
     username, full_name: name, email,
-    date_of_birth: dob, phone, neurologist,
+    date_of_birth: dob, sex, phone, neurologist,
     last_appointment: lastAppt,
     notes: colNum ? `Membership number: ${colNum}` : null,
     role: regRole
@@ -2217,6 +2360,7 @@ function updateHeaderAuth() {
   document.getElementById('navDashboard').style.display = isDr ? '' : 'none';
   const canRecs = loggedIn && currentUser.role === 'patient';
   document.getElementById('navRecommendations').style.display = canRecs ? '' : 'none';
+  document.getElementById('navProfile').style.display = canRecs ? '' : 'none';
   if (loggedIn) {
     const initials = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('userAvatar').textContent = initials;
@@ -2264,12 +2408,13 @@ function showTab(id) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   const navMap = { home:'', alzheimer:'', login:'navLogin', classifier:'navClassifier',
-                   games:'navGames', dashboard:'navDashboard', recommendations:'navRecommendations' };
+                   games:'navGames', dashboard:'navDashboard', recommendations:'navRecommendations', profile: 'navProfile' };
   if (navMap[id]) document.getElementById(navMap[id])?.classList.add('active');
   if (id === 'home')      document.querySelector('.nav-btn').classList.add('active');
   if (id === 'alzheimer') document.querySelectorAll('.nav-btn')[1].classList.add('active');
   if (id === 'dashboard') loadPatients();
   if (id === 'recommendations' && currentUser) loadRecommendations();
+  if (id === 'profile' && currentUser) loadProfile();
   if (id === 'classifier' && currentUser && currentUser.role === 'doctor') loadPatientsForClassifier();
   triggerAssistantTab(id);
 
@@ -2279,6 +2424,7 @@ function guardedTab(id) {
   if (id === 'games'     && currentUser.role !== 'patient') return;
   if (id === 'dashboard' && currentUser.role !== 'doctor')  return;
   if (id === 'recommendations' && currentUser.role !== 'patient') return;
+  if (id === 'profile' && currentUser.role !== 'patient') return;
   showTab(id);
 }
 function toggleStage(id) { document.getElementById(id).classList.toggle('open'); }
@@ -2790,7 +2936,7 @@ async function loadPatients() {
   document.getElementById('patientDetail').style.display = 'none';
   const { data, error } = await db
     .from('users')
-    .select('id, username, full_name, date_of_birth, phone, neurologist, last_appointment, created_at')
+    .select('id, username, full_name, date_of_birth, sex, phone, neurologist, last_appointment, created_at')
     .eq('role', 'patient')
     .eq('neurologist', currentUser.name)
     .order('full_name', { ascending: true });
@@ -2822,6 +2968,7 @@ async function loadPatients() {
       </div>
       <div class="pc-fields">
         <div class="pc-field"><span class="pc-label">Date of birth</span><span class="pc-val">${formatDate(p.date_of_birth)}${age ? ' · ' + age + ' y/o' : ''}</span></div>
+        <div class="pc-field"><span class="pc-label">Sex</span><span class="pc-val">${p.sex || '—'}</span></div>
         <div class="pc-field"><span class="pc-label">Phone</span><span class="pc-val">${p.phone || '—'}</span></div>
         <div class="pc-field"><span class="pc-label">Neurologist</span><span class="pc-val">${p.neurologist || '—'}</span></div>
         <div class="pc-field"><span class="pc-label">Last appointment</span><span class="pc-val">${formatDate(p.last_appointment)}</span></div>
@@ -2867,6 +3014,7 @@ async function selectPatient(p) {
     <div class="detail-body">
       <div class="detail-fields">
         <div class="detail-field"><div class="detail-field-lbl">Date of birth</div><div class="detail-field-val">${formatDate(p.date_of_birth)}${age?' ('+age+' y/o)':''}</div></div>
+        <div class="detail-field"><div class="detail-field-lbl">Sex</div><div class="detail-field-val">${p.sex||'—'}</div></div>
         <div class="detail-field"><div class="detail-field-lbl">Phone</div><div class="detail-field-val">${p.phone||'—'}</div></div>
         <div class="detail-field"><div class="detail-field-lbl">Neurologist</div><div class="detail-field-val">${p.neurologist||'—'}</div></div>
         <div class="detail-field"><div class="detail-field-lbl">Last appointment</div><div class="detail-field-val">${formatDate(p.last_appointment)}</div></div>
@@ -3054,6 +3202,7 @@ async function generateReportFromDashboard(predictionId) {
         name:          p.full_name,
         dni:           p.username,
         dob:           p.date_of_birth || '—',
+        sex:           p.sex || '—',
         phone:         p.phone || '—',
         neurologist:   p.neurologist || '—',
         lastAppt:      p.last_appointment || null,
@@ -3135,6 +3284,7 @@ async function generateEvolutionReportForPatient(patientId) {
         name:          p.full_name,
         dni:           p.username,
         dob:           p.date_of_birth || '—',
+        sex:           p.sex || '—',
         phone:         p.phone || '—',
         neurologist:   p.neurologist || '—',
         lastAppt:      p.last_appointment || null,
@@ -4184,7 +4334,120 @@ async function fetchPreprocessingPipeline(file) {
     wrap.style.display = 'block';
   }
 }
-  
+
+// ══════════════════════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════════════════════
+async function loadProfile() {
+  if (!currentUser) return;
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) return;
+
+  const { data, error } = await db
+    .from('users')
+    .select('id, username, full_name, email, date_of_birth, sex, phone, neurologist, last_appointment')
+    .eq('id', session.user.id)
+    .single();
+
+  if (error || !data) { showToast('Could not load profile'); return; }
+
+  const initials = data.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('profileAvatar').textContent      = initials;
+  document.getElementById('profileAvatarName').textContent  = data.full_name;
+  document.getElementById('profileAvatarSub').textContent   = data.username + ' · Patient';
+  document.getElementById('profileUsername').value          = data.username || '';
+  document.getElementById('profileDob').value               = data.date_of_birth || '';
+  document.getElementById('profileEmail').value             = data.email || '';
+  document.getElementById('profileName').value              = data.full_name || '';
+  document.getElementById('profileSex').value               = data.sex || '';
+  document.getElementById('profilePhone').value             = data.phone || '';
+  document.getElementById('profileLastAppt').value          = data.last_appointment || '';
+
+  const sel = document.getElementById('profileNeurologist');
+  if (sel.options.length <= 1) {
+    const { data: doctors } = await db
+      .from('users').select('full_name').eq('role','doctor').order('full_name',{ascending:true});
+    (doctors||[]).forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.full_name; o.textContent = d.full_name;
+      sel.appendChild(o);
+    });
+  }
+  sel.value = data.neurologist || '';
+
+  document.getElementById('profileNewPass').value     = '';
+  document.getElementById('profileConfirmPass').value = '';
+  document.getElementById('profileMsg').className     = 'profile-msg';
+}
+
+async function saveProfile() {
+  if (!currentUser) return;
+  const btn = document.getElementById('btnSaveProfile');
+  const msg = document.getElementById('profileMsg');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  msg.className = 'profile-msg';
+
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) {
+    showMsg(msg, 'error', 'Session expired. Please log in again.');
+    btn.disabled = false; btn.textContent = 'Save changes'; return;
+  }
+
+  const newPass     = document.getElementById('profileNewPass').value;
+  const confirmPass = document.getElementById('profileConfirmPass').value;
+
+  if (newPass) {
+    if (newPass.length < 8) {
+      showMsg(msg, 'error', 'Password must be at least 8 characters.');
+      btn.disabled = false; btn.textContent = 'Save changes'; return;
+    }
+    if (newPass !== confirmPass) {
+      showMsg(msg, 'error', 'Passwords do not match.');
+      btn.disabled = false; btn.textContent = 'Save changes'; return;
+    }
+  }
+
+  const updates = {
+    full_name:        document.getElementById('profileName').value.trim() || null,
+    sex:              document.getElementById('profileSex').value         || null,
+    phone:            document.getElementById('profilePhone').value.trim()|| null,
+    neurologist:      document.getElementById('profileNeurologist').value || null,
+    last_appointment: document.getElementById('profileLastAppt').value    || null,
+  };
+
+  if (!updates.full_name) {
+    showMsg(msg, 'error', 'Full name cannot be empty.');
+    btn.disabled = false; btn.textContent = 'Save changes'; return;
+  }
+
+  const { error: dbErr } = await db.from('users').update(updates).eq('id', session.user.id);
+  if (dbErr) {
+    showMsg(msg, 'error', 'Could not save: ' + dbErr.message);
+    btn.disabled = false; btn.textContent = 'Save changes'; return;
+  }
+
+  if (newPass) {
+    const { error: passErr } = await db.auth.updateUser({ password: newPass });
+    if (passErr) {
+      showMsg(msg, 'error', 'Profile saved but password update failed: ' + passErr.message);
+      btn.disabled = false; btn.textContent = 'Save changes'; return;
+    }
+  }
+
+  // Sync local state
+  currentUser.name = updates.full_name;
+  localStorage.setItem('ns_user', JSON.stringify(currentUser));
+  updateHeaderAuth();
+
+  const initials = updates.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('profileAvatar').textContent     = initials;
+  document.getElementById('profileAvatarName').textContent = updates.full_name;
+  document.getElementById('profileNewPass').value          = '';
+  document.getElementById('profileConfirmPass').value      = '';
+
+  showMsg(msg, 'success', 'Profile updated successfully!');
+  btn.disabled = false; btn.textContent = 'Save changes';
+}
 // ── Init ────────────────────────────────────────────────────
 (function checkRecoveryOnLoad() {
   const hash = window.location.hash;
