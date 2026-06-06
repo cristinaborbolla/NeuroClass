@@ -2757,10 +2757,14 @@ function memFlip(card) {
     if (memState.matched === 8) {
       clearInterval(memState.timerInterval);
       const elapsed = Math.floor((Date.now()-memState.startTime)/1000);
-      const efficiency = Math.max(0, 1 - (memState.attempts - 8) / 16);
-      const score = Math.round(efficiency * 8);
-      const t = setTimeout(() => showResults('memResults','memory', score, 8, elapsed,
-        `All pairs found in ${memState.attempts} attempt${memState.attempts!==1?'s':''}`), 600);
+      const extraAttempts = Math.max(0, memState.attempts - 16);
+      const timePenalty   = Math.max(0, Math.floor((elapsed - 60) / 5));
+      const score         = Math.max(0, 100 - (extraAttempts * 5) - timePenalty);
+      const label         = score >= 85 ? 'Excellent' : score >= 65 ? 'Good' : score >= 40 ? 'Keep practising' : 'Keep trying!';
+      const t = setTimeout(() => showResults(
+        'memResults', 'memory', score, 100, elapsed,
+        `${label} · ${memState.attempts} attempt${memState.attempts !== 1 ? 's' : ''} · ${extraAttempts > 0 ? extraAttempts + ' extra attempt' + (extraAttempts !== 1 ? 's' : '') : 'No penalty on attempts'}`
+      ), 600);
       gameTimers.push(t);
     }
   } else {
